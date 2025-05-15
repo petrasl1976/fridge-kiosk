@@ -1,0 +1,79 @@
+.sensors-widget {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #fff;
+    font-size: 1.2em;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.sensor-item {
+    display: flex;
+    margin: 6px 0;
+    align-items: center;
+}
+
+.sensor-label {
+    font-weight: bold;
+    margin-right: 8px;
+    min-width: 65px;
+}
+
+.sensor-value {
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+}
+
+.unit {
+    margin-left: 2px;
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+/* CPU Temperature status colors */
+.temp-normal {
+    color: #4caf50; /* Green */
+}
+
+.temp-warning {
+    color: #ffc107; /* Yellow/Amber */
+}
+
+.temp-critical {
+    color: #f44336; /* Red */
+}
+
+/* Room Temperature status colors */
+.room-temp-normal {
+    color: #4caf50; /* Green */
+}
+
+.room-temp-warning {
+    color: #ffc107; /* Yellow/Amber */
+}
+
+.room-temp-critical {
+    color: #f44336; /* Red */
+}
+
+/* Humidity status colors */
+.humid-normal {
+    color: #03a9f4; /* Blue */
+}
+
+.humid-warning {
+    color: #ffc107; /* Yellow/Amber */
+}
+
+.humid-critical {
+    color: #f44336; /* Red */
+}
+
+/* Error display */
+.sensor-error {
+    color: #f44336;
+    font-size: 0.8em;
+    margin-top: 5px;
+    font-style: italic;
+} 
