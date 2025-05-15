@@ -1,0 +1,17 @@
+{
+  "system": {
+    "display_orientation": "landscape",
+    "font_family": "Roboto, sans-serif",
+    "theme": "dark",
+    "debug": false,
+    "timezone": "Europe/Vilnius"
+  },
+  "enabled_plugins": [
+    "google-photos",
+    "google-calendar-weeks",
+    "google-calendar-days",
+    "discord-text-channel",
+    "date-time",
+    "sensors"
+  ]
+} 
