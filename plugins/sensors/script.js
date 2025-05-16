@@ -3,155 +3,182 @@
  * Monitors temperature and humidity
  */
 
-// Initialize the sensors plugin
-function sensorsInit(config, container) {
-    console.log('Initializing Sensors plugin with config:', config);
-    
-    // DOM elements
-    const tempElement = container.querySelector('.temperature');
-    const humidityElement = container.querySelector('.humidity');
-    const statusElement = container.querySelector('.status-value');
+function sensorsInit() {
+    // Get DOM elements
+    const container = document.getElementById('sensors-container');
+    const temperatureElement = document.getElementById('temperature-value');
+    const humidityElement = document.getElementById('humidity-value');
+    const statusElement = document.getElementById('sensor-status');
+    const lastUpdateElement = document.getElementById('sensor-last-update');
     
     // Plugin state
     const state = {
         temperature: null,
         humidity: null,
+        error: null,
         lastUpdate: null,
-        updateInterval: config.updateInterval || 30, // seconds
-        warningThresholds: config.warningThresholds || {
-            temperature: { min: 2, max: 8 },
-            humidity: { min: 30, max: 60 }
+        updateInterval: 60000, // milliseconds
+        warningThresholds: {
+            temperature: {
+                min: 1,
+                max: 8
+            },
+            humidity: {
+                min: 30,
+                max: 50
+            }
         },
-        status: 'initializing'
+        status: 'normal' // normal, warning, error
     };
-    
-    // For demo purposes - simulate sensor readings
-    function simulateSensorReadings() {
-        // Simulate temperature between 1 and 10°C with occasional outliers
-        state.temperature = Math.random() < 0.1 
-            ? Math.random() * 15 - 2  // Occasional outlier between -2 and 13
-            : Math.random() * 7 + 2;  // Usually between 2 and 9
-            
-        // Simulate humidity between 20 and 70% with occasional outliers
-        state.humidity = Math.random() < 0.1
-            ? Math.random() * 80 + 10  // Occasional outlier between 10 and 90
-            : Math.random() * 30 + 30; // Usually between 30 and 60
-            
-        state.lastUpdate = new Date();
-        
-        // Update status based on readings
-        updateStatus();
-        
-        // Format and display readings
-        displayReadings();
-    }
     
     // Update status based on current readings
     function updateStatus() {
-        const { temperature, humidity, warningThresholds } = state;
-        
-        if (temperature === null || humidity === null) {
-            state.status = 'no data';
+        if (state.error) {
+            state.status = 'error';
             return;
         }
         
-        const tempOk = temperature >= warningThresholds.temperature.min && 
-                        temperature <= warningThresholds.temperature.max;
-        
-        const humidityOk = humidity >= warningThresholds.humidity.min && 
-                           humidity <= warningThresholds.humidity.max;
-        
-        if (tempOk && humidityOk) {
-            state.status = 'normal';
-        } else if (!tempOk && humidityOk) {
-            state.status = temperature < warningThresholds.temperature.min 
-                ? 'temperature too low' 
-                : 'temperature too high';
-        } else if (tempOk && !humidityOk) {
-            state.status = humidity < warningThresholds.humidity.min 
-                ? 'humidity too low' 
-                : 'humidity too high';
-        } else {
-            state.status = 'critical - multiple warnings';
+        // Check temperature
+        if (state.temperature < state.warningThresholds.temperature.min || 
+            state.temperature > state.warningThresholds.temperature.max) {
+            state.status = 'warning';
+            return;
         }
+        
+        // Check humidity
+        if (state.humidity < state.warningThresholds.humidity.min || 
+            state.humidity > state.warningThresholds.humidity.max) {
+            state.status = 'warning';
+            return;
+        }
+        
+        state.status = 'normal';
     }
     
-    // Format and display readings on the UI
+    // Display sensor readings on UI
     function displayReadings() {
-        if (state.temperature !== null) {
-            tempElement.textContent = `${state.temperature.toFixed(1)} °C`;
-            
-            // Apply warning classes
-            tempElement.classList.remove('warning', 'critical');
-            if (state.temperature < state.warningThresholds.temperature.min ||
-                state.temperature > state.warningThresholds.temperature.max) {
-                tempElement.classList.add(
-                    state.temperature < state.warningThresholds.temperature.min - 2 ||
-                    state.temperature > state.warningThresholds.temperature.max + 2 
-                        ? 'critical' : 'warning'
-                );
-            }
-        }
-        
-        if (state.humidity !== null) {
-            humidityElement.textContent = `${state.humidity.toFixed(1)} %`;
-            
-            // Apply warning classes
-            humidityElement.classList.remove('warning', 'critical');
-            if (state.humidity < state.warningThresholds.humidity.min ||
-                state.humidity > state.warningThresholds.humidity.max) {
-                humidityElement.classList.add(
-                    state.humidity < state.warningThresholds.humidity.min - 10 ||
-                    state.humidity > state.warningThresholds.humidity.max + 10 
-                        ? 'critical' : 'warning'
-                );
-            }
-        }
-        
-        // Update status text
-        statusElement.textContent = state.status.charAt(0).toUpperCase() + state.status.slice(1);
-        
-        // Update status classes
-        statusElement.classList.remove('status-normal', 'status-warning', 'status-critical');
-        if (state.status === 'normal') {
-            statusElement.classList.add('status-normal');
-        } else if (state.status.includes('critical')) {
-            statusElement.classList.add('status-critical');
+        if (state.error) {
+            temperatureElement.textContent = '—';
+            humidityElement.textContent = '—';
+            statusElement.textContent = state.error;
+            statusElement.className = 'sensor-status error';
+            container.classList.add('error');
+            container.classList.remove('warning', 'normal');
         } else {
-            statusElement.classList.add('status-warning');
+            // Update temperature
+            temperatureElement.textContent = state.temperature;
+            
+            // Update humidity
+            humidityElement.textContent = state.humidity;
+            
+            // Update status message
+            if (state.status === 'normal') {
+                statusElement.textContent = 'All readings normal';
+                statusElement.className = 'sensor-status normal';
+                container.classList.add('normal');
+                container.classList.remove('warning', 'error');
+            } else if (state.status === 'warning') {
+                let message = '';
+                if (state.temperature < state.warningThresholds.temperature.min) {
+                    message += 'Temperature too low! ';
+                } else if (state.temperature > state.warningThresholds.temperature.max) {
+                    message += 'Temperature too high! ';
+                }
+                
+                if (state.humidity < state.warningThresholds.humidity.min) {
+                    message += 'Humidity too low! ';
+                } else if (state.humidity > state.warningThresholds.humidity.max) {
+                    message += 'Humidity too high! ';
+                }
+                
+                statusElement.textContent = message;
+                statusElement.className = 'sensor-status warning';
+                container.classList.add('warning');
+                container.classList.remove('normal', 'error');
+            }
+        }
+        
+        // Update last updated time
+        if (state.lastUpdate) {
+            const date = new Date(state.lastUpdate * 1000);
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            lastUpdateElement.textContent = `Updated: ${hours}:${minutes}`;
+        } else {
+            lastUpdateElement.textContent = 'Never updated';
         }
     }
     
-    // Start the update cycle
-    statusElement.textContent = 'Connecting to sensors...';
-    
-    // Simulate initial delay for connecting to sensors
-    setTimeout(() => {
-        simulateSensorReadings();
-        // Set up regular updates
-        setInterval(simulateSensorReadings, state.updateInterval * 1000);
-    }, 2000);
-    
-    // Return the public API
-    return {
-        getState: () => ({ ...state }),
-        onThemeChange: (theme) => {
-            console.log('Sensors plugin: Theme changed to', theme);
-            // Handle theme change if needed
-        },
-        onOrientationChange: (orientation) => {
-            console.log('Sensors plugin: Orientation changed to', orientation);
-            // Handle orientation change if needed
-        },
-        onSystemCheck: () => {
-            // Check if data is stale
-            if (state.lastUpdate && Date.now() - state.lastUpdate.getTime() > state.updateInterval * 2000) {
-                console.warn('Sensors plugin: Data is stale');
-                state.status = 'sensor connection lost';
-                statusElement.textContent = 'Sensor connection lost';
-                statusElement.classList.remove('status-normal', 'status-warning');
-                statusElement.classList.add('status-critical');
+    // Fetch sensor readings from backend API
+    async function fetchSensorData() {
+        try {
+            const response = await fetch('/api/plugins/sensors/readings');
+            const data = await response.json();
+            
+            // Check if there's an error from the API
+            if (data.error) {
+                state.error = data.error;
+                state.temperature = null;
+                state.humidity = null;
+            } else {
+                state.error = null;
+                state.temperature = data.temperature;
+                state.humidity = data.humidity;
             }
+            
+            state.lastUpdate = data.timestamp;
+            
+            // Update status and display
+            updateStatus();
+            displayReadings();
+        } catch (error) {
+            console.error('Error fetching sensor data:', error);
+            state.error = 'Failed to connect to sensor service';
+            state.status = 'error';
+            displayReadings();
+        }
+    }
+    
+    // Initial delay to allow the page to load fully
+    setTimeout(() => {
+        // Load initial data
+        fetchSensorData();
+        
+        // Set up regular updates
+        setInterval(fetchSensorData, state.updateInterval);
+    }, 500);
+    
+    // Return the public API of the plugin
+    return {
+        // Getter for current state
+        getState: () => ({ ...state }),
+        
+        // Handle theme changes
+        onThemeChange: (theme) => {
+            // Theme-specific adaptations can be added here
+            console.log(`Sensors plugin: Theme changed to ${theme}`);
+        },
+        
+        // Handle orientation changes
+        onOrientationChange: (orientation) => {
+            // Orientation-specific adaptations can be added here
+            console.log(`Sensors plugin: Orientation changed to ${orientation}`);
+        },
+        
+        // System check to verify if data is stale
+        checkSystem: () => {
+            // Check if data is too old (more than 10 minutes)
+            if (state.lastUpdate && (Date.now() / 1000 - state.lastUpdate > 600)) {
+                return {
+                    status: 'warning',
+                    message: 'Sensor data is stale'
+                };
+            }
+            
+            return {
+                status: state.status,
+                message: state.error || 'Sensors operating normally'
+            };
         }
     };
 } 

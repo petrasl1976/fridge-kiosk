@@ -8,32 +8,35 @@ import os
 import time
 import json
 import logging
+import random
 from pathlib import Path
 
-# Set up logging
-logger = logging.getLogger('fridge-kiosk.plugins.sensors')
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("sensors-plugin")
 
-# Try to import hardware-specific libraries
-DHT_AVAILABLE = False
+# Check if we can import the DHT sensor library
 try:
-    import adafruit_dht
-    import board
+    import Adafruit_DHT
     DHT_AVAILABLE = True
-    logger.info("DHT sensor library available - hardware mode enabled")
+    logger.info("DHT sensor library available, using hardware sensor")
 except ImportError:
-    logger.info("DHT sensor library not available - running in simulation mode")
+    DHT_AVAILABLE = False
+    logger.warning("DHT sensor library not available")
 
 # Settings
-DHT_PIN = board.D4 if DHT_AVAILABLE else None  # Default GPIO pin for DHT sensor
-CACHE_FILE = Path(__file__).parent / "sensor_cache.json"
-CACHE_EXPIRY = 60  # seconds
+SENSOR_TYPE = 22  # DHT22 sensor
+GPIO_PIN = 4     # GPIO pin where the sensor is connected
+PLUGIN_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = PLUGIN_DIR / 'data'
+CACHE_FILE = DATA_DIR / 'sensor_cache.json'
 
 # Initialize sensor if available
-dht_sensor = None
+sensor = None
 if DHT_AVAILABLE:
     try:
-        dht_sensor = adafruit_dht.DHT22(DHT_PIN)
-        logger.info("DHT sensor initialized successfully")
+        sensor = Adafruit_DHT.DHT22(GPIO_PIN)
+        logger.info(f"DHT22 sensor initialized on GPIO pin {GPIO_PIN}")
     except Exception as e:
         logger.error(f"Failed to initialize DHT sensor: {e}")
         DHT_AVAILABLE = False
@@ -42,97 +45,69 @@ def init(config):
     """Initialize the sensors plugin"""
     logger.info("Initializing sensors plugin")
     
-    # Configure from config if available
-    update_interval = config.get('config', {}).get('updateInterval', 30)
+    # Ensure data directory exists
+    os.makedirs(DATA_DIR, exist_ok=True)
+    
+    # Get configuration
+    update_interval = config.get('config', {}).get('updateInterval', 60) # seconds
     
     # Get initial readings
     readings = get_sensor_readings()
     
-    # Plugin data to return
     return {
-        "hardware_available": DHT_AVAILABLE,
         "readings": readings,
-        "update_interval": update_interval
+        "lastUpdate": time.time(),
+        "updateInterval": update_interval
     }
 
 def get_sensor_readings():
-    """Get sensor readings from hardware or cache"""
-    # Check if we have recent cached data
-    if CACHE_FILE.exists():
+    """Get current sensor readings from hardware or return error"""
+    # First, try to read from the hardware sensor if available
+    if DHT_AVAILABLE:
         try:
-            with open(CACHE_FILE, 'r') as f:
-                cache = json.load(f)
+            humidity, temperature = Adafruit_DHT.read_retry(SENSOR_TYPE, GPIO_PIN)
+            
+            # Check if the readings are valid
+            if humidity is not None and temperature is not None:
+                # Convert to standard format
+                readings = {
+                    "temperature": round(temperature, 1),
+                    "humidity": round(humidity, 1),
+                    "timestamp": time.time()
+                }
                 
-            # If cache is fresh, return it
-            if time.time() - cache.get('timestamp', 0) < CACHE_EXPIRY:
-                logger.debug("Using cached sensor data")
+                # Cache the readings
+                with open(CACHE_FILE, 'w') as f:
+                    json.dump(readings, f)
+                
+                return readings
+            else:
                 return {
-                    'temperature': cache.get('temperature'),
-                    'humidity': cache.get('humidity'),
-                    'timestamp': cache.get('timestamp'),
-                    'source': 'cache'
+                    "error": "Unable to read valid data from sensor",
+                    "timestamp": time.time()
                 }
         except Exception as e:
-            logger.error(f"Error reading cache: {e}")
-    
-    # Read from hardware if available
-    if DHT_AVAILABLE and dht_sensor:
-        try:
-            # Try to read from sensor (may fail occasionally)
-            temperature = dht_sensor.temperature
-            humidity = dht_sensor.humidity
-            
-            # Sometimes the sensor returns None or implausible values
-            if temperature is not None and humidity is not None:
-                if -20 <= temperature <= 50 and 0 <= humidity <= 100:
-                    readings = {
-                        'temperature': temperature,
-                        'humidity': humidity,
-                        'timestamp': time.time(),
-                        'source': 'hardware'
-                    }
-                    
-                    # Cache the readings
-                    try:
-                        with open(CACHE_FILE, 'w') as f:
-                            json.dump(readings, f)
-                    except Exception as e:
-                        logger.error(f"Error writing to cache: {e}")
-                    
-                    return readings
-            
-            logger.warning("Sensor returned invalid readings, using simulation")
-        except Exception as e:
             logger.error(f"Error reading from sensor: {e}")
+            return {
+                "error": f"Sensor reading failed: {str(e)}",
+                "timestamp": time.time()
+            }
     
-    # Fallback to simulation
-    import random
-    readings = {
-        'temperature': round(random.uniform(2, 8), 1),  # Simulated refrigerator temperature
-        'humidity': round(random.uniform(30, 60), 1),
-        'timestamp': time.time(),
-        'source': 'simulation'
+    # If hardware reading failed or not available, return error
+    return {
+        "error": "No temperature sensor available",
+        "timestamp": time.time()
     }
-    
-    # Cache the simulated readings
-    try:
-        with open(CACHE_FILE, 'w') as f:
-            json.dump(readings, f)
-    except Exception as e:
-        logger.error(f"Error writing to cache: {e}")
-    
-    return readings
 
-# API Functions that can be called from the web server
 def api_get_readings():
-    """API endpoint to get current readings"""
+    """API endpoint to get current sensor readings"""
     return get_sensor_readings()
 
 def api_get_status():
     """API endpoint to get plugin status"""
     return {
-        'hardware_available': DHT_AVAILABLE,
-        'sensor_type': 'DHT22' if DHT_AVAILABLE else 'Simulation',
-        'cache_file': str(CACHE_FILE),
-        'cache_exists': CACHE_FILE.exists()
+        "status": "active" if DHT_AVAILABLE else "error",
+        "sensor_available": DHT_AVAILABLE,
+        "last_update": time.time(),
+        "error": None if DHT_AVAILABLE else "Sensor hardware not available"
     } 

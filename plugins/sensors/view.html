@@ -1,16 +1,17 @@
-<div class="sensor-container">
-    <h2>Temperature & Humidity</h2>
+<div id="sensors-container" class="sensor-container">
+    <h2 class="sensor-header">Environment Monitoring</h2>
     <div class="sensor-readings">
-        <div class="sensor-item">
+        <div class="sensor-item temperature">
             <div class="sensor-icon">🌡️</div>
-            <div class="sensor-value temperature">-- °C</div>
-            <div class="sensor-label">Temperature</div>
+            <div id="temperature-value" class="sensor-value">—</div>
+            <div class="sensor-label">°C</div>
         </div>
-        <div class="sensor-item">
+        <div class="sensor-item humidity">
             <div class="sensor-icon">💧</div>
-            <div class="sensor-value humidity">-- %</div>
-            <div class="sensor-label">Humidity</div>
+            <div id="humidity-value" class="sensor-value">—</div>
+            <div class="sensor-label">%</div>
         </div>
     </div>
-    <div class="sensor-status">Status: <span class="status-value">Initializing...</span></div>
+    <div id="sensor-status" class="sensor-status">Connecting to sensors...</div>
+    <div id="sensor-last-update" class="sensor-last-update">Waiting for readings...</div>
 </div> 
