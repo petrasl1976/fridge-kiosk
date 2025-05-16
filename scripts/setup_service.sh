@@ -53,9 +53,14 @@ INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 print_header "SETTING UP SYSTEM SERVICES"
 print_status "Installation directory: $INSTALL_DIR"
 
+# Define service names
+BACKEND_SERVICE="fridge-kiosk-backend.service"
+DISPLAY_SERVICE="fridge-kiosk-display.service"
+MAIN_SERVICE="fridge-kiosk.service"
+
 # Create the backend service file
-print_step "Creating backend service..."
-cat > /etc/systemd/system/fridge-kiosk-backend.service << EOF
+print_step "Creating backend service ($BACKEND_SERVICE)..."
+cat > /etc/systemd/system/$BACKEND_SERVICE << EOF
 [Unit]
 Description=Fridge Kiosk Backend Service
 After=network.target
@@ -77,16 +82,17 @@ ProtectSystem=true
 [Install]
 WantedBy=multi-user.target
 EOF
+echo -e "  ${CYAN}•${NC} Created service file: /etc/systemd/system/$BACKEND_SERVICE"
 print_status "Backend service file created"
 
 # Create the kiosk service file
-print_step "Creating kiosk display service..."
-cat > /etc/systemd/system/fridge-kiosk-display.service << EOF
+print_step "Creating kiosk display service ($DISPLAY_SERVICE)..."
+cat > /etc/systemd/system/$DISPLAY_SERVICE << EOF
 [Unit]
 Description=Fridge Kiosk Display Service
-After=network.target fridge-kiosk-backend.service
-Requires=fridge-kiosk-backend.service
-BindsTo=fridge-kiosk-backend.service
+After=network.target $BACKEND_SERVICE
+Requires=$BACKEND_SERVICE
+BindsTo=$BACKEND_SERVICE
 
 [Service]
 User=$SUDO_USER
@@ -112,15 +118,16 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF
+echo -e "  ${CYAN}•${NC} Created service file: /etc/systemd/system/$DISPLAY_SERVICE"
 print_status "Display service file created"
 
 # Create a startup service to tie everything together
-print_step "Creating main kiosk service..."
-cat > /etc/systemd/system/fridge-kiosk.service << EOF
+print_step "Creating main kiosk service ($MAIN_SERVICE)..."
+cat > /etc/systemd/system/$MAIN_SERVICE << EOF
 [Unit]
 Description=Fridge Kiosk System
-Requires=fridge-kiosk-backend.service fridge-kiosk-display.service
-After=fridge-kiosk-backend.service fridge-kiosk-display.service
+Requires=$BACKEND_SERVICE $DISPLAY_SERVICE
+After=$BACKEND_SERVICE $DISPLAY_SERVICE
 After=network.target
 
 [Service]
@@ -131,6 +138,7 @@ RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target
 EOF
+echo -e "  ${CYAN}•${NC} Created service file: /etc/systemd/system/$MAIN_SERVICE"
 print_status "Main service file created"
 
 # Reload systemd daemon
@@ -140,29 +148,34 @@ print_status "Systemd daemon reloaded"
 
 # Enable the services to start at boot
 print_step "Enabling services to start at boot..."
-systemctl enable fridge-kiosk-backend.service
-systemctl enable fridge-kiosk-display.service
-systemctl enable fridge-kiosk.service
+systemctl enable $BACKEND_SERVICE
+echo -e "  ${CYAN}•${NC} Enabled service: $BACKEND_SERVICE"
+systemctl enable $DISPLAY_SERVICE
+echo -e "  ${CYAN}•${NC} Enabled service: $DISPLAY_SERVICE"
+systemctl enable $MAIN_SERVICE
+echo -e "  ${CYAN}•${NC} Enabled service: $MAIN_SERVICE"
 print_success "Services enabled to start at boot"
 
 # Start the backend service
-print_step "Starting backend service..."
-systemctl start fridge-kiosk-backend.service
+print_step "Starting backend service ($BACKEND_SERVICE)..."
+systemctl start $BACKEND_SERVICE
 
 # Check service status
 print_status "Backend service status:"
-systemctl status fridge-kiosk-backend.service --no-pager
+systemctl status $BACKEND_SERVICE --no-pager
 
 print_header "SERVICE SETUP COMPLETE"
 print_success "Services set up successfully!"
 echo
-print_status "The Fridge Kiosk backend service will start automatically on boot."
-print_status "The display service will start after the backend is ready."
+print_status "The following services have been created and enabled:"
+echo -e "  ${CYAN}•${NC} $BACKEND_SERVICE - Runs the Python backend API"
+echo -e "  ${CYAN}•${NC} $DISPLAY_SERVICE - Manages the kiosk display using Wayland/Cage"
+echo -e "  ${CYAN}•${NC} $MAIN_SERVICE - Main service that coordinates the other services"
 echo
 print_status "You can control the services with these commands:"
-echo -e "  ${CYAN}•${NC} sudo systemctl start/stop/restart fridge-kiosk"
-echo -e "  ${CYAN}•${NC} sudo systemctl status fridge-kiosk"
-echo -e "  ${CYAN}•${NC} sudo journalctl -fu fridge-kiosk-backend.service"
+echo -e "  ${CYAN}•${NC} sudo systemctl start/stop/restart $MAIN_SERVICE"
+echo -e "  ${CYAN}•${NC} sudo systemctl status $MAIN_SERVICE"
+echo -e "  ${CYAN}•${NC} sudo journalctl -fu $BACKEND_SERVICE"
 echo
 
 exit 0 
