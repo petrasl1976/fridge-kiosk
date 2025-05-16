@@ -72,6 +72,11 @@ print_step "Setting directory and file permissions..."
 chown -R $SUDO_USER:$SUDO_USER "$INSTALL_DIR"
 echo -e "  ${CYAN}•${NC} Set ownership of all files to: $SUDO_USER"
 
+# Update shebang in run.py with the actual venv path
+print_step "Updating shebang in run.py..."
+sed -i "1c #!$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/run.py"
+echo -e "  ${CYAN}•${NC} Updated run.py shebang to use virtual environment"
+
 # Ensure logs directory and files are writable
 chmod -R 755 "$INSTALL_DIR/logs"
 chmod 666 "$INSTALL_DIR/logs/backend.log"
@@ -180,7 +185,7 @@ cat > "$USER_HOME/start-kiosk.sh" << EOF
 #!/bin/bash
 
 # Set environment variables
-export XDG_RUNTIME_DIR=/run/user/1000
+export XDG_RUNTIME_DIR=/tmp/xdg-runtime-dir
 export WLR_BACKENDS=drm
 export WLR_DRM_NO_ATOMIC=1
 export WLR_DRM_DEVICES=/dev/dri/card0
@@ -190,31 +195,9 @@ export WAYLAND_DISPLAY=wayland-0
 export DISPLAY=:0
 export DBUS_SESSION_BUS_ADDRESS="unix:path=\$XDG_RUNTIME_DIR/bus"
 
-# Check if the system has a GPU
-HAS_GPU=false
-if [ -e "/dev/dri/card0" ]; then
-    HAS_GPU=true
-fi
-
-# Check if required files exist
-if [ ! -f "$INSTALL_DIR/run.py" ]; then
-    echo "Error: run.py file not found"
-    exit 1
-fi
-
-# Create and set up runtime directory with sudo
-sudo mkdir -p \$XDG_RUNTIME_DIR
-sudo chown $SUDO_USER:$SUDO_USER \$XDG_RUNTIME_DIR
-sudo chmod 700 \$XDG_RUNTIME_DIR
-
-# Set DRI permissions
-if [ -e "/dev/dri/renderD128" ]; then
-    sudo chmod 666 /dev/dri/renderD128
-fi
-if [ -e "/dev/dri/card0" ]; then
-    sudo chmod 666 /dev/dri/card0
-fi
-sudo usermod -aG render,video $SUDO_USER
+# Create runtime directory
+mkdir -p \$XDG_RUNTIME_DIR
+chmod 700 \$XDG_RUNTIME_DIR
 
 # Start dbus session
 if [ ! -e "\$XDG_RUNTIME_DIR/bus" ]; then
@@ -222,61 +205,47 @@ if [ ! -e "\$XDG_RUNTIME_DIR/bus" ]; then
     sleep 1
 fi
 
-# Start the application in background
-cd $INSTALL_DIR
-$INSTALL_DIR/venv/bin/python3 run.py &
-APP_PID=\$!
+# Start cage and chromium
+cage -d -- chromium-browser \\
+    --kiosk \\
+    --disable-gpu \\
+    --disable-software-rasterizer \\
+    --disable-dev-shm-usage \\
+    --no-sandbox \\
+    --disable-dbus \\
+    --incognito \\
+    --disable-extensions \\
+    --disable-plugins \\
+    --disable-popup-blocking \\
+    --disable-notifications \\
+    http://localhost:8080 &
 
-# Wait for application to start
-sleep 3
+# Wait for cage to start
+sleep 5
 
-# Get display orientation from config file
-ORIENTATION=\$(${INSTALL_DIR}/venv/bin/python3 -c "import json; print(json.load(open('$INSTALL_DIR/config/main.json')).get('system', {}).get('orientation', 'landscape'))")
-
-# Start browser - decide which approach to use based on GPU availability
-if [ "\$HAS_GPU" = true ]; then
-    # Use cage and chromium if we have a GPU
-    echo "Starting kiosk with Wayland/Cage (GPU detected)"
-    cage -m last -- chromium-browser \\
-        --kiosk \\
-        --disable-gpu \\
-        --disable-software-rasterizer \\
-        --disable-dev-shm-usage \\
-        --no-sandbox \\
-        --disable-dbus \\
-        --incognito \\
-        --disable-extensions \\
-        --disable-plugins \\
-        --disable-popup-blocking \\
-        --disable-notifications \\
-        http://localhost:8080 &
-    
-    # Wait for cage to start
-    sleep 3
-    
-    # Rotate screen if needed
+# Check which monitors are connected and rotate the screen if in portrait mode
+OUTPUT=\$(wlr-randr | grep -o -m 1 "^HDMI-[A-Za-z0-9\-]*")
+if [ -n "\$OUTPUT" ]; then
+    echo "Found monitor: \$OUTPUT"
+    # Get display orientation from config file
+    ORIENTATION=\$(cat "$INSTALL_DIR/config/main.json" | grep -o '"orientation":[^,]*' | cut -d '"' -f 4)
     if [ "\$ORIENTATION" = "portrait" ]; then
-        WAYLAND_DISPLAY=\$WAYLAND_DISPLAY XDG_RUNTIME_DIR=\$XDG_RUNTIME_DIR wlr-randr --output HDMI-A-1 --transform 270
+        for i in {1..3}; do
+            if wlr-randr --output "\$OUTPUT" --transform 270; then
+                echo "Screen rotated to portrait mode"
+                break
+            fi
+            sleep 2
+        done
+    else
+        echo "Using landscape orientation"
     fi
 else
-    # Fallback to plain chromium in kiosk mode (with virtual framebuffer)
-    echo "Starting kiosk with Xvfb (No GPU detected)"
-    
-    # Use chromium in kiosk mode
-    chromium-browser \\
-        --no-sandbox \\
-        --kiosk \\
-        --incognito \\
-        --disable-extensions \\
-        --disable-notifications \\
-        http://localhost:8080 &
-    
-    # Save browser PID
-    BROWSER_PID=\$!
+    echo "Monitor not found"
 fi
 
 # Wait for main process
-wait \$APP_PID
+wait
 EOF
 
 # Set permissions for the kiosk script

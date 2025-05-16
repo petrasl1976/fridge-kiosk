@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/home/kiosk/fridge-kiosk/venv/bin/python3
 """
 Fridge Kiosk - Main Application
 Launches a simple HTTP server and manages plugins
