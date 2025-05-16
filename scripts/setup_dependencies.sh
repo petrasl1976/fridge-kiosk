@@ -162,7 +162,7 @@ AVAILABLE_PLUGINS=$(find "$INSTALL_DIR/plugins" -maxdepth 1 -type d -not -path "
 if [ -f "$CONFIG_FILE" ]; then
     # Read enabled plugins from config file
     print_step "Reading enabled plugins from config file..."
-    ENABLED_PLUGINS=$(jq -r '.enabledPlugins[]' "$CONFIG_FILE" 2>/dev/null)
+    ENABLED_PLUGINS=$(jq -r '.enabled_plugins[]' "$CONFIG_FILE" 2>/dev/null)
     
     # If jq fails or config doesn't exist, don't install any plugins
     if [ $? -ne 0 ] || [ -z "$ENABLED_PLUGINS" ]; then
