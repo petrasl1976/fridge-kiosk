@@ -109,18 +109,35 @@ print_step "Setting up DRI device permissions..."
 if [ -e "/dev/dri/card0" ]; then
     chmod 666 /dev/dri/card0
     echo -e "  ${CYAN}•${NC} Set permissions for /dev/dri/card0"
+    # Add current user to the video group
+    if ! groups $SUDO_USER | grep -q "video"; then
+        usermod -aG video $SUDO_USER
+        echo -e "  ${CYAN}•${NC} Added $SUDO_USER to video group"
+    fi
+else
+    print_warning "DRI device /dev/dri/card0 not found. This will cause graphics issues."
+    echo -e "  ${CYAN}•${NC} Make sure the GPU driver is properly installed"
 fi
 
 if [ -e "/dev/dri/renderD128" ]; then
     chmod 666 /dev/dri/renderD128
     echo -e "  ${CYAN}•${NC} Set permissions for /dev/dri/renderD128"
+    # Add current user to the render group
+    if ! groups $SUDO_USER | grep -q "render"; then
+        usermod -aG render $SUDO_USER
+        echo -e "  ${CYAN}•${NC} Added $SUDO_USER to render group"
+    fi
+else
+    print_warning "DRI device /dev/dri/renderD128 not found. This will cause graphics issues."
+    echo -e "  ${CYAN}•${NC} Make sure the GPU driver is properly installed"
 fi
 
 # Make sure udev rules are correct for these devices
 cat > /etc/udev/rules.d/99-drm-permissions.rules << EOF
 SUBSYSTEM=="drm", ACTION=="add", MODE="0666", GROUP="video"
 SUBSYSTEM=="graphics", ACTION=="add", MODE="0666", GROUP="video"
-KERNEL=="renderD*", SUBSYSTEM=="drm", MODE="0666", GROUP="video"
+KERNEL=="card[0-9]*", SUBSYSTEM=="drm", MODE="0666", GROUP="video"
+KERNEL=="renderD[0-9]*", SUBSYSTEM=="drm", MODE="0666", GROUP="video"
 EOF
 echo -e "  ${CYAN}•${NC} Created udev rules for DRM devices"
 
@@ -128,6 +145,31 @@ echo -e "  ${CYAN}•${NC} Created udev rules for DRM devices"
 udevadm control --reload-rules
 udevadm trigger
 echo -e "  ${CYAN}•${NC} Reloaded udev rules"
+
+# Create a dummy virtual X frame buffer for systems without a GPU
+if [ ! -e "/dev/dri/card0" ]; then
+    print_step "Setting up Xvfb as fallback display..."
+    apt-get install -y xvfb
+    
+    # Create a systemd service for Xvfb
+    cat > /etc/systemd/system/xvfb.service << EOF
+[Unit]
+Description=X Virtual Frame Buffer Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/Xvfb :0 -screen 0 1920x1080x24
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    
+    systemctl daemon-reload
+    systemctl enable xvfb.service
+    systemctl start xvfb.service
+    echo -e "  ${CYAN}•${NC} Xvfb virtual display configured as fallback"
+fi
 
 print_success "DRI device access configured"
 
@@ -148,6 +190,12 @@ export WAYLAND_DISPLAY=wayland-0
 export DISPLAY=:0
 export DBUS_SESSION_BUS_ADDRESS="unix:path=\$XDG_RUNTIME_DIR/bus"
 
+# Check if the system has a GPU
+HAS_GPU=false
+if [ -e "/dev/dri/card0" ]; then
+    HAS_GPU=true
+fi
+
 # Check if required files exist
 if [ ! -f "$INSTALL_DIR/run.py" ]; then
     echo "Error: run.py file not found"
@@ -160,7 +208,12 @@ sudo chown $SUDO_USER:$SUDO_USER \$XDG_RUNTIME_DIR
 sudo chmod 700 \$XDG_RUNTIME_DIR
 
 # Set DRI permissions
-sudo chmod 666 /dev/dri/renderD128
+if [ -e "/dev/dri/renderD128" ]; then
+    sudo chmod 666 /dev/dri/renderD128
+fi
+if [ -e "/dev/dri/card0" ]; then
+    sudo chmod 666 /dev/dri/card0
+fi
 sudo usermod -aG render,video $SUDO_USER
 
 # Start dbus session
@@ -171,39 +224,59 @@ fi
 
 # Start the application in background
 cd $INSTALL_DIR
-python3 run.py &
+$INSTALL_DIR/venv/bin/python3 run.py &
+APP_PID=\$!
 
 # Wait for application to start
 sleep 3
 
-# Start cage and chromium
-cage -m last -- chromium-browser \\
-    --kiosk \\
-    --disable-gpu \\
-    --disable-software-rasterizer \\
-    --disable-dev-shm-usage \\
-    --no-sandbox \\
-    --disable-dbus \\
-    --incognito \\
-    --disable-extensions \\
-    --disable-plugins \\
-    --disable-popup-blocking \\
-    --disable-notifications \\
-    http://localhost:8080 &
-
-# Wait for cage to start
-sleep 3
-
 # Get display orientation from config file
-ORIENTATION=\$(python3 -c "import json; print(json.load(open('$INSTALL_DIR/config/main.json')).get('system', {}).get('orientation', 'landscape'))")
+ORIENTATION=\$(${INSTALL_DIR}/venv/bin/python3 -c "import json; print(json.load(open('$INSTALL_DIR/config/main.json')).get('system', {}).get('orientation', 'landscape'))")
 
-# Rotate screen if needed
-if [ "\$ORIENTATION" = "portrait" ]; then
-    WAYLAND_DISPLAY=\$WAYLAND_DISPLAY XDG_RUNTIME_DIR=\$XDG_RUNTIME_DIR wlr-randr --output HDMI-A-1 --transform 270
+# Start browser - decide which approach to use based on GPU availability
+if [ "\$HAS_GPU" = true ]; then
+    # Use cage and chromium if we have a GPU
+    echo "Starting kiosk with Wayland/Cage (GPU detected)"
+    cage -m last -- chromium-browser \\
+        --kiosk \\
+        --disable-gpu \\
+        --disable-software-rasterizer \\
+        --disable-dev-shm-usage \\
+        --no-sandbox \\
+        --disable-dbus \\
+        --incognito \\
+        --disable-extensions \\
+        --disable-plugins \\
+        --disable-popup-blocking \\
+        --disable-notifications \\
+        http://localhost:8080 &
+    
+    # Wait for cage to start
+    sleep 3
+    
+    # Rotate screen if needed
+    if [ "\$ORIENTATION" = "portrait" ]; then
+        WAYLAND_DISPLAY=\$WAYLAND_DISPLAY XDG_RUNTIME_DIR=\$XDG_RUNTIME_DIR wlr-randr --output HDMI-A-1 --transform 270
+    fi
+else
+    # Fallback to plain chromium in kiosk mode (with virtual framebuffer)
+    echo "Starting kiosk with Xvfb (No GPU detected)"
+    
+    # Use chromium in kiosk mode
+    chromium-browser \\
+        --no-sandbox \\
+        --kiosk \\
+        --incognito \\
+        --disable-extensions \\
+        --disable-notifications \\
+        http://localhost:8080 &
+    
+    # Save browser PID
+    BROWSER_PID=\$!
 fi
 
 # Wait for main process
-wait
+wait \$APP_PID
 EOF
 
 # Set permissions for the kiosk script
