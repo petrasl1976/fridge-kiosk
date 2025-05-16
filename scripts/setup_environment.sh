@@ -56,9 +56,15 @@ print_status "Installation directory: $INSTALL_DIR"
 # Create necessary directories
 print_step "Creating required directories..."
 mkdir -p "$INSTALL_DIR/logs"
+mkdir -p "$INSTALL_DIR/config"
+touch "$INSTALL_DIR/logs/kiosk.log"
 echo -e "  ${CYAN}•${NC} Created directory: $INSTALL_DIR/logs"
-mkdir -p "$INSTALL_DIR/data"
-echo -e "  ${CYAN}•${NC} Created directory: $INSTALL_DIR/data"
+
+# Set ownership
+if [ -n "$SUDO_USER" ]; then
+    chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR/logs"
+    chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR/config"
+fi
 
 # Create log files
 print_step "Creating log files..."
@@ -299,36 +305,30 @@ print_step "Enabling the kiosk service..."
 systemctl enable fridge-kiosk.service
 print_success "Kiosk service enabled"
 
-print_header "SETTING UP PLUGIN DATA DIRECTORIES"
-# Load main config to determine which plugins are enabled
+# Read enabled plugins from config to display in summary
+print_header "CONFIGURATION SUMMARY"
 CONFIG_FILE="$INSTALL_DIR/config/main.json"
 if [ -f "$CONFIG_FILE" ]; then
     # Read enabled plugins from config file
     print_step "Reading enabled plugins from config file..."
-    ENABLED_PLUGINS=$(jq -r '.enabled_plugins[]' "$CONFIG_FILE" 2>/dev/null)
+    ENABLED_PLUGINS=$(jq -r '.enabled_plugins[]' "$CONFIG_FILE" 2>/dev/null | tr '\n' ' ')
     
-    # If jq fails or config doesn't exist, setup all plugins
     if [ $? -ne 0 ] || [ -z "$ENABLED_PLUGINS" ]; then
-        print_warning "Could not determine enabled plugins from config, setting up all plugins."
+        print_warning "No enabled plugins found in config."
         # Get all plugin directories
-        ENABLED_PLUGINS=$(find "$INSTALL_DIR/plugins" -maxdepth 1 -type d -not -path "$INSTALL_DIR/plugins" -exec basename {} \;)
+        AVAILABLE_PLUGINS=$(find "$INSTALL_DIR/plugins" -maxdepth 1 -type d -not -path "$INSTALL_DIR/plugins" -exec basename {} \; | tr '\n' ' ')
+        print_status "Available plugins that can be enabled in the config:"
+        echo -e "  ${CYAN}•${NC} $AVAILABLE_PLUGINS"
     else
-        print_status "Found enabled plugins: $ENABLED_PLUGINS"
+        print_status "Enabled plugins: $ENABLED_PLUGINS"
     fi
 else
-    print_warning "Config file not found, setting up all plugins."
+    print_warning "Config file not found."
     # Get all plugin directories
-    ENABLED_PLUGINS=$(find "$INSTALL_DIR/plugins" -maxdepth 1 -type d -not -path "$INSTALL_DIR/plugins" -exec basename {} \;)
+    AVAILABLE_PLUGINS=$(find "$INSTALL_DIR/plugins" -maxdepth 1 -type d -not -path "$INSTALL_DIR/plugins" -exec basename {} \; | tr '\n' ' ')
+    print_status "Available plugins that can be enabled once you create a config:"
+    echo -e "  ${CYAN}•${NC} $AVAILABLE_PLUGINS"
 fi
-
-# Create data directories for each enabled plugin
-print_step "Creating plugin data directories..."
-for plugin in $ENABLED_PLUGINS; do
-    PLUGIN_DATA_DIR="$INSTALL_DIR/data/$plugin"
-    mkdir -p "$PLUGIN_DATA_DIR"
-    chown -R $SUDO_USER:$SUDO_USER "$PLUGIN_DATA_DIR"
-    echo -e "  ${CYAN}•${NC} Created data directory: $PLUGIN_DATA_DIR"
-done
 
 # Set up log rotation for log files
 print_header "CONFIGURING LOG ROTATION"
@@ -347,11 +347,6 @@ print_success "Log rotation configured"
 
 print_header "ENVIRONMENT SETUP COMPLETE"
 print_success "System environment configured successfully!"
-echo
-print_status "The following plugins are enabled:"
-for plugin in $ENABLED_PLUGINS; do
-    echo -e "  ${CYAN}•${NC} $plugin"
-done
 echo
 print_status "To start the kiosk immediately, run:"
 echo -e "  ${CYAN}sudo systemctl start fridge-kiosk.service${NC}"
