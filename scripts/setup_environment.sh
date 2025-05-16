@@ -53,38 +53,39 @@ INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 print_header "SETTING UP SYSTEM ENVIRONMENT"
 print_status "Installation directory: $INSTALL_DIR"
 
-# Create necessary directories
-print_step "Creating required directories..."
+# Create necessary directories and files
+print_step "Creating required directories and files..."
 mkdir -p "$INSTALL_DIR/logs"
 mkdir -p "$INSTALL_DIR/config"
-touch "$INSTALL_DIR/logs/kiosk.log"
 echo -e "  ${CYAN}•${NC} Created directory: $INSTALL_DIR/logs"
+echo -e "  ${CYAN}•${NC} Created directory: $INSTALL_DIR/config"
 
-# Set ownership
+# Create log files
+touch "$INSTALL_DIR/logs/kiosk.log"
+touch "$INSTALL_DIR/logs/backend.log"
+touch "$INSTALL_DIR/logs/backend-error.log"
+echo -e "  ${CYAN}•${NC} Created log files in: $INSTALL_DIR/logs"
+
+# Set permissions
+print_step "Setting directory and file permissions..."
+
+# Set owner to the user running the script (non-sudo)
 if [ -n "$SUDO_USER" ]; then
     chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR/logs"
     chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR/config"
+    chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR"
+    echo -e "  ${CYAN}•${NC} Set ownership of all files to: $SUDO_USER"
 fi
 
-# Create log files
-print_step "Creating log files..."
-touch "$INSTALL_DIR/logs/backend.log"
-touch "$INSTALL_DIR/logs/backend-error.log"
 # Ensure logs directory and files are writable
 chmod -R 755 "$INSTALL_DIR/logs"
+chmod 666 "$INSTALL_DIR/logs/kiosk.log"
 chmod 666 "$INSTALL_DIR/logs/backend.log"
 chmod 666 "$INSTALL_DIR/logs/backend-error.log"
-echo -e "  ${CYAN}•${NC} Created log files in: $INSTALL_DIR/logs"
 echo -e "  ${CYAN}•${NC} Set write permissions for log files"
 
-# Set permissions - ensure kiosk user has full access to the application files
-print_step "Setting directory and file permissions..."
-# Set owner to the user running the script (non-sudo)
-chown -R $SUDO_USER:$SUDO_USER "$INSTALL_DIR"
-echo -e "  ${CYAN}•${NC} Set ownership of all files to: $SUDO_USER"
-
 # Update shebang in run.py with the actual venv path
-print_step "Updating shebang in run.py..."
+print_step "Setting up executable files..."
 sed -i "1c #!$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/run.py"
 echo -e "  ${CYAN}•${NC} Updated run.py shebang to use virtual environment"
 
