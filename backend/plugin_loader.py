@@ -140,12 +140,8 @@ def load_plugins(app) -> List[Plugin]:
     logger.info(f"Loading plugins from {plugins_dir}")
     
     # Get enabled plugins from config
-    enabled_plugins = {}
-    for plugin_info in main_config.get('plugins', []):
-        if plugin_info.get('enabled', False):
-            plugin_name = plugin_info.get('name')
-            if plugin_name:
-                enabled_plugins[plugin_name] = plugin_info.get('config', {})
+    enabled_plugins = main_config.get('enabled_plugins', [])
+    logger.info(f"Enabled plugins in config: {enabled_plugins}")
     
     # Check each directory in the plugins directory
     for item in os.listdir(plugins_dir):
@@ -162,6 +158,20 @@ def load_plugins(app) -> List[Plugin]:
         
         logger.info(f"Loading plugin: {item}")
         
+        # Load the plugin configuration
+        config_path = os.path.join(plugin_dir, 'config.json')
+        plugin_config = {}
+        
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r') as f:
+                    plugin_config = json.load(f)
+                logger.debug(f"Loaded configuration for plugin {item}")
+            except Exception as e:
+                logger.error(f"Error loading configuration for plugin {item}: {e}")
+        else:
+            logger.warning(f"No configuration file found for plugin {item}")
+        
         # Load the plugin module
         module = load_plugin_module(item, plugin_dir)
         if not module:
@@ -173,7 +183,7 @@ def load_plugins(app) -> List[Plugin]:
             name=item,
             module=module,
             enabled=True,
-            config=enabled_plugins.get(item, {})
+            config=plugin_config
         )
         
         # Set up the plugin

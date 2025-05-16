@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ config.system.name|default('Fridge Kiosk') }}</title>
+
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    
+    <!-- Plugin CSS -->
+    {% for plugin in plugins %}
+    {% if plugin.name %}
+    <link rel="stylesheet" href="/plugins/{{ plugin.name }}/static/style.css">
+    {% endif %}
+    {% endfor %}
+    
+    <style>
+        /* Inline styles for system-wide configuration */
+        :root {
+            --font-family: "{{ config.system.fontFamily|default('Roboto, sans-serif') }}";
+        }
+        html, body {
+            font-family: var(--font-family);
+        }
+    </style>
+</head>
+<body class="theme-{{ config.system.theme|default('dark') }} orientation-{{ config.system.orientation|default('landscape') }}">
+    <div id="kiosk-container">
+        <!-- Plugin containers -->
+        {% for plugin in plugins %}
+        <div id="plugin-{{ plugin.name }}" class="plugin-container" style="
+            position: absolute;
+            {% if plugin.position.top %}top: {{ plugin.position.top }};{% endif %}
+            {% if plugin.position.left %}left: {{ plugin.position.left }};{% endif %}
+            {% if plugin.position.right %}right: {{ plugin.position.right }};{% endif %}
+            {% if plugin.position.bottom %}bottom: {{ plugin.position.bottom }};{% endif %}
+            {% if plugin.position.width %}width: {{ plugin.position.width }};{% endif %}
+            {% if plugin.position.height %}height: {{ plugin.position.height }};{% endif %}
+            z-index: {{ plugin.position.z_index|default(1) }};
+        ">
+            {% if plugin.view_content %}
+            {{ plugin.view_content|safe }}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Plugin data for JavaScript -->
+    <script>
+        window.KIOSK_CONFIG = {{ config|tojson|safe }};
+        window.PLUGINS_DATA = {{ plugins_data|tojson|safe }};
+    </script>
+
+    <!-- Main JavaScript -->
+    <script src="/js/main.js"></script>
+    
+    <!-- Plugin JavaScript -->
+    {% for plugin in plugins %}
+    {% if plugin.name %}
+    <script src="/plugins/{{ plugin.name }}/static/script.js"></script>
+    {% endif %}
+    {% endfor %}
+</body>
+</html> 

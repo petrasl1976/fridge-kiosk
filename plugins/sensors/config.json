@@ -1,18 +1,31 @@
 {
+    "name": "sensors",
+    "displayName": "Temperature & Humidity",
     "position": {
         "landscape": {
-            "top": "10px",
-            "right": "10px",
-            "width": "auto",
-            "height": "auto",
-            "z_index": 10
+            "top": "10%",
+            "left": "10%",
+            "width": "80%",
+            "height": "80%",
+            "z_index": 1
         },
         "portrait": {
-            "top": "70px",
-            "right": "10px",
-            "width": "auto",
-            "height": "auto",
-            "z_index": 10
+            "top": "10%",
+            "left": "10%",
+            "width": "80%", 
+            "height": "80%",
+            "z_index": 1
+        }
+    },
+    "updateInterval": 30,
+    "warningThresholds": {
+        "temperature": {
+            "min": 2,
+            "max": 8
+        },
+        "humidity": {
+            "min": 30,
+            "max": 60
         }
     },
     "thresholds": {
@@ -33,7 +46,6 @@
             "max_warning": 70
         }
     },
-    "refresh_interval": 60,
     "show_cpu_temp": true,
     "show_room_temp": true,
     "show_humidity": true

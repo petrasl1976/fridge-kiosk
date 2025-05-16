@@ -42,51 +42,8 @@ def setup(app):
         with open(config_path, 'r') as f:
             config = json.load(f)
     else:
-        # Default configuration
-        config = {
-            "position": {
-                "landscape": {
-                    "top": "60px",
-                    "right": "10px",
-                    "width": "auto",
-                    "height": "auto",
-                    "z_index": 10
-                },
-                "portrait": {
-                    "top": "60px",
-                    "right": "10px",
-                    "width": "auto",
-                    "height": "auto",
-                    "z_index": 10
-                }
-            },
-            "thresholds": {
-                "cpu_temp": {
-                    "warning": 60,
-                    "critical": 70
-                },
-                "temperature": {
-                    "min_normal": 18,
-                    "max_normal": 25,
-                    "min_warning": 15,
-                    "max_warning": 28
-                },
-                "humidity": {
-                    "min_normal": 40,
-                    "max_normal": 60,
-                    "min_warning": 30,
-                    "max_warning": 70
-                }
-            },
-            "refresh_interval": 60,
-            "show_cpu_temp": True,
-            "show_room_temp": True,
-            "show_humidity": True
-        }
-        
-        # Save default configuration
-        with open(config_path, 'w') as f:
-            json.dump(config, f, indent=4)
+        logger.warning(f"No configuration file found for plugin {PLUGIN_NAME}")
+        config = {}
     
     # Register the plugin blueprint
     blueprint = Blueprint(PLUGIN_NAME, __name__)
@@ -103,7 +60,7 @@ def setup(app):
         
         # Check if we need to refresh the data
         current_time = time.time()
-        if current_time - last_update_time > config.get('refresh_interval', 60):
+        if current_time - last_update_time > config.get('updateInterval', 60):
             last_data = fetch_sensor_data()
             last_update_time = current_time
         

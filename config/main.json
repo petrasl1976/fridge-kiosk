@@ -1,17 +1,11 @@
 {
   "system": {
-    "display_orientation": "landscape",
-    "font_family": "Roboto, sans-serif",
+    "name": "Fridge Kiosk",
     "theme": "dark",
-    "debug": false,
-    "timezone": "Europe/Vilnius"
+    "orientation": "landscape",
+    "displayTimeout": 60,
+    "logLevel": "info",
+    "fontFamily": "Roboto, sans-serif"
   },
-  "enabled_plugins": [
-    "google-photos",
-    "google-calendar-weeks",
-    "google-calendar-days",
-    "discord-text-channel",
-    "date-time",
-    "sensors"
-  ]
+  "enabled_plugins": ["sensors", "date-time"]
 } 

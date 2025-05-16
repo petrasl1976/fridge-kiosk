@@ -1,32 +1,16 @@
-<div id="sensors-plugin" class="plugin-container">
-    <div class="sensors-widget">
-        <div id="sensors-data">
-            <!-- CPU Temperature -->
-            <div id="cpu-temp-container" class="sensor-item" style="display: block;">
-                <div class="sensor-label">CPU:</div>
-                <div class="sensor-value">
-                    <span id="cpu-temp-value" class="temp-normal">--</span>
-                    <span class="unit">°C</span>
-                </div>
-            </div>
-            
-            <!-- Room Temperature -->
-            <div id="room-temp-container" class="sensor-item" style="display: block;">
-                <div class="sensor-label">Temp:</div>
-                <div class="sensor-value">
-                    <span id="room-temp-value" class="temp-normal">--</span>
-                    <span class="unit">°C</span>
-                </div>
-            </div>
-            
-            <!-- Humidity -->
-            <div id="humidity-container" class="sensor-item" style="display: block;">
-                <div class="sensor-label">Humid:</div>
-                <div class="sensor-value">
-                    <span id="humidity-value" class="humid-normal">--</span>
-                    <span class="unit">%</span>
-                </div>
-            </div>
+<div class="sensor-container">
+    <h2>Temperature & Humidity</h2>
+    <div class="sensor-readings">
+        <div class="sensor-item">
+            <div class="sensor-icon">🌡️</div>
+            <div class="sensor-value temperature">-- °C</div>
+            <div class="sensor-label">Temperature</div>
+        </div>
+        <div class="sensor-item">
+            <div class="sensor-icon">💧</div>
+            <div class="sensor-value humidity">-- %</div>
+            <div class="sensor-label">Humidity</div>
         </div>
     </div>
+    <div class="sensor-status">Status: <span class="status-value">Initializing...</span></div>
 </div> 

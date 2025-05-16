@@ -63,37 +63,55 @@ get_plugin_routes(app, plugins)
 @app.route('/')
 def index():
     """Render the main index page with all enabled plugins."""
-    orientation = config.get('system', {}).get('display_orientation', 'landscape')
-    theme = config.get('system', {}).get('theme', 'dark')
-    font_family = config.get('system', {}).get('font_family', 'sans-serif')
+    system_config = config.get('system', {})
+    orientation = system_config.get('orientation', 'landscape')
+    theme = system_config.get('theme', 'dark')
+    font_family = system_config.get('fontFamily', 'sans-serif')
     
     # Get data from all plugins
     plugin_data = get_plugin_data(plugins)
     
-    # Get plugin config for frontend
+    # Get plugin list with their frontend configuration
+    frontend_plugins = []
+    
+    # Add plugin data for each loaded plugin
+    for plugin in plugins:
+        # Position settings based on current orientation
+        positions = plugin.config.get('position', {})
+        position = {}
+        
+        if orientation == 'portrait' and 'portrait' in positions:
+            position = positions.get('portrait', {})
+        elif orientation == 'landscape' and 'landscape' in positions:
+            position = positions.get('landscape', {})
+        elif not isinstance(positions, dict):
+            position = {}
+        else:
+            # Fallback to direct position if no orientation-specific settings
+            position = positions
+        
+        # Add plugin info
+        frontend_plugins.append({
+            'name': plugin.name,
+            'displayName': plugin.config.get('displayName', plugin.name.capitalize()),
+            'position': position,
+            'view_content': plugin_data.get(plugin.name, {}).get('view_content', '')
+        })
+    
+    # Combine all config data for frontend
     frontend_config = {
-        'system': config.get('system', {}),
-        'plugins': []
+        'system': system_config,
+        'plugins': {}
     }
     
-    # Add enabled plugins with their frontend configuration
-    for plugin_info in config.get('plugins', []):
-        if plugin_info.get('enabled', False):
-            plugin_name = plugin_info.get('name')
-            plugin_config = plugin_info.get('config', {})
-            
-            # Position based on orientation
-            position = plugin_config.get('position', {}).get(orientation, {})
-            
-            frontend_config['plugins'].append({
-                'name': plugin_name,
-                'config': plugin_config,
-                'position': position
-            })
+    # Add plugin configs to the frontend config
+    for plugin in plugins:
+        frontend_config['plugins'][plugin.name] = plugin.config
     
     return render_template('index.html', 
                           config=frontend_config,
-                          plugin_data=plugin_data,
+                          plugins=frontend_plugins,
+                          plugins_data=plugin_data,
                           orientation=orientation,
                           theme=theme,
                           font_family=font_family)

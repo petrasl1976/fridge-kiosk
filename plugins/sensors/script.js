@@ -3,26 +3,9 @@
  * Monitors temperature and humidity
  */
 
-// Initialize the sensors plugin when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Get plugin container
-    const container = document.getElementById('plugin-sensors');
-    if (!container) {
-        console.error('Sensors plugin: Container not found');
-        return;
-    }
-    
-    // Initialize
-    sensorsInit(container);
-});
-
 // Initialize the sensors plugin
-function sensorsInit(container) {
-    console.log('Initializing Sensors plugin');
-    
-    // Get config from global object
-    const config = window.KIOSK_CONFIG?.plugins?.sensors || {};
-    const pluginData = window.PLUGINS_DATA?.sensors || {};
+function sensorsInit(config, container) {
+    console.log('Initializing Sensors plugin with config:', config);
     
     // DOM elements
     const tempElement = container.querySelector('.temperature');
@@ -42,37 +25,25 @@ function sensorsInit(container) {
         status: 'initializing'
     };
     
-    // Display initial data if available from the backend
-    if (pluginData.readings) {
-        state.temperature = pluginData.readings.temperature;
-        state.humidity = pluginData.readings.humidity;
+    // For demo purposes - simulate sensor readings
+    function simulateSensorReadings() {
+        // Simulate temperature between 1 and 10°C with occasional outliers
+        state.temperature = Math.random() < 0.1 
+            ? Math.random() * 15 - 2  // Occasional outlier between -2 and 13
+            : Math.random() * 7 + 2;  // Usually between 2 and 9
+            
+        // Simulate humidity between 20 and 70% with occasional outliers
+        state.humidity = Math.random() < 0.1
+            ? Math.random() * 80 + 10  // Occasional outlier between 10 and 90
+            : Math.random() * 30 + 30; // Usually between 30 and 60
+            
         state.lastUpdate = new Date();
+        
+        // Update status based on readings
         updateStatus();
+        
+        // Format and display readings
         displayReadings();
-    }
-    
-    // Function to fetch sensor data from the API
-    function fetchSensorData() {
-        fetch('/api/plugins/sensors/data')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                state.temperature = data.temperature;
-                state.humidity = data.humidity;
-                state.lastUpdate = new Date();
-                updateStatus();
-                displayReadings();
-            })
-            .catch(error => {
-                console.error('Error fetching sensor data:', error);
-                state.status = 'connection error';
-                statusElement.textContent = 'Connection Error';
-                statusElement.className = 'status-critical';
-            });
     }
     
     // Update status based on current readings
@@ -154,11 +125,33 @@ function sensorsInit(container) {
     // Start the update cycle
     statusElement.textContent = 'Connecting to sensors...';
     
-    // Initial data fetch
-    fetchSensorData();
+    // Simulate initial delay for connecting to sensors
+    setTimeout(() => {
+        simulateSensorReadings();
+        // Set up regular updates
+        setInterval(simulateSensorReadings, state.updateInterval * 1000);
+    }, 2000);
     
-    // Set up regular updates
-    setInterval(fetchSensorData, state.updateInterval * 1000);
-    
-    console.log('Sensors plugin initialized with interval:', state.updateInterval);
+    // Return the public API
+    return {
+        getState: () => ({ ...state }),
+        onThemeChange: (theme) => {
+            console.log('Sensors plugin: Theme changed to', theme);
+            // Handle theme change if needed
+        },
+        onOrientationChange: (orientation) => {
+            console.log('Sensors plugin: Orientation changed to', orientation);
+            // Handle orientation change if needed
+        },
+        onSystemCheck: () => {
+            // Check if data is stale
+            if (state.lastUpdate && Date.now() - state.lastUpdate.getTime() > state.updateInterval * 2000) {
+                console.warn('Sensors plugin: Data is stale');
+                state.status = 'sensor connection lost';
+                statusElement.textContent = 'Sensor connection lost';
+                statusElement.classList.remove('status-normal', 'status-warning');
+                statusElement.classList.add('status-critical');
+            }
+        }
+    };
 } 

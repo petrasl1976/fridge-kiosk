@@ -1,0 +1,66 @@
+/* 
+ * Date-time Plugin Styles
+ */
+
+.datetime-container {
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    font-family: var(--font-family, 'Roboto, sans-serif');
+    color: white;
+    min-width: 200px;
+}
+
+/* Time display with large font */
+.datetime-container .time {
+    font-size: 5rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+    line-height: 1;
+    letter-spacing: 2px;
+}
+
+/* Date display with smaller font */
+.datetime-container .date {
+    font-size: 2rem;
+    opacity: 0.9;
+}
+
+/* Light Theme */
+body.theme-light .datetime-container {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #333;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Portrait Mode Adjustments */
+body.orientation-portrait .datetime-container {
+    padding: 15px;
+}
+
+body.orientation-portrait .datetime-container .time {
+    font-size: 4rem;
+}
+
+body.orientation-portrait .datetime-container .date {
+    font-size: 1.8rem;
+}
+
+/* Animation for time change */
+@keyframes time-update {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.datetime-container .time.updating {
+    animation: time-update 0.5s;
+} 

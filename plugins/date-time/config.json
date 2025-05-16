@@ -1,0 +1,27 @@
+{
+    "name": "date-time",
+    "displayName": "Date & Time",
+    "position": {
+        "landscape": {
+            "top": "20px",
+            "right": "20px",
+            "width": "auto",
+            "height": "auto",
+            "z_index": 5
+        },
+        "portrait": {
+            "top": "20px",
+            "right": "20px",
+            "width": "auto",
+            "height": "auto",
+            "z_index": 5
+        }
+    },
+    "updateInterval": 60,
+    "format": {
+        "time": "HH:MM",
+        "date": "YYYY.MM.DD",
+        "time_font_size": "5rem",
+        "date_font_size": "2rem"
+    }
+} 

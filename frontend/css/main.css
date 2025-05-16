@@ -1,0 +1,73 @@
+/* Reset and Base Styles */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-family, 'Roboto, sans-serif');
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* Themes */
+body.theme-dark {
+    background-color: #000;
+    color: #fff;
+}
+
+body.theme-light {
+    background-color: #fff;
+    color: #000;
+}
+
+/* Main container */
+#kiosk-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Plugin container */
+.plugin-container {
+    position: absolute;
+    overflow: hidden;
+}
+
+/* Orientation handling */
+body.orientation-landscape {
+    /* Landscape-specific styles if needed */
+}
+
+body.orientation-portrait {
+    /* Portrait-specific styles if needed */
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}
+
+/* Animation for fading in/out */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+.fade-out {
+    animation: fadeOut 0.5s ease-in-out forwards;
+} 
