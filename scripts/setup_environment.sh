@@ -31,11 +31,6 @@ print_step() {
     echo -e "${CYAN}[STEP]${NC} $1"
 }
 
-# Function to print success messages
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
 # Function to print warning messages
 print_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
@@ -84,7 +79,7 @@ chmod 666 "$INSTALL_DIR/logs/backend.log"
 chmod 666 "$INSTALL_DIR/logs/backend-error.log"
 echo -e "  ${CYAN}•${NC} Set write permissions for log files"
 
-# Update shebang in run.py with the actual venv path
+# Set up executable files
 print_step "Setting up executable files..."
 sed -i "1c #!$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/run.py"
 echo -e "  ${CYAN}•${NC} Updated run.py shebang to use virtual environment"
@@ -94,8 +89,6 @@ chmod +x "$INSTALL_DIR/run.py"
 find "$INSTALL_DIR/scripts" -name "*.sh" -exec chmod +x {} \;
 echo -e "  ${CYAN}•${NC} Set execute permissions for scripts"
 
-print_success "Directories created and permissions set"
-
 print_header "CONFIGURING KIOSK SERVICES"
 
 # Create groups for the kiosk user if they don't exist
@@ -104,7 +97,6 @@ groupadd -f seat
 echo -e "  ${CYAN}•${NC} Created/verified group: seat"
 groupadd -f render
 echo -e "  ${CYAN}•${NC} Created/verified group: render"
-print_success "Groups created"
 
 # Add user to required groups
 print_step "Adding user $SUDO_USER to required groups..."
@@ -177,8 +169,6 @@ EOF
     systemctl start xvfb.service
     echo -e "  ${CYAN}•${NC} Xvfb virtual display configured as fallback"
 fi
-
-print_success "DRI device access configured"
 
 # Create the kiosk start script
 USER_HOME="/home/$SUDO_USER"
@@ -254,16 +244,39 @@ EOF
 print_step "Setting permissions for startup script..."
 chown $SUDO_USER:$SUDO_USER "$USER_HOME/start-kiosk.sh"
 chmod +x "$USER_HOME/start-kiosk.sh"
-print_success "Kiosk startup script created"
 
 # Create systemd service files
 print_step "Creating systemd service files..."
 
-# Create the fridge-kiosk.service file
-cat > /etc/systemd/system/fridge-kiosk.service << EOF
+# Create the backend service file
+cat > /etc/systemd/system/fridge-kiosk-backend.service << EOF
 [Unit]
-Description=Fridge Kiosk Service
+Description=Fridge Kiosk Backend Service
 After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=$SUDO_USER
+WorkingDirectory=$INSTALL_DIR
+ExecStart=$INSTALL_DIR/venv/bin/python $INSTALL_DIR/run.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+echo -e "  ${CYAN}•${NC} Created backend service: fridge-kiosk-backend.service"
+
+# Create the display service file
+cat > /etc/systemd/system/fridge-kiosk-display.service << EOF
+[Unit]
+Description=Fridge Kiosk Display Service
+After=network.target fridge-kiosk-backend.service
+Requires=fridge-kiosk-backend.service
+StartLimitIntervalSec=0
 
 [Service]
 User=$SUDO_USER
@@ -284,22 +297,38 @@ ExecStartPre=/bin/chmod 700 /run/user/1000
 ExecStartPre=/bin/chown $SUDO_USER:$SUDO_USER /run/user/1000
 ExecStart=$USER_HOME/start-kiosk.sh
 Restart=always
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
 EOF
-
-print_success "Systemd service files created"
+echo -e "  ${CYAN}•${NC} Created display service: fridge-kiosk-display.service"
 
 # Reload systemd configuration
 print_step "Reloading systemd configuration..."
 systemctl daemon-reload
-print_success "Systemd configuration reloaded"
 
-# Enable the service
-print_step "Enabling the kiosk service..."
-systemctl enable fridge-kiosk.service
-print_success "Kiosk service enabled"
+# Enable the services
+print_step "Enabling services to start at boot..."
+systemctl enable fridge-kiosk-backend.service
+systemctl enable fridge-kiosk-display.service
+
+
+# Start the backend service
+print_step "Starting backend service..."
+systemctl start fridge-kiosk-backend.service
+echo -e "${BLUE}[INFO]${NC} Backend service status:"
+systemctl status fridge-kiosk-backend.service --no-pager || true
+
+print_header "SERVICE INFORMATION"
+print_status "The following services have been created and enabled:"
+echo -e "  ${CYAN}•${NC} fridge-kiosk-backend.service - Runs the Python backend API"
+echo -e "  ${CYAN}•${NC} fridge-kiosk-display.service - Manages the kiosk display using Wayland/Cage"
+echo
+print_status "You can control the services with these commands:"
+echo -e "  ${CYAN}•${NC} sudo systemctl start/stop/restart fridge-kiosk-backend.service"
+echo -e "  ${CYAN}•${NC} sudo systemctl start/stop/restart fridge-kiosk-display.service"
+echo -e "  ${CYAN}•${NC} sudo journalctl -fu fridge-kiosk-backend.service"
 
 # Read enabled plugins from config to display in summary
 print_header "CONFIGURATION SUMMARY"
@@ -327,7 +356,6 @@ else
 fi
 
 # Set up log rotation for log files
-print_header "CONFIGURING LOG ROTATION"
 print_step "Setting up log rotation..."
 cat > /etc/logrotate.d/fridge-kiosk << EOF
 $INSTALL_DIR/logs/*.log {
@@ -339,13 +367,10 @@ $INSTALL_DIR/logs/*.log {
     create 0644 $SUDO_USER $SUDO_USER
 }
 EOF
-print_success "Log rotation configured"
 
-print_header "ENVIRONMENT SETUP COMPLETE"
-print_success "System environment configured successfully!"
-echo
+print_header "INSTALLATION COMPLETE"
 print_status "To start the kiosk immediately, run:"
-echo -e "  ${CYAN}sudo systemctl start fridge-kiosk.service${NC}"
+echo -e "  ${CYAN}sudo systemctl start fridge-kiosk-display.service${NC}"
 echo
 
 exit 0 
