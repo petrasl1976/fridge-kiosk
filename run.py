@@ -194,6 +194,15 @@ def load_plugins(config):
         # Get plugin configuration
         plugin_config = config.get('plugins', {}).get(plugin_name, {})
         
+        # Ensure plugin has its own data directory
+        plugin_data_dir = os.path.join(plugin_path, 'data')
+        if not os.path.exists(plugin_data_dir):
+            try:
+                os.makedirs(plugin_data_dir, exist_ok=True)
+                logger.debug(f"Created data directory for plugin: {plugin_data_dir}")
+            except Exception as e:
+                logger.error(f"Failed to create data directory for plugin {plugin_name}: {e}")
+        
         # Default plugin info
         plugin_info = {
             'name': plugin_name,
@@ -207,7 +216,8 @@ def load_plugins(config):
             'view': None,
             'script': None,
             'style': None,
-            'view_content': None
+            'view_content': None,
+            'data_dir': plugin_data_dir  # Add data directory to plugin info
         }
         
         # Check for basic files

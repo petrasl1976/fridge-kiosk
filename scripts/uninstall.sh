@@ -26,11 +26,6 @@ print_step() {
     echo -e "${CYAN}[STEP]${NC} $1"
 }
 
-# Function to print success messages
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
 # Function to print warning messages
 print_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
@@ -261,7 +256,7 @@ if ! su -c "git pull" $SUDO_USER; then
 fi
 
 print_header "UNINSTALLATION COMPLETE"
-print_success "The Fridge Kiosk system has been removed."
+print_status "The Fridge Kiosk system has been removed."
 print_status "The following may need manual cleanup:"
 echo -e "  ${CYAN}•${NC} User groups (your user may still be a member of video, input, tty)"
 echo -e "  ${CYAN}•${NC} Browser cache and preferences"

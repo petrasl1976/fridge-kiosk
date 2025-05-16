@@ -31,11 +31,6 @@ print_step() {
     echo -e "${CYAN}[STEP]${NC} $1"
 }
 
-# Function to print success messages
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
 # Function to print warning messages
 print_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
@@ -97,7 +92,7 @@ else
 fi
 
 print_header "INSTALLATION COMPLETED!"
-print_success "The Fridge Kiosk has been installed to: $INSTALL_DIR"
+print_status "The Fridge Kiosk has been installed to: $INSTALL_DIR"
 echo
 print_status "Next steps:"
 echo -e "  ${CYAN}1.${NC} Services have been enabled automatically. To manage them:"
@@ -119,6 +114,6 @@ echo
 print_status "Reboot your system to start using the kiosk:"
 echo -e "  ${CYAN}•${NC} sudo reboot"
 echo
-print_success "Enjoy your new kiosk system!"
+print_status "Enjoy your new kiosk system!"
 
 exit 0 

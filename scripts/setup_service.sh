@@ -31,11 +31,6 @@ print_step() {
     echo -e "${CYAN}[STEP]${NC} $1"
 }
 
-# Function to print success messages
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
 # Function to print warning messages
 print_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
@@ -131,7 +126,6 @@ systemctl enable $BACKEND_SERVICE
 echo -e "  ${CYAN}•${NC} Enabled service: $BACKEND_SERVICE"
 systemctl enable $DISPLAY_SERVICE
 echo -e "  ${CYAN}•${NC} Enabled service: $DISPLAY_SERVICE"
-print_success "Services enabled to start at boot"
 
 # Start the backend service
 print_step "Starting backend service ($BACKEND_SERVICE)..."
@@ -142,7 +136,6 @@ print_status "Backend service status:"
 systemctl status $BACKEND_SERVICE --no-pager
 
 print_header "SERVICE SETUP COMPLETE"
-print_success "Services set up successfully!"
 echo
 print_status "The following services have been created and enabled:"
 echo -e "  ${CYAN}•${NC} $BACKEND_SERVICE - Runs the Python backend API"
