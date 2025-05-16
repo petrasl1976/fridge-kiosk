@@ -60,16 +60,17 @@ fi
 
 # Current directory where the script is located
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$SCRIPT_DIR"
 
-# Use current directory as installation directory
-INSTALL_DIR="$SCRIPT_DIR"
-print_status "Using current directory as installation directory: $INSTALL_DIR"
+# Use parent directory as installation directory
+INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
+cd "$INSTALL_DIR"
+
+print_status "Installation directory: $INSTALL_DIR"
 
 # Set execute permissions on scripts
 print_step "Setting execute permissions on scripts..."
 find "$INSTALL_DIR/scripts" -name "*.sh" -exec chmod +x {} \;
-chmod +x "$INSTALL_DIR/install.sh"
+chmod +x "$SCRIPT_DIR/install.sh"
 print_status "Permissions set"
 
 # Run setup scripts in the correct order
@@ -99,19 +100,21 @@ print_header "INSTALLATION COMPLETED!"
 print_success "The Fridge Kiosk has been installed to: $INSTALL_DIR"
 echo
 print_status "Next steps:"
-echo -e "  ${CYAN}1.${NC} Services have been enabled automatically. If you need to enable them manually:"
-echo -e "     ${CYAN}•${NC} sudo systemctl enable fridge-kiosk.service"
+echo -e "  ${CYAN}1.${NC} Services have been enabled automatically. To manage them:"
+echo -e "     ${CYAN}•${NC} sudo systemctl enable/disable fridge-kiosk-backend.service"
+echo -e "     ${CYAN}•${NC} sudo systemctl enable/disable fridge-kiosk-display.service"
 echo
 echo -e "  ${CYAN}2.${NC} Configure the system by editing these files:"
 echo -e "     ${CYAN}•${NC} Main configuration: $INSTALL_DIR/config/main.json"
 echo -e "     ${CYAN}•${NC} Environment variables: $INSTALL_DIR/config/.env"
 echo
 echo -e "  ${CYAN}3.${NC} Start the services:"
-echo -e "     ${CYAN}•${NC} sudo systemctl start fridge-kiosk.service"
+echo -e "     ${CYAN}•${NC} sudo systemctl start fridge-kiosk-backend.service"
+echo -e "     ${CYAN}•${NC} sudo systemctl start fridge-kiosk-display.service"
 echo
-echo -e "  ${CYAN}4.${NC} Kiosk status commands:"
-echo -e "     ${CYAN}•${NC} sudo systemctl status fridge-kiosk.service"
-echo -e "     ${CYAN}•${NC} sudo journalctl -fu fridge-kiosk.service"
+echo -e "  ${CYAN}4.${NC} Monitor kiosk status:"
+echo -e "     ${CYAN}•${NC} sudo systemctl status fridge-kiosk-backend.service"
+echo -e "     ${CYAN}•${NC} sudo journalctl -fu fridge-kiosk-backend.service"
 echo 
 print_status "Reboot your system to start using the kiosk:"
 echo -e "  ${CYAN}•${NC} sudo reboot"
