@@ -64,46 +64,66 @@ chown -R $SUDO_USER:$SUDO_USER "$INSTALL_DIR/logs"
 chown -R $SUDO_USER:$SUDO_USER "$INSTALL_DIR/data"
 print_status "Directories created and permissions set"
 
-# Configure auto-login
-print_header "CONFIGURING AUTO-LOGIN"
+print_header "CONFIGURING KIOSK SERVICES"
 
-# Check if we're using systemd (newer Raspbian)
-if [ -f /lib/systemd/system/getty@.service ]; then
-    print_step "Setting up automatic login for user $SUDO_USER..."
-    # Configure systemd auto-login for TTY1
-    mkdir -p /etc/systemd/system/getty@tty1.service.d/
-    cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --autologin $SUDO_USER --noclear %I \$TERM
-EOF
-    print_success "Auto-login configured via systemd"
-else
-    print_error "Could not configure auto-login, system may not be using systemd"
-    exit 1
-fi
+# Create groups for the kiosk user if they don't exist
+print_step "Setting up necessary groups..."
+groupadd -f seat
+groupadd -f render
+print_success "Groups created"
 
-print_header "CONFIGURING DISPLAY ENVIRONMENT"
-# Create startup script for Cage Wayland compositor
+# Add user to required groups
+print_step "Adding user $SUDO_USER to required groups..."
+usermod -aG video,input,seat,render,tty $SUDO_USER
+print_success "User added to groups"
+
+# Create the kiosk start script
 USER_HOME="/home/$SUDO_USER"
 print_step "Creating kiosk startup script..."
 cat > "$USER_HOME/start-kiosk.sh" << EOF
 #!/bin/bash
 
-# Set XDG_RUNTIME_DIR, which is needed for Wayland
-export XDG_RUNTIME_DIR=/tmp/xdg-runtime-dir
-mkdir -p \$XDG_RUNTIME_DIR
-chmod 700 \$XDG_RUNTIME_DIR
+# Nustatome aplinką
+export XDG_RUNTIME_DIR=/run/user/1000
+export WLR_BACKENDS=drm
+export WLR_DRM_NO_ATOMIC=1
+export WLR_DRM_DEVICES=/dev/dri/card0
+export QT_QPA_PLATFORM=wayland
+export GDK_BACKEND=wayland
+export WAYLAND_DISPLAY=wayland-0
+export DISPLAY=:0
+export DBUS_SESSION_BUS_ADDRESS="unix:path=\$XDG_RUNTIME_DIR/bus"
 
-# Start dbus session if needed
+# Tikriname ar yra reikalingi failai
+if [ ! -f "$INSTALL_DIR/run.py" ]; then
+    echo "Klaida: Nerastas run.py failas"
+    exit 1
+fi
+
+# Sukuriame ir nustatome runtime direktoriją su sudo
+sudo mkdir -p \$XDG_RUNTIME_DIR
+sudo chown $SUDO_USER:$SUDO_USER \$XDG_RUNTIME_DIR
+sudo chmod 700 \$XDG_RUNTIME_DIR
+
+# Nustatome DRI teises
+sudo chmod 666 /dev/dri/renderD128
+sudo usermod -aG render,video $SUDO_USER
+
+# Paleidžiame dbus sesiją
 if [ ! -e "\$XDG_RUNTIME_DIR/bus" ]; then
     dbus-daemon --session --address="\$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
     sleep 1
 fi
 
-# Start cage and chromium
-echo "Starting Chromium in kiosk mode..."
-cage -d -- chromium-browser \\
+# Paleidžiame aplikaciją fone
+cd $INSTALL_DIR
+python3 run.py &
+
+# Laukiame kol aplikacija pasileis
+sleep 3
+
+# Paleidžiame cage ir chromium
+cage -m last -- chromium-browser \\
     --kiosk \\
     --disable-gpu \\
     --disable-software-rasterizer \\
@@ -117,67 +137,71 @@ cage -d -- chromium-browser \\
     --disable-notifications \\
     http://localhost:8080 &
 
-# Wait for cage to start and create Wayland session
-echo "Waiting for display compositor to initialize..."
-sleep 5
+# Laukiame kol cage pasileis
+sleep 3
 
-# Check which monitors are connected and rotate the screen if needed
-OUTPUT=\$(wlr-randr | grep -o -m 1 "^HDMI-[A-Za-z0-9\-]*")
-if [ -n "\$OUTPUT" ]; then
-    echo "Found monitor: \$OUTPUT"
-    
-    # Get display orientation from config file
-    ORIENTATION=\$(jq -r '.system.display_orientation' $INSTALL_DIR/config/main.json 2>/dev/null || echo "landscape")
-    
-    # Apply rotation based on orientation setting
-    if [ "\$ORIENTATION" = "portrait" ]; then
-        echo "Setting screen orientation to portrait mode..."
-        for i in {1..3}; do
-            if wlr-randr --output "\$OUTPUT" --transform 270; then
-                echo "Screen rotated to portrait mode successfully"
-                break
-            fi
-            sleep 2
-        done
-    else
-        echo "Using landscape orientation"
-    fi
-else
-    echo "WARNING: Monitor not found, unable to configure screen orientation"
+# Get display orientation from config file
+ORIENTATION=\$(python3 -c "import json; print(json.load(open('$INSTALL_DIR/config/main.json')).get('system', {}).get('orientation', 'landscape'))")
+
+# Bandome pasukti ekraną
+if [ "\$ORIENTATION" = "portrait" ]; then
+    WAYLAND_DISPLAY=\$WAYLAND_DISPLAY XDG_RUNTIME_DIR=\$XDG_RUNTIME_DIR wlr-randr --output HDMI-A-1 --transform 270
 fi
 
-# Wait for main process
-echo "Kiosk display started successfully"
+# Laukiame pagrindinio proceso
 wait
 EOF
 
-# Set permissions
+# Set permissions for the kiosk script
 print_step "Setting permissions for startup script..."
 chown $SUDO_USER:$SUDO_USER "$USER_HOME/start-kiosk.sh"
 chmod +x "$USER_HOME/start-kiosk.sh"
 print_success "Kiosk startup script created"
 
-# Configure the .bash_profile to start the kiosk on login
-print_step "Configuring automatic kiosk start on login..."
-cat > "$USER_HOME/.bash_profile" << EOF
-# Auto-start kiosk on login
-if [ "\$(tty)" = "/dev/tty1" ]; then
-    # If not already running, start the kiosk
-    if ! pgrep -f "cage" > /dev/null; then
-        echo "Starting kiosk..."
-        # Wait for backend service to be ready
-        until curl -s http://localhost:8080 > /dev/null 2>&1; do 
-            echo "Waiting for backend to start..."
-            sleep 2
-        done
-        exec ~/start-kiosk.sh
-    fi
-fi
+# Create systemd service files
+print_step "Creating systemd service files..."
+
+# Create the fridge-kiosk.service file
+cat > /etc/systemd/system/fridge-kiosk.service << EOF
+[Unit]
+Description=Fridge Kiosk Service
+After=network.target
+
+[Service]
+User=$SUDO_USER
+SupplementaryGroups=video render input seat tty
+RuntimeDirectory=user/%U
+RuntimeDirectoryMode=0700
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="WAYLAND_DISPLAY=wayland-0"
+Environment="QT_QPA_PLATFORM=wayland"
+Environment="GDK_BACKEND=wayland"
+Environment="WLR_DRM_NO_ATOMIC=1"
+Environment="WLR_RENDERER=pixman"
+Environment="WLR_BACKENDS=drm"
+Environment="DISPLAY=:0"
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=%t/user/%U/bus"
+ExecStartPre=/bin/mkdir -p /run/user/1000
+ExecStartPre=/bin/chmod 700 /run/user/1000
+ExecStartPre=/bin/chown $SUDO_USER:$SUDO_USER /run/user/1000
+ExecStart=$USER_HOME/start-kiosk.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
 EOF
 
-# Set permissions
-chown $SUDO_USER:$SUDO_USER "$USER_HOME/.bash_profile"
-print_success "Login profile configured"
+print_success "Systemd service files created"
+
+# Reload systemd configuration
+print_step "Reloading systemd configuration..."
+systemctl daemon-reload
+print_success "Systemd configuration reloaded"
+
+# Enable the service
+print_step "Enabling the kiosk service..."
+systemctl enable fridge-kiosk.service
+print_success "Kiosk service enabled"
 
 print_header "SETTING UP PLUGIN DATA DIRECTORIES"
 # Load main config to determine which plugins are enabled
@@ -185,7 +209,7 @@ CONFIG_FILE="$INSTALL_DIR/config/main.json"
 if [ -f "$CONFIG_FILE" ]; then
     # Read enabled plugins from config file
     print_step "Reading enabled plugins from config file..."
-    ENABLED_PLUGINS=$(jq -r '.enabled_plugins[]' "$CONFIG_FILE" 2>/dev/null)
+    ENABLED_PLUGINS=$(jq -r '.enabledPlugins[]' "$CONFIG_FILE" 2>/dev/null)
     
     # If jq fails or config doesn't exist, setup all plugins
     if [ $? -ne 0 ] || [ -z "$ENABLED_PLUGINS" ]; then
@@ -232,6 +256,9 @@ print_status "The following plugins are enabled:"
 for plugin in $ENABLED_PLUGINS; do
     echo -e "  ${CYAN}•${NC} $plugin"
 done
+echo
+print_status "To start the kiosk immediately, run:"
+echo -e "  ${CYAN}sudo systemctl start fridge-kiosk.service${NC}"
 echo
 
 exit 0 

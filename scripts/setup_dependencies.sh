@@ -68,10 +68,14 @@ apt-get install -y \
     cage \
     dbus-x11 \
     seatd \
-    wlr-randr \
-    pulseaudio \
+    wlr-randr
+
+# Install additional utility packages
+print_status "Installing utility packages..."
+apt-get install -y \
     jq \
-    unclutter
+    unclutter \
+    pulseaudio
 
 print_status "Installing media support packages..."
 # Install additional packages for media support
@@ -136,70 +140,90 @@ pip install \
     requests \
     google-auth \
     google-auth-oauthlib \
+    google-auth-httplib2 \
     google-api-python-client \
-    python-dotenv \
     pytz \
-    tzlocal \
-    schedule \
+    python-dotenv \
+    schedule
+
+# Add additional packages that were in the original
+print_status "Installing additional Python packages from original installation..."
+pip install \
+    broadlink \
     PyNaCl
+
 print_success "Base Python packages installed successfully"
 
 print_header "INSTALLING PLUGIN DEPENDENCIES"
 # Load main config to determine which plugins are enabled
 CONFIG_FILE="$INSTALL_DIR/config/main.json"
+AVAILABLE_PLUGINS=$(find "$INSTALL_DIR/plugins" -maxdepth 1 -type d -not -path "$INSTALL_DIR/plugins" -exec basename {} \;)
+
 if [ -f "$CONFIG_FILE" ]; then
     # Read enabled plugins from config file
     print_step "Reading enabled plugins from config file..."
-    ENABLED_PLUGINS=$(jq -r '.enabled_plugins[]' "$CONFIG_FILE" 2>/dev/null)
+    ENABLED_PLUGINS=$(jq -r '.enabledPlugins[]' "$CONFIG_FILE" 2>/dev/null)
     
-    # If jq fails or config doesn't exist, install all plugins
+    # If jq fails or config doesn't exist, don't install any plugins
     if [ $? -ne 0 ] || [ -z "$ENABLED_PLUGINS" ]; then
-        print_warning "Could not determine enabled plugins from config, installing all plugins."
-        # Get all plugin directories
-        ENABLED_PLUGINS=$(find "$INSTALL_DIR/plugins" -maxdepth 1 -type d -not -path "$INSTALL_DIR/plugins" -exec basename {} \;)
+        print_warning "No enabled plugins found in config."
+        print_status "Available plugins that can be enabled in config:"
+        for plugin in $AVAILABLE_PLUGINS; do
+            echo -e "  ${CYAN}•${NC} $plugin"
+        done
+        ENABLED_PLUGINS=""
     else
         print_status "Found enabled plugins: $ENABLED_PLUGINS"
     fi
 else
-    print_warning "Config file not found, installing all plugins."
-    # Get all plugin directories
-    ENABLED_PLUGINS=$(find "$INSTALL_DIR/plugins" -maxdepth 1 -type d -not -path "$INSTALL_DIR/plugins" -exec basename {} \;)
+    print_warning "Config file not found at $CONFIG_FILE."
+    print_status "Available plugins that can be enabled once you create a config:"
+    for plugin in $AVAILABLE_PLUGINS; do
+        echo -e "  ${CYAN}•${NC} $plugin"
+    done
+    ENABLED_PLUGINS=""
 fi
 
 # Install dependencies for each enabled plugin
-for plugin in $ENABLED_PLUGINS; do
-    PLUGIN_DIR="$INSTALL_DIR/plugins/$plugin"
-    REQUIREMENTS_FILE="$PLUGIN_DIR/requirements.txt"
-    
-    if [ -d "$PLUGIN_DIR" ]; then
-        print_step "Checking dependencies for plugin: $plugin"
+if [ ! -z "$ENABLED_PLUGINS" ]; then
+    for plugin in $ENABLED_PLUGINS; do
+        PLUGIN_DIR="$INSTALL_DIR/plugins/$plugin"
+        REQUIREMENTS_FILE="$PLUGIN_DIR/requirements.txt"
         
-        if [ -f "$REQUIREMENTS_FILE" ]; then
-            print_status "Installing requirements from: $REQUIREMENTS_FILE"
-            pip install -r "$REQUIREMENTS_FILE"
-            print_success "Plugin $plugin requirements installed"
+        if [ -d "$PLUGIN_DIR" ]; then
+            print_step "Installing dependencies for plugin: $plugin"
+            
+            if [ -f "$REQUIREMENTS_FILE" ]; then
+                print_status "Installing requirements from: $REQUIREMENTS_FILE"
+                pip install -r "$REQUIREMENTS_FILE"
+                print_success "Plugin $plugin requirements installed"
+            else
+                print_status "No requirements.txt found for plugin: $plugin"
+            fi
+            
+            # Special handling for discord plugin if enabled
+            if [ "$plugin" = "discord-text-channel" ]; then
+                print_step "Installing Discord dependencies..."
+                pip install "py-cord[voice]"
+                print_success "Discord dependencies installed"
+            fi
         else
-            print_status "No requirements.txt found for plugin: $plugin"
+            print_warning "Plugin directory not found: $plugin"
         fi
-        
-        # Special handling for discord plugin if enabled
-        if [ "$plugin" = "discord-text-channel" ]; then
-            print_step "Installing Discord dependencies..."
-            pip install "py-cord[voice]"
-            print_success "Discord dependencies installed"
-        fi
-    else
-        print_warning "Plugin directory not found: $plugin"
-    fi
-done
+    done
+else
+    print_status "No plugin dependencies will be installed."
+fi
 
 print_header "INSTALLATION COMPLETE"
 print_success "All dependencies installed successfully!"
 echo
-print_status "The following plugins are enabled:"
-for plugin in $ENABLED_PLUGINS; do
-    echo -e "  ${CYAN}•${NC} $plugin"
-done
+if [ ! -z "$ENABLED_PLUGINS" ]; then
+    print_status "The following plugins are enabled:"
+    for plugin in $ENABLED_PLUGINS; do
+        echo -e "  ${CYAN}•${NC} $plugin"
+    done
+fi
 echo
 
 exit 0 

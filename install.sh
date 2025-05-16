@@ -98,18 +98,24 @@ fi
 print_header "INSTALLATION COMPLETED!"
 print_success "The Fridge Kiosk has been installed to: $INSTALL_DIR"
 echo
-print_status "You can configure the system by editing:"
-echo -e "  ${CYAN}•${NC} Main config: $INSTALL_DIR/config/main.json"
-echo -e "  ${CYAN}•${NC} Environment: $INSTALL_DIR/config/.env"
+print_status "Next steps:"
+echo -e "  ${CYAN}1.${NC} Services have been enabled automatically. If you need to enable them manually:"
+echo -e "     ${CYAN}•${NC} sudo systemctl enable fridge-kiosk.service"
 echo
-print_status "The system has been set up to start automatically on boot."
-echo -e "  ${CYAN}•${NC} To start it manually, run: sudo systemctl start fridge-kiosk"
-echo -e "  ${CYAN}•${NC} To check status, run: sudo systemctl status fridge-kiosk"
-echo -e "  ${CYAN}•${NC} To view logs, run: journalctl -u fridge-kiosk-backend -f"
+echo -e "  ${CYAN}2.${NC} Configure the system by editing these files:"
+echo -e "     ${CYAN}•${NC} Main configuration: $INSTALL_DIR/config/main.json"
+echo -e "     ${CYAN}•${NC} Environment variables: $INSTALL_DIR/config/.env"
+echo
+echo -e "  ${CYAN}3.${NC} Start the services:"
+echo -e "     ${CYAN}•${NC} sudo systemctl start fridge-kiosk.service"
+echo
+echo -e "  ${CYAN}4.${NC} Kiosk status commands:"
+echo -e "     ${CYAN}•${NC} sudo systemctl status fridge-kiosk.service"
+echo -e "     ${CYAN}•${NC} sudo journalctl -fu fridge-kiosk.service"
 echo 
-print_status "Reboot the system to start using the kiosk:"
+print_status "Reboot your system to start using the kiosk:"
 echo -e "  ${CYAN}•${NC} sudo reboot"
 echo
-print_success "Enjoy your Fridge Kiosk!"
+print_success "Enjoy your new kiosk system!"
 
 exit 0 
