@@ -56,7 +56,9 @@ print_status "Installation directory: $INSTALL_DIR"
 # Create necessary directories
 print_step "Creating required directories..."
 mkdir -p "$INSTALL_DIR/logs"
+echo -e "  ${CYAN}•${NC} Created directory: $INSTALL_DIR/logs"
 mkdir -p "$INSTALL_DIR/data"
+echo -e "  ${CYAN}•${NC} Created directory: $INSTALL_DIR/data"
 
 # Set permissions
 print_step "Setting directory permissions..."
@@ -69,12 +71,15 @@ print_header "CONFIGURING KIOSK SERVICES"
 # Create groups for the kiosk user if they don't exist
 print_step "Setting up necessary groups..."
 groupadd -f seat
+echo -e "  ${CYAN}•${NC} Created/verified group: seat"
 groupadd -f render
+echo -e "  ${CYAN}•${NC} Created/verified group: render"
 print_success "Groups created"
 
 # Add user to required groups
 print_step "Adding user $SUDO_USER to required groups..."
 usermod -aG video,input,seat,render,tty $SUDO_USER
+echo -e "  ${CYAN}•${NC} Added user to groups: video, input, seat, render, tty"
 print_success "User added to groups"
 
 # Create the kiosk start script
@@ -209,7 +214,7 @@ CONFIG_FILE="$INSTALL_DIR/config/main.json"
 if [ -f "$CONFIG_FILE" ]; then
     # Read enabled plugins from config file
     print_step "Reading enabled plugins from config file..."
-    ENABLED_PLUGINS=$(jq -r '.enabledPlugins[]' "$CONFIG_FILE" 2>/dev/null)
+    ENABLED_PLUGINS=$(jq -r '.enabled_plugins[]' "$CONFIG_FILE" 2>/dev/null)
     
     # If jq fails or config doesn't exist, setup all plugins
     if [ $? -ne 0 ] || [ -z "$ENABLED_PLUGINS" ]; then
@@ -231,7 +236,7 @@ for plugin in $ENABLED_PLUGINS; do
     PLUGIN_DATA_DIR="$INSTALL_DIR/data/$plugin"
     mkdir -p "$PLUGIN_DATA_DIR"
     chown -R $SUDO_USER:$SUDO_USER "$PLUGIN_DATA_DIR"
-    print_status "Created data directory for: $plugin"
+    echo -e "  ${CYAN}•${NC} Created data directory: $PLUGIN_DATA_DIR"
 done
 
 # Set up log rotation for log files
