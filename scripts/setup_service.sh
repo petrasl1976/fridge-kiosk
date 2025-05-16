@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # setup_service.sh - Set up systemd services for the backend and kiosk
 # This script creates and enables systemd services for Fridge Kiosk
@@ -47,7 +47,7 @@ print_error() {
 }
 
 # Get the current directory and the install directory
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 
 print_header "SETTING UP SYSTEM SERVICES"

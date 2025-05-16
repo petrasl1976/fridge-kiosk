@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # setup_environment.sh - Set up the system environment for the kiosk
 # This script will configure the Raspberry Pi for kiosk mode operation
@@ -47,7 +47,7 @@ print_error() {
 }
 
 # Get the current directory and the install directory
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 
 print_header "SETTING UP SYSTEM ENVIRONMENT"

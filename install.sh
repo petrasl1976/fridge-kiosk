@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Fridge Kiosk Installation Script
 # This script will install and configure the Fridge Kiosk system on a Raspberry Pi.
@@ -59,33 +59,12 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # Current directory where the script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Create installation directory if it doesn't exist
-INSTALL_DIR="/home/$SUDO_USER/fridge-kiosk"
-print_status "Installing to: $INSTALL_DIR"
-
-# If directory already exists, ask to remove it
-if [ -d "$INSTALL_DIR" ]; then
-    print_warning "Installation directory already exists."
-    read -p "Do you want to remove the existing installation? (y/n): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        print_step "Removing existing installation..."
-        rm -rf "$INSTALL_DIR"
-    else
-        print_error "Installation aborted."
-        exit 1
-    fi
-fi
-
-# Copy files to installation directory
-print_step "Copying files to installation directory..."
-mkdir -p "$INSTALL_DIR"
-cp -r ./* "$INSTALL_DIR"
-chown -R $SUDO_USER:$SUDO_USER "$INSTALL_DIR"
-print_status "Files copied to $INSTALL_DIR"
+# Use current directory as installation directory
+INSTALL_DIR="$SCRIPT_DIR"
+print_status "Using current directory as installation directory: $INSTALL_DIR"
 
 # Set execute permissions on scripts
 print_step "Setting execute permissions on scripts..."

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # setup_dependencies.sh - Install all required dependencies for the system
 # This script will install system packages, Python packages, and plugin-specific dependencies
@@ -47,7 +47,7 @@ print_error() {
 }
 
 # Get the current directory and the install directory
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 
 print_header "INSTALLING SYSTEM DEPENDENCIES"
