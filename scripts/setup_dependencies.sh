@@ -144,7 +144,8 @@ pip install \
     google-api-python-client \
     pytz \
     python-dotenv \
-    schedule
+    schedule \
+    jinja2
 
 # Add additional packages that were in the original
 print_status "Installing additional Python packages from original installation..."

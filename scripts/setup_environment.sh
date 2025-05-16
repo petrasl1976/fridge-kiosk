@@ -66,17 +66,28 @@ touch "$INSTALL_DIR/logs/backend.log"
 touch "$INSTALL_DIR/logs/backend-error.log"
 echo -e "  ${CYAN}•${NC} Created log files in: $INSTALL_DIR/logs"
 
-# Set permissions
+# Set permissions - ensure kiosk user has full access to the application files
 print_step "Setting directory and file permissions..."
-chown -R $SUDO_USER:$SUDO_USER "$INSTALL_DIR/logs"
-chmod -R 755 "$INSTALL_DIR/logs"
-chmod 664 "$INSTALL_DIR/logs/backend.log"
-chmod 664 "$INSTALL_DIR/logs/backend-error.log"
-echo -e "  ${CYAN}•${NC} Set permissions for: $INSTALL_DIR/logs"
+# Set owner to the user running the script (non-sudo)
+chown -R $SUDO_USER:$SUDO_USER "$INSTALL_DIR"
+echo -e "  ${CYAN}•${NC} Set ownership of all files to: $SUDO_USER"
 
-chown -R $SUDO_USER:$SUDO_USER "$INSTALL_DIR/data"
-echo -e "  ${CYAN}•${NC} Set permissions for: $INSTALL_DIR/data"
-print_status "Directories created and permissions set"
+# Ensure logs directory and files are writable
+chmod -R 755 "$INSTALL_DIR/logs"
+chmod 666 "$INSTALL_DIR/logs/backend.log"
+chmod 666 "$INSTALL_DIR/logs/backend-error.log"
+echo -e "  ${CYAN}•${NC} Set write permissions for log files"
+
+# Ensure data directory is writable
+chmod -R 755 "$INSTALL_DIR/data"
+echo -e "  ${CYAN}•${NC} Set permissions for data directory"
+
+# Make sure scripts are executable
+chmod +x "$INSTALL_DIR/run.py"
+find "$INSTALL_DIR/scripts" -name "*.sh" -exec chmod +x {} \;
+echo -e "  ${CYAN}•${NC} Set execute permissions for scripts"
+
+print_success "Directories created and permissions set"
 
 print_header "CONFIGURING KIOSK SERVICES"
 
@@ -92,7 +103,33 @@ print_success "Groups created"
 print_step "Adding user $SUDO_USER to required groups..."
 usermod -aG video,input,seat,render,tty $SUDO_USER
 echo -e "  ${CYAN}•${NC} Added user to groups: video, input, seat, render, tty"
-print_success "User added to groups"
+
+# Set up DRI device permissions
+print_step "Setting up DRI device permissions..."
+if [ -e "/dev/dri/card0" ]; then
+    chmod 666 /dev/dri/card0
+    echo -e "  ${CYAN}•${NC} Set permissions for /dev/dri/card0"
+fi
+
+if [ -e "/dev/dri/renderD128" ]; then
+    chmod 666 /dev/dri/renderD128
+    echo -e "  ${CYAN}•${NC} Set permissions for /dev/dri/renderD128"
+fi
+
+# Make sure udev rules are correct for these devices
+cat > /etc/udev/rules.d/99-drm-permissions.rules << EOF
+SUBSYSTEM=="drm", ACTION=="add", MODE="0666", GROUP="video"
+SUBSYSTEM=="graphics", ACTION=="add", MODE="0666", GROUP="video"
+KERNEL=="renderD*", SUBSYSTEM=="drm", MODE="0666", GROUP="video"
+EOF
+echo -e "  ${CYAN}•${NC} Created udev rules for DRM devices"
+
+# Reload udev rules
+udevadm control --reload-rules
+udevadm trigger
+echo -e "  ${CYAN}•${NC} Reloaded udev rules"
+
+print_success "DRI device access configured"
 
 # Create the kiosk start script
 USER_HOME="/home/$SUDO_USER"
@@ -100,7 +137,7 @@ print_step "Creating kiosk startup script..."
 cat > "$USER_HOME/start-kiosk.sh" << EOF
 #!/bin/bash
 
-# Nustatome aplinką
+# Set environment variables
 export XDG_RUNTIME_DIR=/run/user/1000
 export WLR_BACKENDS=drm
 export WLR_DRM_NO_ATOMIC=1
@@ -111,35 +148,35 @@ export WAYLAND_DISPLAY=wayland-0
 export DISPLAY=:0
 export DBUS_SESSION_BUS_ADDRESS="unix:path=\$XDG_RUNTIME_DIR/bus"
 
-# Tikriname ar yra reikalingi failai
+# Check if required files exist
 if [ ! -f "$INSTALL_DIR/run.py" ]; then
-    echo "Klaida: Nerastas run.py failas"
+    echo "Error: run.py file not found"
     exit 1
 fi
 
-# Sukuriame ir nustatome runtime direktoriją su sudo
+# Create and set up runtime directory with sudo
 sudo mkdir -p \$XDG_RUNTIME_DIR
 sudo chown $SUDO_USER:$SUDO_USER \$XDG_RUNTIME_DIR
 sudo chmod 700 \$XDG_RUNTIME_DIR
 
-# Nustatome DRI teises
+# Set DRI permissions
 sudo chmod 666 /dev/dri/renderD128
 sudo usermod -aG render,video $SUDO_USER
 
-# Paleidžiame dbus sesiją
+# Start dbus session
 if [ ! -e "\$XDG_RUNTIME_DIR/bus" ]; then
     dbus-daemon --session --address="\$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
     sleep 1
 fi
 
-# Paleidžiame aplikaciją fone
+# Start the application in background
 cd $INSTALL_DIR
 python3 run.py &
 
-# Laukiame kol aplikacija pasileis
+# Wait for application to start
 sleep 3
 
-# Paleidžiame cage ir chromium
+# Start cage and chromium
 cage -m last -- chromium-browser \\
     --kiosk \\
     --disable-gpu \\
@@ -154,18 +191,18 @@ cage -m last -- chromium-browser \\
     --disable-notifications \\
     http://localhost:8080 &
 
-# Laukiame kol cage pasileis
+# Wait for cage to start
 sleep 3
 
 # Get display orientation from config file
 ORIENTATION=\$(python3 -c "import json; print(json.load(open('$INSTALL_DIR/config/main.json')).get('system', {}).get('orientation', 'landscape'))")
 
-# Bandome pasukti ekraną
+# Rotate screen if needed
 if [ "\$ORIENTATION" = "portrait" ]; then
     WAYLAND_DISPLAY=\$WAYLAND_DISPLAY XDG_RUNTIME_DIR=\$XDG_RUNTIME_DIR wlr-randr --output HDMI-A-1 --transform 270
 fi
 
-# Laukiame pagrindinio proceso
+# Wait for main process
 wait
 EOF
 
