@@ -60,10 +60,22 @@ echo -e "  ${CYAN}•${NC} Created directory: $INSTALL_DIR/logs"
 mkdir -p "$INSTALL_DIR/data"
 echo -e "  ${CYAN}•${NC} Created directory: $INSTALL_DIR/data"
 
+# Create log files
+print_step "Creating log files..."
+touch "$INSTALL_DIR/logs/backend.log"
+touch "$INSTALL_DIR/logs/backend-error.log"
+echo -e "  ${CYAN}•${NC} Created log files in: $INSTALL_DIR/logs"
+
 # Set permissions
-print_step "Setting directory permissions..."
+print_step "Setting directory and file permissions..."
 chown -R $SUDO_USER:$SUDO_USER "$INSTALL_DIR/logs"
+chmod -R 755 "$INSTALL_DIR/logs"
+chmod 664 "$INSTALL_DIR/logs/backend.log"
+chmod 664 "$INSTALL_DIR/logs/backend-error.log"
+echo -e "  ${CYAN}•${NC} Set permissions for: $INSTALL_DIR/logs"
+
 chown -R $SUDO_USER:$SUDO_USER "$INSTALL_DIR/data"
+echo -e "  ${CYAN}•${NC} Set permissions for: $INSTALL_DIR/data"
 print_status "Directories created and permissions set"
 
 print_header "CONFIGURING KIOSK SERVICES"
