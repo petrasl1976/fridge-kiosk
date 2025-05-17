@@ -4,13 +4,6 @@
 # This script configures the system environment, services, and permissions 
 # for the Fridge Kiosk application.
 
-# Source common utilities
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/utils.sh"
-
-print_header "FRIDGE KIOSK SETUP"
-print_title "Setting up environment and services for the kiosk system"
-
 # Check if running as root
 if [ "$(id -u)" -ne 0 ]; then
     print_error "This script must be run as root!"
@@ -18,11 +11,24 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-# Use parent directory as installation directory
-INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
-cd "$INSTALL_DIR"
+print_header "FRIDGE KIOSK SETUP"
+print_title "Setting up environment and services for the kiosk system"
 
-print_status "Installation directory: $INSTALL_DIR"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/utils.sh"
+INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
+
+cd "$INSTALL_DIR"
+print_info "Installation directory: $INSTALL_DIR"
+
+if [ ! -f "$INSTALL_DIR/config/.env" ]; then
+    print_step "Creating .env file..."
+    cp "$INSTALL_DIR/config/.env.example" "$INSTALL_DIR/config/.env" 2>/dev/null || touch "$INSTALL_DIR/config/.env"
+    print_info "Use .env file to add your API keys and credentials if needed"
+    print_info "vim $INSTALL_DIR/config/.env"
+else
+    print_info "Using existing .env file"
+fi
 
 print_step "Setting execute permissions on scripts..."
 find "$INSTALL_DIR/scripts" -name "*.sh" -exec chmod +x {} \;
@@ -44,110 +50,52 @@ fi
 print_title "Setting write permissions for log files"
 chmod -R 755 "$INSTALL_DIR/logs"
 chmod 666 "$INSTALL_DIR/logs/*.log"
-print_title "Set write permissions for log files"
 
-# Set up executable files
-print_step "Setting up executable files..."
+print_step "Fixing shebang in run.py..."
 sed -i "1c #!$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/backend/run.py"
-print_title "Updated run.py shebang to use virtual environment"
 
-# Make sure scripts are executable
+print_step "Making scripts executable..."
 chmod +x "$INSTALL_DIR/backend/run.py"
-find "$INSTALL_DIR/scripts" -name "*.sh" -exec chmod +x {} \;
-print_title "Set execute permissions for scripts"
+chmod +x "$INSTALL_DIR/scripts/*.sh" 
 
-print_header "CONFIGURING KIOSK SERVICES"
+print_step "Enabling display compositor service (seatd)..."
+systemctl enable --now seatd
 
-# Create groups for the kiosk user if they don't exist
-print_step "Setting up necessary groups..."
+print_step "Setting up system groups: seat, render"
 groupadd -f seat
-print_title "Created/verified group: seat"
 groupadd -f render
-print_title "Created/verified group: render"
 
-# Add user to required groups
-print_step "Adding user $SUDO_USER to required groups..."
+print_step "Adding user $SUDO_USER to groups: video, input, seat, render, tty"
 usermod -aG video,input,seat,render,tty $SUDO_USER
-print_title "Added user to groups: video, input, seat, render, tty"
 
-# Set up DRI device permissions
-print_step "Setting up DRI device permissions..."
-if [ -e "/dev/dri/card0" ]; then
-    chmod 666 /dev/dri/card0
-    print_title "Set permissions for /dev/dri/card0"
-    # Add current user to the video group
-    if ! groups $SUDO_USER | grep -q "video"; then
-        usermod -aG video $SUDO_USER
-        print_title "Added $SUDO_USER to video group"
-    fi
-else
-    print_warning "DRI device /dev/dri/card0 not found. This will cause graphics issues."
-    print_title "Make sure the GPU driver is properly installed"
-fi
-
-if [ -e "/dev/dri/renderD128" ]; then
-    chmod 666 /dev/dri/renderD128
-    print_title "Set permissions for /dev/dri/renderD128"
-    # Add current user to the render group
-    if ! groups $SUDO_USER | grep -q "render"; then
-        usermod -aG render $SUDO_USER
-        print_title "Added $SUDO_USER to render group"
-    fi
-else
-    print_warning "DRI device /dev/dri/renderD128 not found. This will cause graphics issues."
-    print_title "Make sure the GPU driver is properly installed"
-fi
-
-# Make sure udev rules are correct for these devices
+print_step "Creating udev rules for display permissions..."
 cat > /etc/udev/rules.d/99-drm-permissions.rules << EOF
 SUBSYSTEM=="drm", ACTION=="add", MODE="0666", GROUP="video"
 SUBSYSTEM=="graphics", ACTION=="add", MODE="0666", GROUP="video"
 KERNEL=="card[0-9]*", SUBSYSTEM=="drm", MODE="0666", GROUP="video"
 KERNEL=="renderD[0-9]*", SUBSYSTEM=="drm", MODE="0666", GROUP="video"
 EOF
-print_title "Created udev rules for DRM devices"
 
-# Reload udev rules
+print_step "Reloading udev rules..."
 udevadm control --reload-rules
 udevadm trigger
-print_title "Reloaded udev rules"
 
-# Create a dummy virtual X frame buffer for systems without a GPU
+print_step "Checking DRI devices..."
 if [ ! -e "/dev/dri/card0" ]; then
-    print_step "Setting up Xvfb as fallback display..."
-    apt-get install -y xvfb
-    
-    # Create a systemd service for Xvfb
-    cat > /etc/systemd/system/xvfb.service << EOF
-[Unit]
-Description=X Virtual Frame Buffer Service
-After=network.target
-
-[Service]
-ExecStart=/usr/bin/Xvfb :0 -screen 0 1920x1080x24
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-    
-    systemctl daemon-reload
-    systemctl enable xvfb.service
-    systemctl start xvfb.service
-    print_title "Xvfb virtual display configured as fallback"
+    print_warning "DRI device /dev/dri/card0 not found. This will cause graphics issues."
 fi
 
-# Create the kiosk start script
+if [ ! -e "/dev/dri/renderD128" ]; then
+    print_warning "DRI device /dev/dri/renderD128 not found. This will cause graphics issues."
+fi
+
 USER_HOME="/home/$SUDO_USER"
 print_step "Creating kiosk startup script..."
 cp "$INSTALL_DIR/frontend/start-kiosk.sh" "$USER_HOME/start-kiosk.sh"
 chown $SUDO_USER:$SUDO_USER "$USER_HOME/start-kiosk.sh"
 chmod +x "$USER_HOME/start-kiosk.sh"
 
-# SERVICE SETUP - from setup_service.sh
-print_header "SETTING UP SYSTEM SERVICES"
-
-# Define service names
+print_header "CONFIGURING KIOSK SERVICES"
 BACKEND_SERVICE="fridge-kiosk-backend.service"
 DISPLAY_SERVICE="fridge-kiosk-display.service"
 
@@ -176,9 +124,8 @@ ProtectSystem=true
 WantedBy=multi-user.target
 EOF
 print_title "Created service file: /etc/systemd/system/$BACKEND_SERVICE"
-print_status "Backend service file created"
+print_info "Backend service file created"
 
-# Create the kiosk display service file
 print_step "Creating kiosk display service ($DISPLAY_SERVICE)..."
 cat > /etc/systemd/system/$DISPLAY_SERVICE << EOF
 [Unit]
@@ -212,9 +159,8 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 print_title "Created service file: /etc/systemd/system/$DISPLAY_SERVICE"
-print_status "Display service file created"
+print_info "Display service file created"
 
-# Set up log rotation for log files
 print_step "Setting up log rotation..."
 cat > /etc/logrotate.d/fridge-kiosk << EOF
 $INSTALL_DIR/logs/*.log {
@@ -227,41 +173,18 @@ $INSTALL_DIR/logs/*.log {
 }
 EOF
 
-# Reload systemd daemon
 print_step "Reloading systemd daemon..."
 systemctl daemon-reload
-print_status "Systemd daemon reloaded"
 
-# Enable the services to start at boot
-print_step "Enabling services to start at boot..."
+print_step "Enabling and starting $BACKEND_SERVICE"
 systemctl enable $BACKEND_SERVICE
-print_title "Enabled service: $BACKEND_SERVICE"
-systemctl enable $DISPLAY_SERVICE
-print_title "Enabled service: $DISPLAY_SERVICE"
-
-# Start the backend service
-print_step "Starting backend service ($BACKEND_SERVICE)..."
 systemctl start $BACKEND_SERVICE
+print_step "Enabling and starting $DISPLAY_SERVICE"
+systemctl enable $DISPLAY_SERVICE
 
-# Check service status
-print_status "Backend service status:"
-systemctl status $BACKEND_SERVICE --no-pager || true
-
-# Create .env file if it doesn't exist
-if [ ! -f "$INSTALL_DIR/config/.env" ]; then
-    print_step "Creating .env file..."
-    cp "$INSTALL_DIR/config/.env.example" "$INSTALL_DIR/config/.env" 2>/dev/null || touch "$INSTALL_DIR/config/.env"
-    chown $SUDO_USER:$SUDO_USER "$INSTALL_DIR/config/.env"
-    print_warning "Please edit the .env file to add your API keys and credentials:"
-    echo -e "${YELLOW}    nano $INSTALL_DIR/config/.env${NC}"
-else
-    print_status "Using existing .env file"
-fi
-
-print_header "INSTALLATION COMPLETED!"
-print_status "The Fridge Kiosk has been installed to: $INSTALL_DIR"
+print_header "SETUP COMPLETED!"
 echo
-print_status "Next steps:"
+print_info "Next steps:"
 echo -e "  ${CYAN}1.${NC} Services have been enabled automatically. To manage them:"
 echo -e "     ${CYAN}•${NC} sudo systemctl enable/disable fridge-kiosk-backend.service"
 echo -e "     ${CYAN}•${NC} sudo systemctl enable/disable fridge-kiosk-display.service"
@@ -269,18 +192,6 @@ echo
 echo -e "  ${CYAN}2.${NC} Configure the system by editing these files:"
 echo -e "     ${CYAN}•${NC} Main configuration: $INSTALL_DIR/config/main.json"
 echo -e "     ${CYAN}•${NC} Environment variables: $INSTALL_DIR/config/.env"
-echo
-echo -e "  ${CYAN}3.${NC} Start the services:"
-echo -e "     ${CYAN}•${NC} sudo systemctl start fridge-kiosk-backend.service"
-echo -e "     ${CYAN}•${NC} sudo systemctl start fridge-kiosk-display.service"
-echo
-echo -e "  ${CYAN}4.${NC} Monitor kiosk status:"
-echo -e "     ${CYAN}•${NC} sudo systemctl status fridge-kiosk-backend.service"
-echo -e "     ${CYAN}•${NC} sudo journalctl -fu fridge-kiosk-backend.service"
 echo 
-print_status "Reboot your system to start using the kiosk:"
+print_info "Reboot your system to start using the kiosk:"
 print_title "sudo reboot"
-echo
-print_status "Enjoy your new kiosk system!"
-
-exit 0 

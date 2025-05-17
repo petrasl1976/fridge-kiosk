@@ -12,11 +12,11 @@ BOLD='\033[1m'
 NC='\033[0m' # No Color
 
 # Printing functions
-print_status() { echo -e "${BLUE}[INFO]${NC} $1"; }
-print_header() { echo -e "\n${BOLD}${GREEN}==== $1 ====${NC}\n"; }
-print_title() { echo -e "${CYAN}•${NC} $1\n"; }
-print_step() { echo -e "${CYAN}[STEP]${NC} $1"; }
+print_error()   { echo -e "${RED}[ERROR]${NC} $1"; }
 print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
-print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+print_info()    { echo -e "${BLUE}[INFO]${NC} $1"; }
 print_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
-print_code() { echo -e "  ${CYAN}$1${NC}"; } 
+print_step()    { echo -e "${CYAN}[STEP]${NC} $1"; }
+print_header()  { echo -e "\n${BOLD}${GREEN}==== $1 ====${NC}\n"; }
+print_title()   { echo -e "${CYAN}•${NC} $1\n"; }
+print_code()    { echo -e "${CYAN}$1${NC}"; }

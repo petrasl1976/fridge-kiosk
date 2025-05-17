@@ -1,26 +1,27 @@
-#!/bin/sh
+#!/bin/bash -e
 
 # Fridge Kiosk Installer
 # This script installs all required dependencies for the system
 # including system packages, Python packages, and sets up the virtual environment
 
-set -e  # Exit on error
-
-# Source common utilities
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/utils.sh"
-
-INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
+# Check if running as root
+if [ "$(id -u)" -ne 0 ]; then
+    print_error "This script must be run as root!"
+    echo "Please run: sudo ./setup.sh"
+    exit 1
+fi
 
 print_header "FRIDGE KIOSK INSTALLATION"
 print_title "Installing dependencies and setting up Python environment"
-print_status "Installation directory: $INSTALL_DIR"
 
-# Update package lists
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/utils.sh"
+INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
+
+print_info "Installation directory: $INSTALL_DIR"
 print_step "Updating package lists..."
 apt-get update
 
-# Install system dependencies - using cage instead of full X server
 print_step "Installing system packages for kiosk display..."
 apt-get install -y \
     git \
@@ -33,71 +34,36 @@ apt-get install -y \
     seatd \
     wlr-randr
 
-# Install additional utility packages
-print_status "Installing utility packages..."
+print_info "Installing utility packages..."
 apt-get install -y \
     jq \
-    unclutter \
-    pulseaudio
+    unclutter
 
-print_status "Installing media support packages..."
-# Install additional packages for media support
+print_info "Installing media support packages..."
 apt-get install -y \
     ffmpeg \
     libsm6 \
-    libxext6 \
-    alsa-utils \
-    portaudio19-dev \
-    libasound2-dev
-
-print_header "CONFIGURING SYSTEM PERMISSIONS"
-# Create required groups
-print_step "Setting up system groups..."
-groupadd -f seat
-groupadd -f render
-
-# Add user to required groups
-print_step "Adding user $SUDO_USER to required groups..."
-usermod -aG video,input,seat,render,tty $SUDO_USER
-print_status "User $SUDO_USER added to: video, input, seat, render, tty"
-
-# Set DRM permissions
-print_step "Setting up display permissions..."
-echo 'SUBSYSTEM=="drm", ACTION=="add", MODE="0660", GROUP="video"' > /etc/udev/rules.d/99-drm.rules
-echo 'KERNEL=="renderD128", SUBSYSTEM=="drm", MODE="0666"' > /etc/udev/rules.d/99-renderD128.rules
-udevadm control --reload-rules
-udevadm trigger
-print_status "DRM permissions set up successfully"
-
-# Enable seatd service
-print_step "Enabling display compositor service (seatd)..."
-systemctl enable --now seatd
-print_success "Display compositor service enabled"
+    libxext6
 
 print_header "SETTING UP PYTHON ENVIRONMENT"
-# Create virtual environment if it doesn't exist
 VENV_DIR="$INSTALL_DIR/venv"
 if [ ! -d "$VENV_DIR" ]; then
-    print_step "Creating Python virtual environment..."
+    print_step "Creating Python virtual environment at: $VENV_DIR"
     python3 -m venv "$VENV_DIR"
     chown -R $SUDO_USER:$SUDO_USER "$VENV_DIR"
     chmod -R 755 "$VENV_DIR/bin"
-    # Ensure all files in bin directory are executable
     chmod +x "$VENV_DIR/bin/"*
-    print_success "Virtual environment created at: $VENV_DIR"
 else
-    print_status "Using existing virtual environment at: $VENV_DIR"
+    print_info "Using existing virtual environment at: $VENV_DIR"
 fi
 
-# Activate virtual environment
 print_step "Activating virtual environment..."
 source "$VENV_DIR/bin/activate"
-print_status "Virtual environment activated"
 
-# Install base Python requirements
 print_step "Installing base Python packages..."
 pip install --upgrade pip
-print_status "Installing core Python packages (this may take a while)..."
+
+print_info "Installing core Python packages (this may take a while)..."
 pip install \
     flask \
     requests \
@@ -110,45 +76,23 @@ pip install \
     schedule \
     jinja2
 
-# Add additional packages that were in the original
-print_status "Installing additional Python packages from original installation..."
-pip install \
-    broadlink \
-    PyNaCl
-
-print_success "Base Python packages installed successfully"
-
 print_header "INSTALLING PLUGIN DEPENDENCIES"
-# Load main config to determine which plugins are enabled
 CONFIG_FILE="$INSTALL_DIR/config/main.json"
 AVAILABLE_PLUGINS=$(find "$INSTALL_DIR/plugins" -maxdepth 1 -type d -not -path "$INSTALL_DIR/plugins" -exec basename {} \;)
+print_info "Available plugins: $AVAILABLE_PLUGINS"
 
+print_step "Reading plugins from configuration..."
 if [ -f "$CONFIG_FILE" ]; then
-    # Read enabled plugins from config file
-    print_step "Reading enabled plugins from config file..."
-    ENABLED_PLUGINS=$(jq -r '.enabled_plugins[]' "$CONFIG_FILE" 2>/dev/null | tr '\n' ' ')
-    
-    # If jq fails or config doesn't exist, don't install any plugins
-    if [ $? -ne 0 ] || [ -z "$ENABLED_PLUGINS" ]; then
-        print_warning "No enabled plugins found in config."
-        print_status "Available plugins that can be enabled in config:"
-        for plugin in $AVAILABLE_PLUGINS; do
-            print_title "$plugin"
-        done
-        ENABLED_PLUGINS=""
-    else
-        print_status "Found enabled plugins: $ENABLED_PLUGINS"
-    fi
-else
-    print_warning "Config file not found at $CONFIG_FILE."
-    print_status "Available plugins that can be enabled once you create a config:"
-    for plugin in $AVAILABLE_PLUGINS; do
-        print_title "$plugin"
-    done
-    ENABLED_PLUGINS=""
+    ENABLED_PLUGINS=$(jq -r '.enabled_plugins[]' "$CONFIG_FILE" 2>/dev/null | tr '\n' ' ' || echo "")
 fi
 
-# Install dependencies for each enabled plugin
+if [ -z "$ENABLED_PLUGINS" ]; then
+    print_info "No plugins enabled. Available plugins:"
+else
+    print_info "Enabled plugins: $ENABLED_PLUGINS"
+fi
+
+print_step "Installing dependencies for each enabled plugin..."
 if [ ! -z "$ENABLED_PLUGINS" ]; then
     for plugin in $ENABLED_PLUGINS; do
         PLUGIN_DIR="$INSTALL_DIR/plugins/$plugin"
@@ -158,34 +102,17 @@ if [ ! -z "$ENABLED_PLUGINS" ]; then
             print_step "Installing dependencies for plugin: $plugin"
             
             if [ -f "$REQUIREMENTS_FILE" ]; then
-                print_status "Installing requirements from: $REQUIREMENTS_FILE"
+                print_info "Installing requirements from: $REQUIREMENTS_FILE"
                 pip install -r "$REQUIREMENTS_FILE"
-                print_success "Plugin $plugin requirements installed"
             else
-                print_status "No requirements.txt found for plugin: $plugin"
-            fi
-            
-            # Special handling for discord plugin if enabled
-            if [ "$plugin" = "discord-text-channel" ]; then
-                print_step "Installing Discord dependencies..."
-                pip install "py-cord[voice]"
-                print_success "Discord dependencies installed"
+                print_info "No requirements.txt found for plugin: $plugin"
             fi
         else
             print_warning "Plugin directory not found: $plugin"
         fi
     done
 else
-    print_status "No plugin dependencies will be installed."
+    print_info "No plugin dependencies will be installed."
 fi
 
 print_header "INSTALLATION COMPLETE"
-print_success "All dependencies installed successfully!"
-echo
-if [ ! -z "$ENABLED_PLUGINS" ]; then
-    print_status "The following plugins are enabled:"
-    print_title "$ENABLED_PLUGINS"
-fi
-echo
-
-exit 0 
