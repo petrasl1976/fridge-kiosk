@@ -26,6 +26,7 @@
         
         /* Dynamic plugin positioning */
         {% for plugin in plugins %}
+        /* Position debug: {{ plugin.name }} - {{ plugin.position|tojson|safe }} */
         #plugin-{{ plugin.name }} {
             position: absolute;
             top: {{ plugin.position.top|default('0') }};

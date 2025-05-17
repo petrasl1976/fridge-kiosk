@@ -61,6 +61,11 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             # Render the template
             try:
                 template = template_env.get_template('index.html')
+                
+                # Debug position values before template rendering
+                for plugin in self.plugins:
+                    logger.info(f"Plugin {plugin['name']} position before rendering: {plugin['position']}")
+                
                 html = template.render(
                     config=self.config,
                     plugins=self.plugins,
