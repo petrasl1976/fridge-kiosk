@@ -40,7 +40,7 @@ def load_config():
                     "fontFamily": "Roboto, sans-serif",
                     "logLevel": "info"
                 },
-                "enabled_plugins": ["sensors", "date-time"]
+                "enabledPlugins": ["sensors", "date-time"]
             }
     except Exception as e:
         logger.error(f"Error loading configuration: {e}")

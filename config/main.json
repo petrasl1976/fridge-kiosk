@@ -7,5 +7,5 @@
     "logLevel": "info",
     "fontFamily": "Roboto, sans-serif"
   },
-  "enabled_plugins": ["sensors", "date-time"]
+  "enabledPlugins": ["sensors", "date-time"]
 } 

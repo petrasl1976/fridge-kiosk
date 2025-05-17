@@ -268,7 +268,7 @@ def load_plugins(config):
 def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description='Fridge Kiosk Application')
-    parser.add_argument('-p', '--port', type=int, default=8000, help='Port to run the HTTP server on')
+    parser.add_argument('-p', '--port', type=int, default=8080, help='Port to run the HTTP server on')
     parser.add_argument('-c', '--config', type=str, default='config/main.json', help='Path to configuration file')
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
     return parser.parse_args()
