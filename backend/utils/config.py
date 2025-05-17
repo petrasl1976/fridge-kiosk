@@ -37,7 +37,7 @@ def load_config():
                     "name": "Fridge Kiosk",
                     "theme": "dark",
                     "orientation": "landscape",
-                    "fontFamily": "Roboto, sans-serif",
+                    "fontFamily": "Courier New, monospace",
                     "logLevel": "info"
                 },
                 "enabledPlugins": ["sensors", "date-time"]
