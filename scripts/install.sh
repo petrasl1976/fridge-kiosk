@@ -24,7 +24,7 @@ print_step "Updating package lists..."
 apt-get update
 
 print_step "Installing system packages for kiosk display..."
-apt-get install -y \
+apt-get install -y --no-install-recommends \
     git \
     python3 \
     python3-pip \
@@ -36,12 +36,12 @@ apt-get install -y \
     wlr-randr
 
 print_info "Installing utility packages..."
-apt-get install -y \
+apt-get install -y --no-install-recommends \
     jq \
     unclutter
 
 print_info "Installing media support packages..."
-apt-get install -y \
+apt-get install -y --no-install-recommends \
     ffmpeg \
     libsm6 \
     libxext6
