@@ -29,26 +29,14 @@
     <div id="kiosk-container">
         <!-- Plugin containers -->
         {% for plugin in plugins %}
-        <div id="plugin-{{ plugin.name }}" class="plugin-container" style="
+        <div id="plugin-{{ plugin.name }}" style="
             position: absolute;
             {% if plugin.position.top %}top: {{ plugin.position.top }};{% endif %}
             {% if plugin.position.left %}left: {{ plugin.position.left }};{% endif %}
             {% if plugin.position.right %}right: {{ plugin.position.right }};{% endif %}
             {% if plugin.position.bottom %}bottom: {{ plugin.position.bottom }};{% endif %}
-            
-            {# Set specific width and height only if they're specified in config #}
-            {% if plugin.position.width and plugin.position.width != 'auto' %}
-                width: {{ plugin.position.width }};
-            {% else %}
-                width: auto;
-            {% endif %}
-            
-            {% if plugin.position.height and plugin.position.height != 'auto' %}
-                height: {{ plugin.position.height }};
-            {% else %}
-                height: auto;
-            {% endif %}
-            
+            {% if plugin.position.width and plugin.position.width != 'auto' %}width: {{ plugin.position.width }};{% endif %}
+            {% if plugin.position.height and plugin.position.height != 'auto' %}height: {{ plugin.position.height }};{% endif %}
             z-index: {{ plugin.position.z_index|default(1) }};
         ">
             {% if plugin.view_content %}
