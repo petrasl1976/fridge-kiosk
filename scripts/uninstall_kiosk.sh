@@ -10,38 +10,13 @@ BOLD='\033[1m'
 NC='\033[0m' # No Color
 
 # Function to print status messages
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
+print_status() { echo -e "${BLUE}[INFO]${NC} $1"; }
+print_header() { echo -e "\n${BOLD}${GREEN}==== $1 ====${NC}\n"; }
+print_step() { echo -e "${CYAN}[STEP]${NC} $1"; }
+print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+print_code() { echo -e "  ${CYAN}$1${NC}"; }
 
-# Function to print section headers
-print_header() {
-    echo
-    echo -e "${BOLD}${GREEN}==== $1 ====${NC}"
-    echo
-}
-
-# Function to print step information
-print_step() {
-    echo -e "${CYAN}[STEP]${NC} $1"
-}
-
-# Function to print warning messages
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-# Function to print error messages
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Function to print code snippet
-print_code() {
-    echo -e "  ${CYAN}$1${NC}"
-}
-
-# Print banner
 print_header "FRIDGE KIOSK UNINSTALLATION"
 echo -e "${CYAN}This script will completely remove the Fridge Kiosk system and revert system changes${NC}"
 echo

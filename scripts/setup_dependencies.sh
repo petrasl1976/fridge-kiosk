@@ -14,39 +14,13 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-# Function to print status messages
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
+print_status() { echo -e "${BLUE}[INFO]${NC} $1"; }
+print_header() { echo -e "\n${BOLD}${GREEN}==== $1 ====${NC}\n"; }
+print_step() { echo -e "${CYAN}[STEP]${NC} $1"; }
+print_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-# Function to print section headers
-print_header() {
-    echo
-    echo -e "${BOLD}${GREEN}==== $1 ====${NC}"
-    echo
-}
-
-# Function to print step information
-print_step() {
-    echo -e "${CYAN}[STEP]${NC} $1"
-}
-
-# Function to print success messages
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-# Function to print warning messages
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-# Function to print error messages
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Get the current directory and the install directory
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 
