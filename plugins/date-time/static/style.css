@@ -1,51 +1,60 @@
 /* 
  * Date-time Plugin Styles
+ * Positioned in bottom right corner with larger fonts like in the old app
  */
 
 .datetime-container {
-    background-color: rgba(0, 0, 0, 0.7);
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    font-family: var(--font-family, 'Roboto, sans-serif');
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    padding: 12px 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    text-align: right;
+    font-family: 'Roboto', sans-serif;
     color: white;
-    min-width: 200px;
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    min-width: 220px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    z-index: 100;
 }
 
-/* Time display with large font */
+/* Time display with extra large font */
 .datetime-container .time {
-    font-size: 5rem;
+    font-size: 6rem;
     font-weight: bold;
     margin-bottom: 5px;
     line-height: 1;
     letter-spacing: 2px;
 }
 
-/* Date display with smaller font */
+/* Date display with medium font */
 .datetime-container .date {
-    font-size: 2rem;
+    font-size: 2.5rem;
     opacity: 0.9;
 }
 
 /* Light Theme */
 body.theme-light .datetime-container {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.7);
     color: #333;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-shadow: none;
 }
 
 /* Portrait Mode Adjustments */
 body.orientation-portrait .datetime-container {
-    padding: 15px;
+    padding: 10px 15px;
+    bottom: 10px;
+    right: 10px;
 }
 
 body.orientation-portrait .datetime-container .time {
-    font-size: 4rem;
+    font-size: 5rem;
 }
 
 body.orientation-portrait .datetime-container .date {
-    font-size: 1.8rem;
+    font-size: 2.2rem;
 }
 
 /* Animation for time change */
