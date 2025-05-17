@@ -60,6 +60,7 @@ sed -i "1c #!$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/backend/run.py"
 print_step "Making scripts executable..."
 chmod +x "$INSTALL_DIR/backend/run.py"
 chmod +x "$INSTALL_DIR/scripts/"*.sh 
+chmod +x "$INSTALL_DIR/frontend/start-kiosk.sh"
 
 print_step "Enabling display compositor service (seatd)..."
 systemctl enable --now seatd
