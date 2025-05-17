@@ -66,6 +66,10 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 for plugin in self.plugins:
                     logger.info(f"Plugin {plugin['name']} position before rendering: {plugin['position']}")
                 
+                # Debug config values
+                logger.info(f"Config object: {self.config}")
+                logger.info(f"Font family from config: {self.config.get('system', {}).get('fontFamily', 'NOT FOUND')}")
+                
                 html = template.render(
                     config=self.config,
                     plugins=self.plugins,

@@ -18,7 +18,7 @@
     <style>
         /* Inline styles for system-wide configuration */
         :root {
-            --font-family: "{{ config.system.fontFamily|default('Courier New, monospace') }}";
+            --font-family: {{ config.system.fontFamily|default('Courier New, monospace') }};
         }
         html, body {
             font-family: var(--font-family);
@@ -39,6 +39,13 @@
     </style>
 </head>
 <body class="theme-{{ config.system.theme|default('dark') }} orientation-{{ config.system.orientation|default('landscape') }}">
+    <!-- Debug info -->
+    <div style="position: fixed; bottom: 5px; left: 5px; background: rgba(0,0,0,0.8); color: white; padding: 5px; font-size: 10px; z-index: 10000; font-family: monospace;">
+        Font: {{ config.system.fontFamily|default('none') }}<br>
+        Theme: {{ config.system.theme|default('none') }}<br>
+        Config: {{ config|tojson|safe }}
+    </div>
+    
     <div id="kiosk-container">
         <!-- Plugins -->
         {% for plugin in plugins %}
