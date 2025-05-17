@@ -3,18 +3,18 @@
     "displayName": "Date & Time",
     "position": {
         "landscape": {
-            "top": "20px",
-            "right": "20px",
-            "width": "auto",
+            "top": "7%",
+            "left": "65%",
+            "width": "35%",
             "height": "auto",
-            "z_index": 100
+            "z_index": 9999
         },
         "portrait": {
-            "top": "10px",
-            "right": "10px",
-            "width": "auto",
+            "top": "5%",
+            "left": "60%",
+            "width": "40%",
             "height": "auto",
-            "z_index": 100
+            "z_index": 9999
         }
     },
     "updateInterval": 60,
