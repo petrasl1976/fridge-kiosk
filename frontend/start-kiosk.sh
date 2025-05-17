@@ -47,8 +47,20 @@ cage -d -- chromium-browser \
 # Wait for the display to start
 sleep 3
 
-# Rotate screen - typical for vertical displays on Pi
-wlr-randr --output HDMI-A-1 --transform 270
+# Rotate screen - use exactly the same approach as the old code
+OUTPUT=$(wlr-randr | grep -o -m 1 "^HDMI-[A-Za-z0-9\-]*")
+if [ -n "$OUTPUT" ]; then
+    echo "Found monitor: $OUTPUT"
+    for i in {1..3}; do
+        if wlr-randr --output "$OUTPUT" --transform 270; then
+            echo "Screen rotated successfully"
+            break
+        fi
+        sleep 2
+    done
+else
+    echo "Monitor not found"
+fi
 
 # Wait for the main process
 wait 
