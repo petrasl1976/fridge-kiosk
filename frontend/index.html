@@ -18,7 +18,7 @@
     <style>
         /* Inline styles for system-wide configuration */
         :root {
-            --font-family: "Courier New, monospace";
+            --font-family: "{{ config.system.fontFamily|default('Courier New, monospace') }}";
         }
         html, body {
             font-family: var(--font-family);
