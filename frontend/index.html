@@ -23,6 +23,18 @@
         html, body {
             font-family: var(--font-family);
         }
+        
+        /* Dynamic plugin positioning */
+        {% for plugin in plugins %}
+        #plugin-{{ plugin.name }} {
+            position: absolute;
+            top: {{ plugin.position.top|default('0') }};
+            left: {{ plugin.position.left|default('0') }};
+            width: {{ plugin.position.width|default('auto') }};
+            height: {{ plugin.position.height|default('auto') }};
+            z-index: {{ plugin.position.z_index|default(1) }};
+        }
+        {% endfor %}
     </style>
 </head>
 <body class="theme-{{ config.system.theme|default('dark') }} orientation-{{ config.system.orientation|default('landscape') }}">
@@ -30,14 +42,7 @@
         <!-- Plugins -->
         {% for plugin in plugins %}
             {% if plugin.view_content %}
-            <div id="plugin-{{ plugin.name }}" style="
-                position: absolute;
-                top: {{ plugin.position.top|default('0') }};
-                left: {{ plugin.position.left|default('0') }};
-                width: {{ plugin.position.width|default('auto') }};
-                height: {{ plugin.position.height|default('auto') }};
-                z-index: {{ plugin.position.z_index|default(1) }};
-            ">
+            <div id="plugin-{{ plugin.name }}">
                 {{ plugin.view_content|safe }}
             </div>
             {% endif %}
