@@ -12,8 +12,8 @@ export DISPLAY=:0
 export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
 
 # Check for required files
-if [ ! -f "/home/kiosk/fridge-kiosk/run.py" ]; then
-    echo "Error: run.py file not found"
+if [ ! -f "/home/kiosk/fridge-kiosk/backend/run.py" ]; then
+    echo "Error: backend/run.py file not found"
     exit 1
 fi
 

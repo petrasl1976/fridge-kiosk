@@ -1,6 +1,6 @@
 #!/home/kiosk/fridge-kiosk/venv/bin/python3
 """
-Fridge Kiosk - Main Application
+Fridge Kiosk - Main Backend Application
 Launches a simple HTTP server and manages plugins
 """
 
@@ -15,6 +15,10 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import mimetypes
 import jinja2
+
+# Add parent directory to sys.path to make imports work after moving to backend/
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(parent_dir)
 from backend.utils.config import load_config, get_plugin_path, get_env
 
 # Set up logging
@@ -23,13 +27,13 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('kiosk.log')
+        logging.FileHandler(os.path.join(parent_dir, 'kiosk.log'))
     ]
 )
 logger = logging.getLogger('fridge-kiosk')
 
 # Initialize Jinja2 template environment
-template_loader = jinja2.FileSystemLoader(searchpath="./frontend")
+template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(parent_dir, "frontend"))
 template_env = jinja2.Environment(loader=template_loader)
 
 class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -39,7 +43,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         self.config = config or {}
         self.plugins = plugins or []
         self.plugins_data = plugins_data or {}
-        self.root_dir = str(Path(__file__).parent)
+        self.root_dir = parent_dir
         super().__init__(*args, **kwargs)
     
     def do_GET(self):

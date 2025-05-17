@@ -14,13 +14,14 @@ A modular, plugin-based kiosk display system designed for Raspberry Pi.
 
 ```
 fridge-kiosk/
-├── backend/            # Backend Flask application
-│   ├── app.py          # Main Flask app
+├── backend/            # Backend application
+│   ├── run.py          # Main backend entry point
 │   ├── plugin_loader.py # Plugin loading system  
 │   └── utils/          # Utility functions
 │       └── config.py   # Configuration utilities
 ├── frontend/           # Frontend files
 │   ├── index.html      # Main HTML template
+│   ├── start-kiosk.sh  # Frontend launch script
 │   ├── css/            # CSS files
 │   │   └── main.css    # Main stylesheet
 │   └── js/             # JavaScript files
@@ -41,7 +42,6 @@ fridge-kiosk/
 │   ├── setup_dependencies.sh  # Install dependencies
 │   ├── install_kiosk.sh       # Main installation script (new combined version)
 │   └── uninstall_kiosk.sh     # Complete uninstallation script
-└── run.py              # Main application entry point
 ```
 
 ## Installation

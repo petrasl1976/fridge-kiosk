@@ -87,11 +87,11 @@ echo -e "  ${CYAN}•${NC} Set write permissions for log files"
 
 # Set up executable files
 print_step "Setting up executable files..."
-sed -i "1c #!$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/run.py"
+sed -i "1c #!$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/backend/run.py"
 echo -e "  ${CYAN}•${NC} Updated run.py shebang to use virtual environment"
 
 # Make sure scripts are executable
-chmod +x "$INSTALL_DIR/run.py"
+chmod +x "$INSTALL_DIR/backend/run.py"
 find "$INSTALL_DIR/scripts" -name "*.sh" -exec chmod +x {} \;
 echo -e "  ${CYAN}•${NC} Set execute permissions for scripts"
 
@@ -179,75 +179,7 @@ fi
 # Create the kiosk start script
 USER_HOME="/home/$SUDO_USER"
 print_step "Creating kiosk startup script..."
-cat > "$USER_HOME/start-kiosk.sh" << EOF
-#!/bin/bash
-
-# Set environment variables
-export XDG_RUNTIME_DIR=/tmp/xdg-runtime-dir
-export WLR_BACKENDS=drm
-export WLR_DRM_NO_ATOMIC=1
-export WLR_DRM_DEVICES=/dev/dri/card0
-export QT_QPA_PLATFORM=wayland
-export GDK_BACKEND=wayland
-export WAYLAND_DISPLAY=wayland-0
-export DISPLAY=:0
-export DBUS_SESSION_BUS_ADDRESS="unix:path=\$XDG_RUNTIME_DIR/bus"
-
-# Create runtime directory
-mkdir -p \$XDG_RUNTIME_DIR
-chmod 700 \$XDG_RUNTIME_DIR
-
-# Start dbus session
-if [ ! -e "\$XDG_RUNTIME_DIR/bus" ]; then
-    dbus-daemon --session --address="\$DBUS_SESSION_BUS_ADDRESS" --nofork --nopidfile --syslog-only &
-    sleep 1
-fi
-
-# Start cage and chromium
-cage -d -- chromium-browser \\
-    --kiosk \\
-    --disable-gpu \\
-    --disable-software-rasterizer \\
-    --disable-dev-shm-usage \\
-    --no-sandbox \\
-    --disable-dbus \\
-    --incognito \\
-    --disable-extensions \\
-    --disable-plugins \\
-    --disable-popup-blocking \\
-    --disable-notifications \\
-    http://localhost:8080 &
-
-# Wait for cage to start
-sleep 5
-
-# Check which monitors are connected and rotate the screen if in portrait mode
-OUTPUT=\$(wlr-randr | grep -o -m 1 "^HDMI-[A-Za-z0-9\-]*")
-if [ -n "\$OUTPUT" ]; then
-    echo "Found monitor: \$OUTPUT"
-    # Get display orientation from config file
-    ORIENTATION=\$(cat "$INSTALL_DIR/config/main.json" | grep -o '"orientation":[^,]*' | cut -d '"' -f 4)
-    if [ "\$ORIENTATION" = "portrait" ]; then
-        for i in {1..3}; do
-            if wlr-randr --output "\$OUTPUT" --transform 270; then
-                echo "Screen rotated to portrait mode"
-                break
-            fi
-            sleep 2
-        done
-    else
-        echo "Using landscape orientation"
-    fi
-else
-    echo "Monitor not found"
-fi
-
-# Wait for main process
-wait
-EOF
-
-# Set permissions for the kiosk script
-print_step "Setting permissions for startup script..."
+cp "$INSTALL_DIR/frontend/start-kiosk.sh" "$USER_HOME/start-kiosk.sh"
 chown $SUDO_USER:$SUDO_USER "$USER_HOME/start-kiosk.sh"
 chmod +x "$USER_HOME/start-kiosk.sh"
 
@@ -269,7 +201,7 @@ After=network.target
 Type=simple
 User=$SUDO_USER
 WorkingDirectory=$INSTALL_DIR
-ExecStart=$INSTALL_DIR/venv/bin/python $INSTALL_DIR/run.py
+ExecStart=$INSTALL_DIR/venv/bin/python $INSTALL_DIR/backend/run.py
 Restart=always
 RestartSec=5
 StandardOutput=append:$INSTALL_DIR/logs/backend.log
