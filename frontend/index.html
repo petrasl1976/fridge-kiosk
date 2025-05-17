@@ -35,8 +35,8 @@
             {% if plugin.position.left %}left: {{ plugin.position.left }};{% endif %}
             {% if plugin.position.right %}right: {{ plugin.position.right }};{% endif %}
             {% if plugin.position.bottom %}bottom: {{ plugin.position.bottom }};{% endif %}
-            {% if plugin.position.width %}width: {{ plugin.position.width }};{% endif %}
-            {% if plugin.position.height %}height: {{ plugin.position.height }};{% endif %}
+            {% if plugin.position.width %}width: {{ plugin.position.width }};{% else %}width: fit-content;{% endif %}
+            {% if plugin.position.height %}height: {{ plugin.position.height }};{% else %}height: fit-content;{% endif %}
             z-index: {{ plugin.position.z_index|default(1) }};
         ">
             {% if plugin.view_content %}
