@@ -1,31 +1,19 @@
 #!/bin/sh
 
-# setup_dependencies.sh - Install all required dependencies for the system
-# This script will install system packages, Python packages, and plugin-specific dependencies
+# Fridge Kiosk Installer
+# This script installs all required dependencies for the system
+# including system packages, Python packages, and sets up the virtual environment
 
 set -e  # Exit on error
 
-# Color definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m' # No Color
-
-print_status() { echo -e "${BLUE}[INFO]${NC} $1"; }
-print_header() { echo -e "\n${BOLD}${GREEN}==== $1 ====${NC}\n"; }
-print_step() { echo -e "${CYAN}[STEP]${NC} $1"; }
-print_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
-print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
-print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-print_title() { echo -e "${CYAN}•${NC} $1\n"; }
-
+# Source common utilities
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/utils.sh"
+
 INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 
-print_header "INSTALLING SYSTEM DEPENDENCIES"
+print_header "FRIDGE KIOSK INSTALLATION"
+print_title "Installing dependencies and setting up Python environment"
 print_status "Installation directory: $INSTALL_DIR"
 
 # Update package lists

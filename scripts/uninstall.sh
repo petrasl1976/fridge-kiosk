@@ -1,32 +1,11 @@
 #!/bin/bash
 
-# Color definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m' # No Color
+# Fridge Kiosk Uninstaller
+# This script completely removes the Fridge Kiosk system and reverts all system changes
 
-# Function to print status messages
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-print_header() { echo -e "\n${BOLD}${GREEN}==== $1 ====${NC}\n"; }
-print_step() { echo -e "${CYAN}[STEP]${NC} $1"; }
-print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-print_code() {
-    echo -e "  ${CYAN}$1${NC}"
-}
-
-print_title() {
-    echo -e "${CYAN}•${NC} $1\n"
-}
+# Source common utilities
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/utils.sh"
 
 print_header "FRIDGE KIOSK UNINSTALLATION"
 echo -e "${CYAN}This script will completely remove the Fridge Kiosk system and revert system changes${NC}"
@@ -40,7 +19,6 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # Get paths
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 SUDO_USER=${SUDO_USER:-$(whoami)}
 USER_HOME="/home/$SUDO_USER"

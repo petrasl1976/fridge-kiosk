@@ -39,9 +39,9 @@ fridge-kiosk/
 │   ├── main.json       # Main configuration
 │   └── .env.example    # Environment variables template
 ├── scripts/            # Installation scripts
-│   ├── setup_dependencies.sh  # Install dependencies
-│   ├── install_kiosk.sh       # Main installation script (new combined version)
-│   └── uninstall_kiosk.sh     # Complete uninstallation script
+│   ├── install.sh      # Package installation and Python venv setup
+│   ├── setup.sh        # System configuration and services setup 
+│   └── uninstall.sh    # Complete uninstallation script
 ```
 
 ## Installation
@@ -54,20 +54,26 @@ fridge-kiosk/
    cd fridge-kiosk
    ```
 
-2. Run the installation script:
+2. Install dependencies first:
    ```
-   chmod +x scripts/install_kiosk.sh
-   sudo ./scripts/install_kiosk.sh
+   chmod +x scripts/install.sh
+   sudo ./scripts/install.sh
    ```
 
-3. Configure your .env file:
+3. Set up system services and configuration:
+   ```
+   chmod +x scripts/setup.sh
+   sudo ./scripts/setup.sh
+   ```
+
+4. Configure your .env file:
    ```
    vi config/.env
    ```
 
-4. Enable or disable plugins in `config/main.json`
+5. Enable or disable plugins in `config/main.json`
 
-The installation script will:
+The installation scripts will:
 - Install all required dependencies
 - Configure the system for kiosk mode
 - Set up systemd services for automatic startup
@@ -78,7 +84,7 @@ The installation script will:
 To completely remove the Fridge Kiosk system:
 
 ```
-sudo ./scripts/uninstall_kiosk.sh
+sudo ./scripts/uninstall.sh
 ```
 
 This will:
@@ -289,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
 3. Add your plugin to the `enabledPlugins` list in `config/main.json`
 4. Run the dependencies setup script to install any new requirements:
    ```
-   sudo ./scripts/setup_dependencies.sh
+   sudo ./scripts/install.sh
    ```
 5. Restart the backend service:
    ```
@@ -324,7 +330,7 @@ After installing a new plugin:
 
 1. Run the dependencies setup script to install any new requirements:
    ```
-   sudo ./scripts/setup_dependencies.sh
+   sudo ./scripts/install.sh
    ```
 
 2. Restart the backend service:

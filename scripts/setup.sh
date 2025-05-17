@@ -1,38 +1,22 @@
-#!/bin/bash
+#!/bin/bash -e
 
-# Fridge Kiosk Installation Script
-# This script will install and configure the Fridge Kiosk system on a Raspberry Pi.
+# Fridge Kiosk Setup Script
+# This script configures the system environment, services, and permissions 
+# for the Fridge Kiosk application.
 
-set -e  # Exit on error
+# Source common utilities
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/utils.sh"
 
-# Color definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m' # No Color
-
-print_status() { echo -e "${BLUE}[INFO]${NC} $1"; }
-print_header() { echo -e "\n${BOLD}${GREEN}==== $1 ====${NC}\n"; }
-print_title() { echo -e "${CYAN}•${NC} $1\n"; }
-print_step() { echo -e "${CYAN}[STEP]${NC} $1"; }
-print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
-print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-
-print_header "FRIDGE KIOSK INSTALLER"
-print_title "A modular, plugin-based kiosk display system for Raspberry Pi"
+print_header "FRIDGE KIOSK SETUP"
+print_title "Setting up environment and services for the kiosk system"
 
 # Check if running as root
 if [ "$(id -u)" -ne 0 ]; then
     print_error "This script must be run as root!"
-    echo "Please run: sudo ./install_kiosk.sh"
+    echo "Please run: sudo ./setup.sh"
     exit 1
 fi
-
-# Current directory where the script is located
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Use parent directory as installation directory
 INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
@@ -40,48 +24,26 @@ cd "$INSTALL_DIR"
 
 print_status "Installation directory: $INSTALL_DIR"
 
-# Set execute permissions on scripts
 print_step "Setting execute permissions on scripts..."
 find "$INSTALL_DIR/scripts" -name "*.sh" -exec chmod +x {} \;
-print_status "Permissions set"
 
-# Run setup_dependencies script
-print_header "SETTING UP DEPENDENCIES"
-print_step "Installing required packages..."
-bash "$INSTALL_DIR/scripts/setup_dependencies.sh"
+for directory in logs config; do
+    print_title "Creating directory: $INSTALL_DIR/$directory"
+    mkdir -p "$INSTALL_DIR/$directory"
+done
 
-# ENVIRONMENT SETUP - from setup_environment.sh
-print_header "SETTING UP SYSTEM ENVIRONMENT"
+for file in backend-run.log backend.log backend-error.log; do
+    print_title "Creating file: $INSTALL_DIR/logs/$file"
+    touch "$INSTALL_DIR/logs/$file"
+done
 
-# Create necessary directories and files
-print_step "Creating required directories and files..."
-mkdir -p "$INSTALL_DIR/logs"
-mkdir -p "$INSTALL_DIR/config"
-print_title "Created directory: $INSTALL_DIR/logs"
-print_title "Created directory: $INSTALL_DIR/config"
-
-# Create log files
-touch "$INSTALL_DIR/logs/kiosk.log"
-touch "$INSTALL_DIR/logs/backend.log"
-touch "$INSTALL_DIR/logs/backend-error.log"
-print_title "Created log files in: $INSTALL_DIR/logs"
-
-# Set permissions
-print_step "Setting directory and file permissions..."
-
-# Set owner to the user running the script (non-sudo)
 if [ -n "$SUDO_USER" ]; then
-    chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR/logs"
-    chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR/config"
     chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR"
-    print_title "Set ownership of all files to: $SUDO_USER"
 fi
 
-# Ensure logs directory and files are writable
+print_title "Setting write permissions for log files"
 chmod -R 755 "$INSTALL_DIR/logs"
-chmod 666 "$INSTALL_DIR/logs/kiosk.log"
-chmod 666 "$INSTALL_DIR/logs/backend.log"
-chmod 666 "$INSTALL_DIR/logs/backend-error.log"
+chmod 666 "$INSTALL_DIR/logs/*.log"
 print_title "Set write permissions for log files"
 
 # Set up executable files
