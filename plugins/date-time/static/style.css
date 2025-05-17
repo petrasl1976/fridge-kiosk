@@ -1,6 +1,6 @@
 /* 
  * Date-time Plugin Styles
- * Positioned in bottom right corner with larger fonts like in the old app
+ * Positioned in top right corner with larger fonts like in the old app
  */
 
 .datetime-container {
@@ -12,7 +12,7 @@
     font-family: 'Roboto', sans-serif;
     color: white;
     position: absolute;
-    bottom: 20px;
+    top: 20px;
     right: 20px;
     min-width: 220px;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
@@ -21,7 +21,7 @@
 
 /* Time display with extra large font */
 .datetime-container .time {
-    font-size: 6rem;
+    font-size: 7.2em;
     font-weight: bold;
     margin-bottom: 5px;
     line-height: 1;
@@ -30,7 +30,7 @@
 
 /* Date display with medium font */
 .datetime-container .date {
-    font-size: 2.5rem;
+    font-size: 3.5em;
     opacity: 0.9;
 }
 
@@ -45,16 +45,16 @@ body.theme-light .datetime-container {
 /* Portrait Mode Adjustments */
 body.orientation-portrait .datetime-container {
     padding: 10px 15px;
-    bottom: 10px;
+    top: 10px;
     right: 10px;
 }
 
 body.orientation-portrait .datetime-container .time {
-    font-size: 5rem;
+    font-size: 6rem;
 }
 
 body.orientation-portrait .datetime-container .date {
-    font-size: 2.2rem;
+    font-size: 3rem;
 }
 
 /* Animation for time change */

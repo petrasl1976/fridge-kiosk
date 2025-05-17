@@ -3,14 +3,14 @@
     "displayName": "Date & Time",
     "position": {
         "landscape": {
-            "bottom": "20px",
+            "top": "20px",
             "right": "20px",
             "width": "auto",
             "height": "auto",
             "z_index": 100
         },
         "portrait": {
-            "bottom": "10px",
+            "top": "10px",
             "right": "10px",
             "width": "auto",
             "height": "auto",
@@ -21,7 +21,7 @@
     "format": {
         "time": "HH:MM",
         "date": "YYYY.MM.DD",
-        "time_font_size": "6rem",
-        "date_font_size": "2.5rem"
+        "time_font_size": "7.2em",
+        "date_font_size": "3.5em"
     }
 } 
