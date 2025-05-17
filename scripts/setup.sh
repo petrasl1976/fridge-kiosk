@@ -4,6 +4,11 @@
 # This script configures the system environment, services, and permissions 
 # for the Fridge Kiosk application.
 
+# Source common utilities
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/utils.sh"
+INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
+
 # Check if running as root
 if [ "$(id -u)" -ne 0 ]; then
     print_error "This script must be run as root!"
@@ -13,10 +18,6 @@ fi
 
 print_header "FRIDGE KIOSK SETUP"
 print_title "Setting up environment and services for the kiosk system"
-
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/utils.sh"
-INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 
 cd "$INSTALL_DIR"
 print_info "Installation directory: $INSTALL_DIR"
@@ -89,12 +90,6 @@ if [ ! -e "/dev/dri/renderD128" ]; then
     print_warning "DRI device /dev/dri/renderD128 not found. This will cause graphics issues."
 fi
 
-USER_HOME="/home/$SUDO_USER"
-print_step "Creating kiosk startup script..."
-cp "$INSTALL_DIR/frontend/start-kiosk.sh" "$USER_HOME/start-kiosk.sh"
-chown $SUDO_USER:$SUDO_USER "$USER_HOME/start-kiosk.sh"
-chmod +x "$USER_HOME/start-kiosk.sh"
-
 print_header "CONFIGURING KIOSK SERVICES"
 BACKEND_SERVICE="fridge-kiosk-backend.service"
 DISPLAY_SERVICE="fridge-kiosk-display.service"
@@ -152,7 +147,7 @@ ExecStartPre=/bin/mkdir -p /tmp/xdg-runtime-dir
 ExecStartPre=/bin/chmod 700 /tmp/xdg-runtime-dir
 ExecStartPre=/bin/chown $SUDO_USER:$SUDO_USER /tmp/xdg-runtime-dir
 ExecStartPre=/bin/bash -c "until curl -s http://localhost:8080 > /dev/null 2>&1; do sleep 2; done"
-ExecStart=/home/$SUDO_USER/start-kiosk.sh
+ExecStart=$INSTALL_DIR/frontend/start-kiosk.sh
 Restart=always
 
 [Install]

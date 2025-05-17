@@ -4,6 +4,11 @@
 # This script installs all required dependencies for the system
 # including system packages, Python packages, and sets up the virtual environment
 
+# Source common utilities
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/utils.sh"
+INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
+
 # Check if running as root
 if [ "$(id -u)" -ne 0 ]; then
     print_error "This script must be run as root!"
@@ -13,12 +18,8 @@ fi
 
 print_header "FRIDGE KIOSK INSTALLATION"
 print_title "Installing dependencies and setting up Python environment"
-
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/utils.sh"
-INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
-
 print_info "Installation directory: $INSTALL_DIR"
+
 print_step "Updating package lists..."
 apt-get update
 

@@ -3,6 +3,10 @@
 # Fridge Kiosk Uninstaller
 # This script completely removes the Fridge Kiosk system and reverts all system changes
 
+# Source common utilities
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/utils.sh"
+INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 
 # Check if running as root
 if [ "$(id -u)" -ne 0 ]; then
@@ -14,9 +18,9 @@ fi
 print_header "FRIDGE KIOSK UNINSTALLATION"
 print_title "This script will completely remove the Fridge Kiosk system and revert system changes"
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/utils.sh"
-INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
+# Initialize variables
+SUDO_USER=${SUDO_USER:-$(whoami)}
+USER_HOME="/home/$SUDO_USER"
 
 print_header "REMOVING SERVICES"
 print_step "Stopping and removing services..."
@@ -61,9 +65,6 @@ udevadm trigger
 
 print_step "Removing log rotation configuration..."
 rm -f /etc/logrotate.d/fridge-kiosk
-
-print_step "Removing startup script..."
-rm -f "$USER_HOME/start-kiosk.sh"
 
 print_step "Removing virtual environment..."
 if [ -d "$INSTALL_DIR/venv" ]; then
