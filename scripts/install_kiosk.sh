@@ -1,7 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
-# setup_environment.sh - Set up the system environment for the kiosk
-# This script will configure the Raspberry Pi for kiosk mode operation
+# Fridge Kiosk Installation Script
+# This script will install and configure the Fridge Kiosk system on a Raspberry Pi.
+# It combines the functionality of install.sh, setup_environment.sh and setup_service.sh
 
 set -e  # Exit on error
 
@@ -41,12 +42,39 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Get the current directory and the install directory
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
+# Print banner
+print_header "FRIDGE KIOSK INSTALLER"
+echo -e "${CYAN}A modular, plugin-based kiosk display system for Raspberry Pi${NC}"
+echo
 
-print_header "SETTING UP SYSTEM ENVIRONMENT"
+# Check if running as root
+if [ "$(id -u)" -ne 0 ]; then
+    print_error "This script must be run as root!"
+    echo "Please run: sudo ./install_kiosk.sh"
+    exit 1
+fi
+
+# Current directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Use parent directory as installation directory
+INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
+cd "$INSTALL_DIR"
+
 print_status "Installation directory: $INSTALL_DIR"
+
+# Set execute permissions on scripts
+print_step "Setting execute permissions on scripts..."
+find "$INSTALL_DIR/scripts" -name "*.sh" -exec chmod +x {} \;
+print_status "Permissions set"
+
+# Run setup_dependencies script
+print_header "SETTING UP DEPENDENCIES"
+print_step "Installing required packages..."
+bash "$INSTALL_DIR/scripts/setup_dependencies.sh"
+
+# ENVIRONMENT SETUP - from setup_environment.sh
+print_header "SETTING UP SYSTEM ENVIRONMENT"
 
 # Create necessary directories and files
 print_step "Creating required directories and files..."
@@ -245,15 +273,19 @@ print_step "Setting permissions for startup script..."
 chown $SUDO_USER:$SUDO_USER "$USER_HOME/start-kiosk.sh"
 chmod +x "$USER_HOME/start-kiosk.sh"
 
-# Create systemd service files
-print_step "Creating systemd service files..."
+# SERVICE SETUP - from setup_service.sh
+print_header "SETTING UP SYSTEM SERVICES"
+
+# Define service names
+BACKEND_SERVICE="fridge-kiosk-backend.service"
+DISPLAY_SERVICE="fridge-kiosk-display.service"
 
 # Create the backend service file
-cat > /etc/systemd/system/fridge-kiosk-backend.service << EOF
+print_step "Creating backend service ($BACKEND_SERVICE)..."
+cat > /etc/systemd/system/$BACKEND_SERVICE << EOF
 [Unit]
 Description=Fridge Kiosk Backend Service
 After=network.target
-StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -261,29 +293,35 @@ User=$SUDO_USER
 WorkingDirectory=$INSTALL_DIR
 ExecStart=$INSTALL_DIR/venv/bin/python $INSTALL_DIR/run.py
 Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
+RestartSec=5
+StandardOutput=append:$INSTALL_DIR/logs/backend.log
+StandardError=append:$INSTALL_DIR/logs/backend-error.log
+Environment="PYTHONUNBUFFERED=1"
+# Permissions to read temperature data
+ReadWritePaths=/sys/class/thermal/thermal_zone0
+ProtectSystem=true
 
 [Install]
 WantedBy=multi-user.target
 EOF
-echo -e "  ${CYAN}•${NC} Created backend service: fridge-kiosk-backend.service"
+echo -e "  ${CYAN}•${NC} Created service file: /etc/systemd/system/$BACKEND_SERVICE"
+print_status "Backend service file created"
 
-# Create the display service file
-cat > /etc/systemd/system/fridge-kiosk-display.service << EOF
+# Create the kiosk display service file
+print_step "Creating kiosk display service ($DISPLAY_SERVICE)..."
+cat > /etc/systemd/system/$DISPLAY_SERVICE << EOF
 [Unit]
 Description=Fridge Kiosk Display Service
-After=network.target fridge-kiosk-backend.service
-Requires=fridge-kiosk-backend.service
-StartLimitIntervalSec=0
+After=network.target $BACKEND_SERVICE
+Requires=$BACKEND_SERVICE
+BindsTo=$BACKEND_SERVICE
 
 [Service]
 User=$SUDO_USER
 SupplementaryGroups=video render input seat tty
 RuntimeDirectory=user/%U
 RuntimeDirectoryMode=0700
-Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="XDG_RUNTIME_DIR=/tmp/xdg-runtime-dir"
 Environment="WAYLAND_DISPLAY=wayland-0"
 Environment="QT_QPA_PLATFORM=wayland"
 Environment="GDK_BACKEND=wayland"
@@ -292,68 +330,18 @@ Environment="WLR_RENDERER=pixman"
 Environment="WLR_BACKENDS=drm"
 Environment="DISPLAY=:0"
 Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=%t/user/%U/bus"
-ExecStartPre=/bin/mkdir -p /run/user/1000
-ExecStartPre=/bin/chmod 700 /run/user/1000
-ExecStartPre=/bin/chown $SUDO_USER:$SUDO_USER /run/user/1000
-ExecStart=$USER_HOME/start-kiosk.sh
+ExecStartPre=/bin/mkdir -p /tmp/xdg-runtime-dir
+ExecStartPre=/bin/chmod 700 /tmp/xdg-runtime-dir
+ExecStartPre=/bin/chown $SUDO_USER:$SUDO_USER /tmp/xdg-runtime-dir
+ExecStartPre=/bin/bash -c "until curl -s http://localhost:8080 > /dev/null 2>&1; do sleep 2; done"
+ExecStart=/home/$SUDO_USER/start-kiosk.sh
 Restart=always
-RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
 EOF
-echo -e "  ${CYAN}•${NC} Created display service: fridge-kiosk-display.service"
-
-# Reload systemd configuration
-print_step "Reloading systemd configuration..."
-systemctl daemon-reload
-
-# Enable the services
-print_step "Enabling services to start at boot..."
-systemctl enable fridge-kiosk-backend.service
-systemctl enable fridge-kiosk-display.service
-
-
-# Start the backend service
-print_step "Starting backend service..."
-systemctl start fridge-kiosk-backend.service
-echo -e "${BLUE}[INFO]${NC} Backend service status:"
-systemctl status fridge-kiosk-backend.service --no-pager || true
-
-print_header "SERVICE INFORMATION"
-print_status "The following services have been created and enabled:"
-echo -e "  ${CYAN}•${NC} fridge-kiosk-backend.service - Runs the Python backend API"
-echo -e "  ${CYAN}•${NC} fridge-kiosk-display.service - Manages the kiosk display using Wayland/Cage"
-echo
-print_status "You can control the services with these commands:"
-echo -e "  ${CYAN}•${NC} sudo systemctl start/stop/restart fridge-kiosk-backend.service"
-echo -e "  ${CYAN}•${NC} sudo systemctl start/stop/restart fridge-kiosk-display.service"
-echo -e "  ${CYAN}•${NC} sudo journalctl -fu fridge-kiosk-backend.service"
-
-# Read enabled plugins from config to display in summary
-print_header "CONFIGURATION SUMMARY"
-CONFIG_FILE="$INSTALL_DIR/config/main.json"
-if [ -f "$CONFIG_FILE" ]; then
-    # Read enabled plugins from config file
-    print_step "Reading enabled plugins from config file..."
-    ENABLED_PLUGINS=$(jq -r '.enabled_plugins[]' "$CONFIG_FILE" 2>/dev/null | tr '\n' ' ')
-    
-    if [ $? -ne 0 ] || [ -z "$ENABLED_PLUGINS" ]; then
-        print_warning "No enabled plugins found in config."
-        # Get all plugin directories
-        AVAILABLE_PLUGINS=$(find "$INSTALL_DIR/plugins" -maxdepth 1 -type d -not -path "$INSTALL_DIR/plugins" -exec basename {} \; | tr '\n' ' ')
-        print_status "Available plugins that can be enabled in the config:"
-        echo -e "  ${CYAN}•${NC} $AVAILABLE_PLUGINS"
-    else
-        print_status "Enabled plugins: $ENABLED_PLUGINS"
-    fi
-else
-    print_warning "Config file not found."
-    # Get all plugin directories
-    AVAILABLE_PLUGINS=$(find "$INSTALL_DIR/plugins" -maxdepth 1 -type d -not -path "$INSTALL_DIR/plugins" -exec basename {} \; | tr '\n' ' ')
-    print_status "Available plugins that can be enabled once you create a config:"
-    echo -e "  ${CYAN}•${NC} $AVAILABLE_PLUGINS"
-fi
+echo -e "  ${CYAN}•${NC} Created service file: /etc/systemd/system/$DISPLAY_SERVICE"
+print_status "Display service file created"
 
 # Set up log rotation for log files
 print_step "Setting up log rotation..."
@@ -368,9 +356,60 @@ $INSTALL_DIR/logs/*.log {
 }
 EOF
 
-print_header "INSTALLATION COMPLETE"
-print_status "To start the kiosk immediately, run:"
-echo -e "  ${CYAN}sudo systemctl start fridge-kiosk-display.service${NC}"
+# Reload systemd daemon
+print_step "Reloading systemd daemon..."
+systemctl daemon-reload
+print_status "Systemd daemon reloaded"
+
+# Enable the services to start at boot
+print_step "Enabling services to start at boot..."
+systemctl enable $BACKEND_SERVICE
+echo -e "  ${CYAN}•${NC} Enabled service: $BACKEND_SERVICE"
+systemctl enable $DISPLAY_SERVICE
+echo -e "  ${CYAN}•${NC} Enabled service: $DISPLAY_SERVICE"
+
+# Start the backend service
+print_step "Starting backend service ($BACKEND_SERVICE)..."
+systemctl start $BACKEND_SERVICE
+
+# Check service status
+print_status "Backend service status:"
+systemctl status $BACKEND_SERVICE --no-pager || true
+
+# Create .env file if it doesn't exist
+if [ ! -f "$INSTALL_DIR/config/.env" ]; then
+    print_step "Creating .env file..."
+    cp "$INSTALL_DIR/config/.env.example" "$INSTALL_DIR/config/.env" 2>/dev/null || touch "$INSTALL_DIR/config/.env"
+    chown $SUDO_USER:$SUDO_USER "$INSTALL_DIR/config/.env"
+    print_warning "Please edit the .env file to add your API keys and credentials:"
+    echo -e "${YELLOW}    nano $INSTALL_DIR/config/.env${NC}"
+else
+    print_status "Using existing .env file"
+fi
+
+print_header "INSTALLATION COMPLETED!"
+print_status "The Fridge Kiosk has been installed to: $INSTALL_DIR"
 echo
+print_status "Next steps:"
+echo -e "  ${CYAN}1.${NC} Services have been enabled automatically. To manage them:"
+echo -e "     ${CYAN}•${NC} sudo systemctl enable/disable fridge-kiosk-backend.service"
+echo -e "     ${CYAN}•${NC} sudo systemctl enable/disable fridge-kiosk-display.service"
+echo
+echo -e "  ${CYAN}2.${NC} Configure the system by editing these files:"
+echo -e "     ${CYAN}•${NC} Main configuration: $INSTALL_DIR/config/main.json"
+echo -e "     ${CYAN}•${NC} Environment variables: $INSTALL_DIR/config/.env"
+echo
+echo -e "  ${CYAN}3.${NC} Start the services:"
+echo -e "     ${CYAN}•${NC} sudo systemctl start fridge-kiosk-backend.service"
+echo -e "     ${CYAN}•${NC} sudo systemctl start fridge-kiosk-display.service"
+echo
+echo -e "  ${CYAN}4.${NC} Monitor kiosk status:"
+echo -e "     ${CYAN}•${NC} sudo systemctl status fridge-kiosk-backend.service"
+echo -e "     ${CYAN}•${NC} sudo journalctl -fu fridge-kiosk-backend.service"
+echo 
+print_status "Reboot your system to start using the kiosk:"
+echo -e "  ${CYAN}•${NC} sudo reboot"
+echo
+print_status "Enjoy your new kiosk system!"
 
 exit 0 
