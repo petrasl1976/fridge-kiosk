@@ -9,7 +9,7 @@
     padding: 12px 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     text-align: right;
-    font-family: var(--font-family);
+    font-family: var(--font-family, 'Courier New, monospace');
     color: white;
     position: relative;
     display: inline-block;
