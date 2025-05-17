@@ -73,24 +73,36 @@ print_step "Adding user $SUDO_USER to groups: video, input, seat, render, tty"
 usermod -aG video,input,seat,render,tty $SUDO_USER
 
 print_step "Creating udev rules for display permissions..."
-cat > /etc/udev/rules.d/99-drm-permissions.rules << EOF
-SUBSYSTEM=="drm", ACTION=="add", MODE="0666", GROUP="video"
-SUBSYSTEM=="graphics", ACTION=="add", MODE="0666", GROUP="video"
-KERNEL=="card[0-9]*", SUBSYSTEM=="drm", MODE="0666", GROUP="video"
-KERNEL=="renderD[0-9]*", SUBSYSTEM=="drm", MODE="0666", GROUP="video"
-EOF
+echo 'SUBSYSTEM=="drm", ACTION=="add", MODE="0660", GROUP="video"' > /etc/udev/rules.d/99-drm.rules
+echo 'KERNEL=="renderD128", SUBSYSTEM=="drm", MODE="0666"' > /etc/udev/rules.d/99-renderD128.rules
 
 print_step "Reloading udev rules..."
 udevadm control --reload-rules
 udevadm trigger
 
 print_step "Checking DRI devices..."
-if [ ! -e "/dev/dri/card0" ]; then
-    print_warning "DRI device /dev/dri/card0 not found. This will cause graphics issues."
-fi
-
-if [ ! -e "/dev/dri/renderD128" ]; then
-    print_warning "DRI device /dev/dri/renderD128 not found. This will cause graphics issues."
+if [ ! -e "/dev/dri/card0" ] || [ ! -e "/dev/dri/renderD128" ]; then
+    print_warning "DRI devices missing. Setting up Raspberry Pi graphics configuration..."
+    
+    # Add VC4 KMS V3D overlay for better graphics support
+    if [ -f "/boot/config.txt" ]; then
+        if ! grep -q "dtoverlay=vc4-kms-v3d" "/boot/config.txt"; then
+            print_info "Adding VC4 KMS V3D overlay to /boot/config.txt"
+            echo "dtoverlay=vc4-kms-v3d" | sudo tee -a /boot/config.txt
+            
+            # Ensure proper memory split for GPU
+            if ! grep -q "^gpu_mem=" "/boot/config.txt"; then
+                echo "gpu_mem=128" | sudo tee -a /boot/config.txt
+                print_info "Set GPU memory to 128MB"
+            fi
+            
+            print_warning "A reboot will be required after setup to apply graphics changes"
+        else
+            print_info "VC4 KMS V3D overlay already configured"
+        fi
+    else
+        print_warning "Cannot find /boot/config.txt file"
+    fi
 fi
 
 print_header "CONFIGURING KIOSK SERVICES"
