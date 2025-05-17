@@ -185,6 +185,10 @@ def load_plugins(config):
     plugins_data = {}
     enabled_plugins = config.get('enabledPlugins', [])
     
+    # Get orientation from system config for position selection
+    orientation = config.get('system', {}).get('orientation', 'landscape')
+    logger.info(f"System orientation: {orientation}")
+    
     logger.info(f"Loading {len(enabled_plugins)} enabled plugins")
     
     for plugin_name in enabled_plugins:
@@ -195,8 +199,19 @@ def load_plugins(config):
             logger.error(f"Plugin directory not found: {plugin_path}")
             continue
         
-        # Get plugin configuration
-        plugin_config = config.get('plugins', {}).get(plugin_name, {})
+        # Load plugin's own config file
+        plugin_config_path = os.path.join(plugin_path, 'config.json')
+        plugin_config = {}
+        
+        if os.path.exists(plugin_config_path):
+            try:
+                with open(plugin_config_path, 'r') as f:
+                    plugin_config = json.load(f)
+                logger.info(f"Loaded configuration for plugin {plugin_name}: {plugin_config_path}")
+            except Exception as e:
+                logger.error(f"Error loading plugin config: {e}")
+        else:
+            logger.warning(f"Plugin config not found: {plugin_config_path}")
         
         # Ensure plugin has its own data directory
         plugin_data_dir = os.path.join(plugin_path, 'data')
@@ -207,21 +222,38 @@ def load_plugins(config):
             except Exception as e:
                 logger.error(f"Failed to create data directory for plugin {plugin_name}: {e}")
         
-        # Default plugin info
-        plugin_info = {
-            'name': plugin_name,
-            'position': plugin_config.get('position', {
+        # Get the position configuration based on orientation
+        position = {}
+        if 'position' in plugin_config:
+            # If plugin has orientation-specific positions
+            if orientation in plugin_config['position']:
+                position = plugin_config['position'][orientation]
+                logger.debug(f"Using {orientation} position for plugin {plugin_name}")
+            # If it has a general position setting
+            elif isinstance(plugin_config['position'], dict) and not ('landscape' in plugin_config['position'] or 'portrait' in plugin_config['position']):
+                position = plugin_config['position']
+                logger.debug(f"Using default position for plugin {plugin_name}")
+        
+        # Default fallback if no position found
+        if not position:
+            position = {
                 'top': '0',
                 'left': '0',
                 'width': '100%',
                 'height': '100%',
                 'z_index': 1
-            }),
+            }
+            logger.warning(f"No position config found for plugin {plugin_name}, using defaults")
+        
+        # Default plugin info
+        plugin_info = {
+            'name': plugin_name,
+            'position': position,
             'view': None,
             'script': None,
             'style': None,
             'view_content': None,
-            'data_dir': plugin_data_dir  # Add data directory to plugin info
+            'data_dir': plugin_data_dir
         }
         
         # Check for basic files
