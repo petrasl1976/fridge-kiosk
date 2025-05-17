@@ -2,7 +2,6 @@
 
 # Fridge Kiosk Installation Script
 # This script will install and configure the Fridge Kiosk system on a Raspberry Pi.
-# It combines the functionality of install.sh, setup_environment.sh and setup_service.sh
 
 set -e  # Exit on error
 
@@ -17,13 +16,13 @@ NC='\033[0m' # No Color
 
 print_status() { echo -e "${BLUE}[INFO]${NC} $1"; }
 print_header() { echo -e "\n${BOLD}${GREEN}==== $1 ====${NC}\n"; }
+print_title() { echo -e "${CYAN}•${NC} $1\n"; }
 print_step() { echo -e "${CYAN}[STEP]${NC} $1"; }
 print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 print_header "FRIDGE KIOSK INSTALLER"
-echo -e "${CYAN}A modular, plugin-based kiosk display system for Raspberry Pi${NC}"
-echo
+print_title "A modular, plugin-based kiosk display system for Raspberry Pi"
 
 # Check if running as root
 if [ "$(id -u)" -ne 0 ]; then
@@ -58,14 +57,14 @@ print_header "SETTING UP SYSTEM ENVIRONMENT"
 print_step "Creating required directories and files..."
 mkdir -p "$INSTALL_DIR/logs"
 mkdir -p "$INSTALL_DIR/config"
-echo -e "  ${CYAN}•${NC} Created directory: $INSTALL_DIR/logs"
-echo -e "  ${CYAN}•${NC} Created directory: $INSTALL_DIR/config"
+print_title "Created directory: $INSTALL_DIR/logs"
+print_title "Created directory: $INSTALL_DIR/config"
 
 # Create log files
 touch "$INSTALL_DIR/logs/kiosk.log"
 touch "$INSTALL_DIR/logs/backend.log"
 touch "$INSTALL_DIR/logs/backend-error.log"
-echo -e "  ${CYAN}•${NC} Created log files in: $INSTALL_DIR/logs"
+print_title "Created log files in: $INSTALL_DIR/logs"
 
 # Set permissions
 print_step "Setting directory and file permissions..."
@@ -75,7 +74,7 @@ if [ -n "$SUDO_USER" ]; then
     chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR/logs"
     chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR/config"
     chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR"
-    echo -e "  ${CYAN}•${NC} Set ownership of all files to: $SUDO_USER"
+    print_title "Set ownership of all files to: $SUDO_USER"
 fi
 
 # Ensure logs directory and files are writable
@@ -83,58 +82,58 @@ chmod -R 755 "$INSTALL_DIR/logs"
 chmod 666 "$INSTALL_DIR/logs/kiosk.log"
 chmod 666 "$INSTALL_DIR/logs/backend.log"
 chmod 666 "$INSTALL_DIR/logs/backend-error.log"
-echo -e "  ${CYAN}•${NC} Set write permissions for log files"
+print_title "Set write permissions for log files"
 
 # Set up executable files
 print_step "Setting up executable files..."
 sed -i "1c #!$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/backend/run.py"
-echo -e "  ${CYAN}•${NC} Updated run.py shebang to use virtual environment"
+print_title "Updated run.py shebang to use virtual environment"
 
 # Make sure scripts are executable
 chmod +x "$INSTALL_DIR/backend/run.py"
 find "$INSTALL_DIR/scripts" -name "*.sh" -exec chmod +x {} \;
-echo -e "  ${CYAN}•${NC} Set execute permissions for scripts"
+print_title "Set execute permissions for scripts"
 
 print_header "CONFIGURING KIOSK SERVICES"
 
 # Create groups for the kiosk user if they don't exist
 print_step "Setting up necessary groups..."
 groupadd -f seat
-echo -e "  ${CYAN}•${NC} Created/verified group: seat"
+print_title "Created/verified group: seat"
 groupadd -f render
-echo -e "  ${CYAN}•${NC} Created/verified group: render"
+print_title "Created/verified group: render"
 
 # Add user to required groups
 print_step "Adding user $SUDO_USER to required groups..."
 usermod -aG video,input,seat,render,tty $SUDO_USER
-echo -e "  ${CYAN}•${NC} Added user to groups: video, input, seat, render, tty"
+print_title "Added user to groups: video, input, seat, render, tty"
 
 # Set up DRI device permissions
 print_step "Setting up DRI device permissions..."
 if [ -e "/dev/dri/card0" ]; then
     chmod 666 /dev/dri/card0
-    echo -e "  ${CYAN}•${NC} Set permissions for /dev/dri/card0"
+    print_title "Set permissions for /dev/dri/card0"
     # Add current user to the video group
     if ! groups $SUDO_USER | grep -q "video"; then
         usermod -aG video $SUDO_USER
-        echo -e "  ${CYAN}•${NC} Added $SUDO_USER to video group"
+        print_title "Added $SUDO_USER to video group"
     fi
 else
     print_warning "DRI device /dev/dri/card0 not found. This will cause graphics issues."
-    echo -e "  ${CYAN}•${NC} Make sure the GPU driver is properly installed"
+    print_title "Make sure the GPU driver is properly installed"
 fi
 
 if [ -e "/dev/dri/renderD128" ]; then
     chmod 666 /dev/dri/renderD128
-    echo -e "  ${CYAN}•${NC} Set permissions for /dev/dri/renderD128"
+    print_title "Set permissions for /dev/dri/renderD128"
     # Add current user to the render group
     if ! groups $SUDO_USER | grep -q "render"; then
         usermod -aG render $SUDO_USER
-        echo -e "  ${CYAN}•${NC} Added $SUDO_USER to render group"
+        print_title "Added $SUDO_USER to render group"
     fi
 else
     print_warning "DRI device /dev/dri/renderD128 not found. This will cause graphics issues."
-    echo -e "  ${CYAN}•${NC} Make sure the GPU driver is properly installed"
+    print_title "Make sure the GPU driver is properly installed"
 fi
 
 # Make sure udev rules are correct for these devices
@@ -144,12 +143,12 @@ SUBSYSTEM=="graphics", ACTION=="add", MODE="0666", GROUP="video"
 KERNEL=="card[0-9]*", SUBSYSTEM=="drm", MODE="0666", GROUP="video"
 KERNEL=="renderD[0-9]*", SUBSYSTEM=="drm", MODE="0666", GROUP="video"
 EOF
-echo -e "  ${CYAN}•${NC} Created udev rules for DRM devices"
+print_title "Created udev rules for DRM devices"
 
 # Reload udev rules
 udevadm control --reload-rules
 udevadm trigger
-echo -e "  ${CYAN}•${NC} Reloaded udev rules"
+print_title "Reloaded udev rules"
 
 # Create a dummy virtual X frame buffer for systems without a GPU
 if [ ! -e "/dev/dri/card0" ]; then
@@ -173,7 +172,7 @@ EOF
     systemctl daemon-reload
     systemctl enable xvfb.service
     systemctl start xvfb.service
-    echo -e "  ${CYAN}•${NC} Xvfb virtual display configured as fallback"
+    print_title "Xvfb virtual display configured as fallback"
 fi
 
 # Create the kiosk start script
@@ -214,7 +213,7 @@ ProtectSystem=true
 [Install]
 WantedBy=multi-user.target
 EOF
-echo -e "  ${CYAN}•${NC} Created service file: /etc/systemd/system/$BACKEND_SERVICE"
+print_title "Created service file: /etc/systemd/system/$BACKEND_SERVICE"
 print_status "Backend service file created"
 
 # Create the kiosk display service file
@@ -250,7 +249,7 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF
-echo -e "  ${CYAN}•${NC} Created service file: /etc/systemd/system/$DISPLAY_SERVICE"
+print_title "Created service file: /etc/systemd/system/$DISPLAY_SERVICE"
 print_status "Display service file created"
 
 # Set up log rotation for log files
@@ -274,9 +273,9 @@ print_status "Systemd daemon reloaded"
 # Enable the services to start at boot
 print_step "Enabling services to start at boot..."
 systemctl enable $BACKEND_SERVICE
-echo -e "  ${CYAN}•${NC} Enabled service: $BACKEND_SERVICE"
+print_title "Enabled service: $BACKEND_SERVICE"
 systemctl enable $DISPLAY_SERVICE
-echo -e "  ${CYAN}•${NC} Enabled service: $DISPLAY_SERVICE"
+print_title "Enabled service: $DISPLAY_SERVICE"
 
 # Start the backend service
 print_step "Starting backend service ($BACKEND_SERVICE)..."
@@ -318,7 +317,7 @@ echo -e "     ${CYAN}•${NC} sudo systemctl status fridge-kiosk-backend.service
 echo -e "     ${CYAN}•${NC} sudo journalctl -fu fridge-kiosk-backend.service"
 echo 
 print_status "Reboot your system to start using the kiosk:"
-echo -e "  ${CYAN}•${NC} sudo reboot"
+print_title "sudo reboot"
 echo
 print_status "Enjoy your new kiosk system!"
 

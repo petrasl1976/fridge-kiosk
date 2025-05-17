@@ -10,12 +10,23 @@ BOLD='\033[1m'
 NC='\033[0m' # No Color
 
 # Function to print status messages
-print_status() { echo -e "${BLUE}[INFO]${NC} $1"; }
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
 print_header() { echo -e "\n${BOLD}${GREEN}==== $1 ====${NC}\n"; }
 print_step() { echo -e "${CYAN}[STEP]${NC} $1"; }
 print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
-print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-print_code() { echo -e "  ${CYAN}$1${NC}"; }
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+print_code() {
+    echo -e "  ${CYAN}$1${NC}"
+}
+
+print_title() {
+    echo -e "${CYAN}•${NC} $1\n"
+}
 
 print_header "FRIDGE KIOSK UNINSTALLATION"
 echo -e "${CYAN}This script will completely remove the Fridge Kiosk system and revert system changes${NC}"
@@ -66,24 +77,24 @@ SERVICES=(
 # Handle all services in a loop
 for service in "${SERVICES[@]}"; do
     if systemctl is-active --quiet "$service"; then
-        echo -e "  ${CYAN}•${NC} Stopping $service..."
+        print_title "Stopping $service..."
         systemctl stop "$service"
     fi
 
     if systemctl is-enabled --quiet "$service"; then
-        echo -e "  ${CYAN}•${NC} Disabling $service..."
+        print_title "Disabling $service..."
         systemctl disable "$service"
     fi
 
     if [ -f "/etc/systemd/system/$service" ]; then
-        echo -e "  ${CYAN}•${NC} Removing $service..."
+        print_title "Removing $service..."
         rm "/etc/systemd/system/$service"
     fi
 done
 
 # Disable seatd service if it was enabled by our script
 if systemctl is-enabled --quiet seatd.service; then
-    echo -e "  ${CYAN}•${NC} Disabling seatd service..."
+    print_title "Disabling seatd service..."
     systemctl disable seatd.service
     systemctl stop seatd.service
 fi
@@ -99,23 +110,23 @@ print_step "Removing udev rules..."
 rm -f /etc/udev/rules.d/99-drm-permissions.rules
 udevadm control --reload-rules
 udevadm trigger
-echo -e "  ${CYAN}•${NC} Device rules removed"
+print_title "Device rules removed"
 
 # Remove logrotate configuration
 print_step "Removing log rotation configuration..."
 rm -f /etc/logrotate.d/fridge-kiosk
-echo -e "  ${CYAN}•${NC} Log rotation config removed"
+print_title "Log rotation config removed"
 
 # Remove startup script
 print_step "Removing startup script..."
 rm -f "$USER_HOME/start-kiosk.sh"
-echo -e "  ${CYAN}•${NC} Kiosk startup script removed"
+print_title "Kiosk startup script removed"
 
 # Remove virtual environment if it exists
 if [ -d "$INSTALL_DIR/venv" ]; then
     print_step "Removing Python virtual environment..."
     rm -rf "$INSTALL_DIR/venv"
-    echo -e "  ${CYAN}•${NC} Python virtual environment removed"
+    print_title "Python virtual environment removed"
 fi
 
 # If user chose to remove packages
@@ -143,18 +154,18 @@ if [[ "$remove_packages" =~ ^[yY]$ ]]; then
         portaudio19-dev \
         libasound2-dev
     
-    echo -e "  ${CYAN}•${NC} Packages removed"
+    print_title "Packages removed"
     
     # Run autoremove to clean up dependencies
     print_step "Removing unused dependencies..."
     apt-get autoremove -y
     apt-get clean
-    echo -e "  ${CYAN}•${NC} Dependencies cleaned up"
+    print_title "Dependencies cleaned up"
     
     print_step "Purging package configurations..."
     # Purge configs for critical components
     apt-get purge -y cage chromium-browser seatd
-    echo -e "  ${CYAN}•${NC} Package configurations purged"
+    print_title "Package configurations purged"
 fi
 
 print_header "CLEANING UP DATA"
@@ -170,11 +181,11 @@ rm -rf "$USER_HOME/.config/chromium"
 # Clean up plugin data directories
 for PLUGIN_DIR in "$INSTALL_DIR/plugins/"*/; do
     if [ -d "${PLUGIN_DIR}data" ]; then
-        echo -e "  ${CYAN}•${NC} Removing data for plugin: $(basename "$PLUGIN_DIR")"
+        print_title "Removing data for plugin: $(basename "$PLUGIN_DIR")"
         rm -rf "${PLUGIN_DIR}data"
     fi
 done
-echo -e "  ${CYAN}•${NC} Data directories cleaned"
+print_title "Data directories cleaned"
 
 # Reset environment variables
 print_step "Resetting environment variables..."
@@ -182,14 +193,14 @@ print_step "Resetting environment variables..."
 sed -i '/fridge-kiosk/d' "$USER_HOME/.profile" "$USER_HOME/.bashrc" 2>/dev/null || true
 sed -i '/XDG_RUNTIME_DIR/d' "$USER_HOME/.profile" "$USER_HOME/.bashrc" 2>/dev/null || true
 sed -i '/WAYLAND_DISPLAY/d' "$USER_HOME/.profile" "$USER_HOME/.bashrc" 2>/dev/null || true
-echo -e "  ${CYAN}•${NC} Environment variables reset"
+print_title "Environment variables reset"
 
 # Reset user groups
 print_step "Resetting user groups..."
 # Remove user from all groups added by the installation
 for group in video input seat render tty; do
     if getent group $group >/dev/null; then
-        echo -e "  ${CYAN}•${NC} Removing $SUDO_USER from group: $group"
+        print_title "Removing $SUDO_USER from group: $group"
         gpasswd -d $SUDO_USER $group 2>/dev/null || true
     fi
 done
@@ -197,23 +208,23 @@ done
 # Remove groups if created by our script
 for group in seat render; do
     if getent group $group >/dev/null; then
-        echo -e "  ${CYAN}•${NC} Checking if group $group can be removed..."
+        print_title "Checking if group $group can be removed..."
         # Only remove if no users are in the group
         if [ -z "$(getent group $group | cut -d: -f4)" ]; then
-            echo -e "  ${CYAN}•${NC} Removing empty group: $group"
+            print_title "Removing empty group: $group"
             groupdel $group 2>/dev/null || true
         else
-            echo -e "  ${YELLOW}•${NC} Group $group still has members, not removing"
+            print_warning "Group $group still has members, not removing"
         fi
     fi
 done
-echo -e "  ${CYAN}•${NC} User groups reset"
+print_title "User groups reset"
 
 # Find and restore any modified system config files
 print_step "Scanning for modified system files..."
 INSTALL_TIME=$(stat -c %Y "$INSTALL_DIR/scripts/install_kiosk.sh" 2>/dev/null || stat -c %Y "$INSTALL_DIR" 2>/dev/null)
 if [ -n "$INSTALL_TIME" ]; then
-    echo -e "  ${CYAN}•${NC} Searching for files modified since installation time: $(date -d @$INSTALL_TIME)"
+    print_title "Searching for files modified since installation time: $(date -d @$INSTALL_TIME)"
     
     # Save the list to a file
     MODIFIED_FILES="$INSTALL_DIR/modified_files.txt"
@@ -221,8 +232,8 @@ if [ -n "$INSTALL_TIME" ]; then
     # Find all files in system directories modified after installation
     find /etc /lib /usr /var /bin /sbin -type f -newer "$INSTALL_DIR/scripts/install_kiosk.sh" 2>/dev/null | grep -v "^$INSTALL_DIR" > "$MODIFIED_FILES"
     
-    echo -e "  ${CYAN}•${NC} Found $(wc -l < "$MODIFIED_FILES") modified system files."
-    echo -e "  ${CYAN}•${NC} List saved to: $MODIFIED_FILES"
+    print_title "Found $(wc -l < "$MODIFIED_FILES") modified system files."
+    print_title "List saved to: $MODIFIED_FILES"
     print_status "You can review these files to check for remaining changes:"
     print_code "less $MODIFIED_FILES"
     
@@ -239,33 +250,33 @@ print_step "Restoring default system configurations..."
 
 # Restore default boot config if we modified it
 if grep -q "fridge-kiosk" /boot/config.txt; then
-    print_status "Restoring default boot configuration..."
+    print_title "Restoring default boot configuration..."
     # Create backup of current config
     cp /boot/config.txt /boot/config.txt.backup
     # Remove our custom settings
     sed -i '/# fridge-kiosk/d' /boot/config.txt
     sed -i '/gpu_mem=/d' /boot/config.txt
     sed -i '/dtoverlay=vc4-kms-v3d/d' /boot/config.txt
-    echo -e "  ${CYAN}•${NC} Boot configuration restored (backup at /boot/config.txt.backup)"
+    print_title "Boot configuration restored (backup at /boot/config.txt.backup)"
 fi
 
 # Restore default lightdm configuration if we modified it
 if [ -f /etc/lightdm/lightdm.conf ] && grep -q "fridge-kiosk" /etc/lightdm/lightdm.conf; then
-    print_status "Restoring default display manager configuration..."
+    print_title "Restoring default display manager configuration..."
     # Create backup of current config
     cp /etc/lightdm/lightdm.conf /etc/lightdm/lightdm.conf.backup
     # Remove our custom settings
     sed -i '/# fridge-kiosk/d' /etc/lightdm/lightdm.conf
     sed -i '/autologin-user=/d' /etc/lightdm/lightdm.conf
-    echo -e "  ${CYAN}•${NC} Display manager configuration restored"
+    print_title "Display manager configuration restored"
 fi
 
 print_header "UNINSTALLATION COMPLETE"
 print_status "The Fridge Kiosk system has been completely removed and system changes have been reverted."
 print_status "The following actions may be needed to completely restore the system:"
-echo -e "  ${CYAN}•${NC} Reboot the system to apply all changes: sudo reboot"
-echo -e "  ${CYAN}•${NC} Reinstall any packages you need that were removed"
-echo -e "  ${CYAN}•${NC} Check $MODIFIED_FILES for any remaining system changes"
+print_title "Reboot the system to apply all changes: sudo reboot"
+print_title "Reinstall any packages you need that were removed"
+print_title "Check $MODIFIED_FILES for any remaining system changes"
 echo
 
 print_warning "For a complete factory reset, consider reinstalling Raspberry Pi OS."

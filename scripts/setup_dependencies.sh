@@ -20,6 +20,7 @@ print_step() { echo -e "${CYAN}[STEP]${NC} $1"; }
 print_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+print_title() { echo -e "${CYAN}•${NC} $1\n"; }
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
@@ -144,7 +145,7 @@ if [ -f "$CONFIG_FILE" ]; then
         print_warning "No enabled plugins found in config."
         print_status "Available plugins that can be enabled in config:"
         for plugin in $AVAILABLE_PLUGINS; do
-            echo -e "  ${CYAN}•${NC} $plugin"
+            print_title "$plugin"
         done
         ENABLED_PLUGINS=""
     else
@@ -154,7 +155,7 @@ else
     print_warning "Config file not found at $CONFIG_FILE."
     print_status "Available plugins that can be enabled once you create a config:"
     for plugin in $AVAILABLE_PLUGINS; do
-        echo -e "  ${CYAN}•${NC} $plugin"
+        print_title "$plugin"
     done
     ENABLED_PLUGINS=""
 fi
@@ -195,7 +196,7 @@ print_success "All dependencies installed successfully!"
 echo
 if [ ! -z "$ENABLED_PLUGINS" ]; then
     print_status "The following plugins are enabled:"
-    echo -e "  ${CYAN}•${NC} $ENABLED_PLUGINS"
+    print_title "$ENABLED_PLUGINS"
 fi
 echo
 
