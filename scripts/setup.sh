@@ -17,7 +17,7 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 print_header "FRIDGE KIOSK SETUP"
-print_title "Setting up environment and services for the kiosk system"
+print_info "Setting up environment and services for the kiosk system"
 
 cd "$INSTALL_DIR"
 print_info "Installation directory: $INSTALL_DIR"
@@ -35,12 +35,12 @@ print_step "Setting execute permissions on scripts..."
 find "$INSTALL_DIR/scripts" -name "*.sh" -exec chmod +x {} \;
 
 for directory in logs config; do
-    print_title "Creating directory: $INSTALL_DIR/$directory"
+    print_info "Creating directory: $INSTALL_DIR/$directory"
     mkdir -p "$INSTALL_DIR/$directory"
 done
 
 for file in backend-run.log backend.log backend-error.log; do
-    print_title "Creating file: $INSTALL_DIR/logs/$file"
+    print_info "Creating file: $INSTALL_DIR/logs/$file"
     touch "$INSTALL_DIR/logs/$file"
 done
 
@@ -48,16 +48,18 @@ if [ -n "$SUDO_USER" ]; then
     chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR"
 fi
 
-print_title "Setting write permissions for log files"
+print_info "Setting write permissions for log files"
 chmod -R 755 "$INSTALL_DIR/logs"
-chmod 666 "$INSTALL_DIR/logs/*.log"
+for file in backend-run.log backend.log backend-error.log; do
+    chmod 666 "$INSTALL_DIR/logs/$file"
+done
 
 print_step "Fixing shebang in run.py..."
 sed -i "1c #!$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/backend/run.py"
 
 print_step "Making scripts executable..."
 chmod +x "$INSTALL_DIR/backend/run.py"
-chmod +x "$INSTALL_DIR/scripts/*.sh" 
+chmod +x "$INSTALL_DIR/scripts/"*.sh 
 
 print_step "Enabling display compositor service (seatd)..."
 systemctl enable --now seatd
@@ -118,7 +120,7 @@ ProtectSystem=true
 [Install]
 WantedBy=multi-user.target
 EOF
-print_title "Created service file: /etc/systemd/system/$BACKEND_SERVICE"
+print_info "Created service file: /etc/systemd/system/$BACKEND_SERVICE"
 print_info "Backend service file created"
 
 print_step "Creating kiosk display service ($DISPLAY_SERVICE)..."
@@ -153,7 +155,7 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF
-print_title "Created service file: /etc/systemd/system/$DISPLAY_SERVICE"
+print_info "Created service file: /etc/systemd/system/$DISPLAY_SERVICE"
 print_info "Display service file created"
 
 print_step "Setting up log rotation..."
@@ -189,4 +191,4 @@ echo -e "     ${CYAN}•${NC} Main configuration: $INSTALL_DIR/config/main.json"
 echo -e "     ${CYAN}•${NC} Environment variables: $INSTALL_DIR/config/.env"
 echo 
 print_info "Reboot your system to start using the kiosk:"
-print_title "sudo reboot"
+print_info "sudo reboot"
