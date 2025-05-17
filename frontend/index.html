@@ -27,22 +27,20 @@
 </head>
 <body class="theme-{{ config.system.theme|default('dark') }} orientation-{{ config.system.orientation|default('landscape') }}">
     <div id="kiosk-container">
-        <!-- Plugin containers -->
+        <!-- Plugins -->
         {% for plugin in plugins %}
-        <div id="plugin-{{ plugin.name }}" style="
-            position: absolute;
-            {% if plugin.position.top %}top: {{ plugin.position.top }};{% endif %}
-            {% if plugin.position.left %}left: {{ plugin.position.left }};{% endif %}
-            {% if plugin.position.right %}right: {{ plugin.position.right }};{% endif %}
-            {% if plugin.position.bottom %}bottom: {{ plugin.position.bottom }};{% endif %}
-            {% if plugin.position.width and plugin.position.width != 'auto' %}width: {{ plugin.position.width }};{% endif %}
-            {% if plugin.position.height and plugin.position.height != 'auto' %}height: {{ plugin.position.height }};{% endif %}
-            z-index: {{ plugin.position.z_index|default(1) }};
-        ">
             {% if plugin.view_content %}
-            {{ plugin.view_content|safe }}
+            <div id="plugin-{{ plugin.name }}" style="
+                position: absolute;
+                top: {{ plugin.position.top|default('0') }};
+                left: {{ plugin.position.left|default('0') }};
+                width: {{ plugin.position.width|default('auto') }};
+                height: {{ plugin.position.height|default('auto') }};
+                z-index: {{ plugin.position.z_index|default(1) }};
+            ">
+                {{ plugin.view_content|safe }}
+            </div>
             {% endif %}
-        </div>
         {% endfor %}
     </div>
 
