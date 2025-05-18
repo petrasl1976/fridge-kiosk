@@ -38,47 +38,27 @@ def get_sensor_data(config=None):
     }
     
     # Try to get temperature and humidity from sensor
+    broadlink_config = (config or {}).get('broadlink', {})
+    discover_timeout = broadlink_config.get('discover_timeout', 5)
+    target_type_prefix = broadlink_config.get('target_type_prefix', 'RM4')
     try:
-        # Try to use BroadLink sensor first
-        broadlink_config = (config or {}).get('broadlink', {})
-        discover_timeout = broadlink_config.get('discover_timeout', 5)
-        target_type_prefix = broadlink_config.get('target_type_prefix', 'RM4')
-        try:
-            import broadlink
-            devices = broadlink.discover(timeout=discover_timeout)
-            for device in devices:
-                if device.type.startswith(target_type_prefix):
-                    device.auth()
-                    sensor_data = device.check_sensors()
-                    if sensor_data:
-                        result["temperature"] = sensor_data.get("temperature")
-                        result["humidity"] = sensor_data.get("humidity")
-                        if result["temperature"] is not None and result["humidity"] is not None:
-                            break  # Successfully got the data
-        except ImportError:
-            pass  # BroadLink not available
-
-        # If BroadLink failed, try DHT22 sensor
+        import broadlink
+        devices = broadlink.discover(timeout=discover_timeout)
+        for device in devices:
+            if device.type.startswith(target_type_prefix):
+                device.auth()
+                sensor_data = device.check_sensors()
+                if sensor_data:
+                    result["temperature"] = sensor_data.get("temperature")
+                    result["humidity"] = sensor_data.get("humidity")
+                    if result["temperature"] is not None and result["humidity"] is not None:
+                        break
         if result["temperature"] is None or result["humidity"] is None:
-            try:
-                import Adafruit_DHT
-                # Read data from DHT22 sensor on GPIO pin 4
-                humidity, temperature = Adafruit_DHT.read_retry(22, 4)
-                if humidity is not None and temperature is not None:
-                    result["temperature"] = round(temperature, 1)
-                    result["humidity"] = round(humidity, 1)
-                else:
-                    result["temperature"] = "err"
-                    result["humidity"] = "err"
-            except ImportError:
-                result["temperature"] = "err"
-                result["humidity"] = "err"
-            except Exception as e:
-                print(f"Error reading temperature/humidity sensor: {e}")
-                result["temperature"] = "err"
-                result["humidity"] = "err"
+            raise Exception("No data from broadlink")
     except Exception as e:
-        print(f"Error reading temperature/humidity sensor: {e}")
+        print(f"Error reading broadlink sensor: {e}")
+        result["temperature"] = "err"
+        result["humidity"] = "err"
     
     # Get CPU temperature
     try:
