@@ -1,6 +1,5 @@
 {
     "name": "sensors",
-    "displayName": "Temperature & Humidity",
     "position": {
         "landscape": {
             "top": "10%",

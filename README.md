@@ -26,11 +26,11 @@ fridge-kiosk/
 │   └── utils/          # Utility functions
 │       └── config.py   # Configuration utilities
 ├── plugins/            # Plugin directories
-│   └── sensors/        # Temperature & humidity plugin
+│   └── date-time/      # Date & time display plugin
 │       ├── view.html   # Plugin HTML template
-│       ├── __init__.py # Plugin main code
+│       ├── main.py     # Plugin main code
 │       ├── config.json # Plugin configuration
-│       ├── requirements.txt # Plugin dependencies
+│       ├── requirements.txt # Plugin dependencies (optional)
 │       └── static/     # Static assets
 │           ├── script.js  # Plugin JavaScript
 │           └── style.css  # Plugin CSS
@@ -92,7 +92,6 @@ This will:
 - Remove configuration files
 - Clean up data and logs
 - Reset system changes
-- Optionally remove installed packages
 
 ## Plugin Development
 
@@ -104,189 +103,46 @@ Each plugin must follow this directory structure:
 
 ```
 plugins/my_plugin/
-├── __init__.py          # Main plugin code with required exports
-├── view.html            # HTML template for your plugin
-├── config.json          # Plugin configuration
-├── main.py              # Optional API handlers (if needed)
-├── requirements.txt     # Python dependencies
-└── static/              # Static assets directory
-    ├── script.js        # JavaScript implementation
-    └── style.css        # CSS styles
+├── requirements.txt    # Python dependencies (optional)
+├── config.json         # Plugin configuration
+├── main.py             # Main plugin code with API endpoints
+├── view.html           # HTML template for your plugin
+└── static/             # Static assets directory
+    ├── script.js       # JavaScript implementation
+    └── style.css       # CSS styles
 ```
 
-### Required Files
+### Required Plugin Components
 
-1. **`__init__.py`**: The main plugin module that must export:
-   - `PLUGIN_NAME`: String identifier for your plugin
-   - `PLUGIN_VERSION`: Version number (e.g., "1.0.0")
-   - `PLUGIN_DESCRIPTION`: Short description of your plugin
-   - `setup(app)`: Function to initialize the plugin
-   - `get_routes(app)`: Function to register any HTTP routes
-   - `get_data()`: Function to return initial data for frontend
-   - `cleanup()`: Function to release resources when plugin is disabled
+To create a working plugin, you need these essential components:
 
-2. **`view.html`**: HTML template for your plugin UI. This will be injected into the main page.
+1. **main.py**: Backend file with two required functions:
+   - `init(config)`: Called once at startup to initialize the plugin
+   - `api_data()`: Called when frontend requests fresh data
 
-3. **`config.json`**: Configuration for your plugin, which will be loaded at startup.
+2. **view.html**: Simple HTML template for your plugin's UI
 
-4. **`static/script.js`**: JavaScript code for your plugin. **IMPORTANT:** Place script files in the `static/` subdirectory, not in the plugin root.
+3. **config.json**: Configuration including:
+   - `name`: Unique plugin identifier
+   - `position`: Screen positioning for different orientations
+   - `updateInterval`: Refresh rate in seconds
 
-5. **`static/style.css`**: CSS styles for your plugin. **IMPORTANT:** Place style files in the `static/` subdirectory, not in the plugin root.
+4. **static/script.js**: JavaScript file with these key parts:
+   - `document.addEventListener('DOMContentLoaded', ...)`: Entry point that runs when page loads
+   - Main initialization function: Sets up elements and periodically fetches new data
+   - Data fetching function: Gets data from API, updates UI, and handles errors
 
-### Example Implementation
+5. **static/style.css**: CSS styling for your plugin's UI
 
-#### __init__.py
-```python
-#!/usr/bin/env python3
-"""
-My Plugin - Description of your plugin
-"""
-import os
-import json
-import logging
+For a complete working example, see the `plugins/date-time` directory in the codebase.
 
-# Plugin information
-PLUGIN_NAME = "my_plugin"
-PLUGIN_VERSION = "1.0.0"
-PLUGIN_DESCRIPTION = "Description of your plugin"
+### Plugin Loading Process
 
-# Set up logging
-logger = logging.getLogger(f"plugin.{PLUGIN_NAME}")
-
-# Global variables
-config = {}
-
-def setup(app):
-    """Set up the plugin"""
-    global config
-    
-    logger.info(f"Setting up {PLUGIN_NAME} plugin")
-    
-    # Get the plugin directory
-    plugin_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Load plugin config
-    config_path = os.path.join(plugin_dir, 'config.json')
-    if os.path.exists(config_path):
-        with open(config_path, 'r') as f:
-            config = json.load(f)
-    
-    # Register routes if using Flask
-    blueprint = Blueprint(PLUGIN_NAME, __name__)
-    
-    @blueprint.route(f'/api/plugins/{PLUGIN_NAME}/data')
-    def get_plugin_data():
-        # Your API endpoint
-        return jsonify({"status": "ok"})
-    
-    # Register the blueprint
-    app.register_blueprint(blueprint)
-    
-    return True
-
-def get_routes(app):
-    """Define plugin routes"""
-    return [f'/api/plugins/{PLUGIN_NAME}/data']
-
-def get_data():
-    """Return initial data for frontend"""
-    return {
-        'config': config,
-        'data': {},  # Any initial data
-        'view': 'view.html',
-        'script': 'static/script.js',
-        'style': 'static/style.css'
-    }
-
-def cleanup():
-    """Clean up resources"""
-    logger.info(f"Cleaning up {PLUGIN_NAME} plugin")
-    return True
-```
-
-#### view.html
-```html
-<div id="my-plugin-container" class="my-plugin">
-    <h2 class="my-plugin-header">My Plugin</h2>
-    <div class="my-plugin-content">
-        <div id="my-plugin-data">Loading...</div>
-    </div>
-</div>
-```
-
-#### static/script.js
-```javascript
-/**
- * My Plugin for Fridge Kiosk
- */
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Get plugin container
-    const container = document.getElementById('plugin-my_plugin');
-    if (!container) {
-        console.error('My plugin: Container not found');
-        return;
-    }
-    
-    // Access plugin config
-    const config = window.KIOSK_CONFIG?.plugins?.my_plugin || {};
-    const pluginData = window.PLUGINS_DATA?.my_plugin || {};
-    
-    // Your plugin initialization code here
-    
-    // Example: Update content periodically
-    function fetchData() {
-        fetch('/api/plugins/my_plugin/data')
-            .then(response => response.json())
-            .then(data => {
-                // Update UI with data
-                document.getElementById('my-plugin-data').textContent = 
-                    JSON.stringify(data);
-            })
-            .catch(error => {
-                console.error('Error fetching data:', error);
-            });
-    }
-    
-    // Initial fetch
-    fetchData();
-    
-    // Set up periodic updates
-    setInterval(fetchData, (config.updateInterval || 30) * 1000);
-});
-```
-
-#### static/style.css
-```css
-.my-plugin {
-    background-color: #f0f0f0;
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.my-plugin-header {
-    font-size: 1.5rem;
-    margin-bottom: 12px;
-}
-
-.my-plugin-content {
-    font-size: 1.2rem;
-}
-```
-
-#### config.json
-```json
-{
-    "updateInterval": 30,
-    "enabled": true,
-    "customOptions": {
-        "option1": "value1",
-        "option2": "value2"
-    }
-}
-```
+1. The backend reads your `config.json` to configure the plugin
+2. It calls `main.py:init()` once at startup to get initial data
+3. The frontend loads `view.html` and injects it into the page
+4. Frontend JavaScript loads and uses your `script.js` to add dynamic behavior
+5. Your script periodically calls `/api/plugins/your-plugin/data`, which invokes `main.py:api_data()`
 
 ### Adding New Plugins
 
@@ -323,20 +179,6 @@ To manage the services:
 sudo systemctl {start|stop|restart|status} fridge-kiosk-backend.service
 sudo systemctl {start|stop|restart|status} fridge-kiosk-display.service
 ```
-
-## Adding New Plugins
-
-After installing a new plugin:
-
-1. Run the dependencies setup script to install any new requirements:
-   ```
-   sudo ./scripts/install.sh
-   ```
-
-2. Restart the backend service:
-   ```
-   sudo systemctl restart fridge-kiosk-backend.service
-   ```
 
 ## License
 
