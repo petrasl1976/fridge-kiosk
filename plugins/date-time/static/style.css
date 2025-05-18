@@ -20,7 +20,7 @@
 
 /* Time display with extra large font */
 .datetime-container .time {
-    font-size: 7.2em;
+    /* Font size will be set by JavaScript from config */
     font-weight: bold;
     margin-bottom: 5px;
     line-height: 1;
@@ -30,7 +30,7 @@
 
 /* Date display with medium font */
 .datetime-container .date {
-    font-size: 3.5em;
+    /* Font size will be set by JavaScript from config */
     opacity: 0.9;
     white-space: nowrap;
 }
@@ -42,7 +42,7 @@
 }
 
 .datetime-container .date.error {
-    font-size: 2em;
+    font-size: 2em; /* Keep this for error state only */
     background-color: rgba(255, 0, 0, 0.1);
     padding: 5px;
     border-radius: 4px;
@@ -70,13 +70,8 @@ body.orientation-portrait .datetime-container {
     padding: 10px 15px;
 }
 
-body.orientation-portrait .datetime-container .time {
-    font-size: 6rem;
-}
-
-body.orientation-portrait .datetime-container .date {
-    font-size: 3rem;
-}
+/* Remove hardcoded font sizes for portrait mode */
+/* Let JavaScript set these from config */
 
 /* Animation for time change */
 @keyframes time-update {

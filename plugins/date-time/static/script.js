@@ -35,10 +35,16 @@ function dateTimeInit(container) {
     // Apply font sizes from config
     if (pluginConfig.format) {
         if (pluginConfig.format.time_font_size) {
-            timeElement.style.fontSize = pluginConfig.format.time_font_size;
+            console.log(`Setting time font size to ${pluginConfig.format.time_font_size}`);
+            timeElement.style.cssText += `font-size: ${pluginConfig.format.time_font_size} !important;`;
+            // Verify it was applied
+            console.log(`Applied time font size: ${getComputedStyle(timeElement).fontSize}`);
         }
         if (pluginConfig.format.date_font_size) {
-            dateElement.style.fontSize = pluginConfig.format.date_font_size;
+            console.log(`Setting date font size to ${pluginConfig.format.date_font_size}`);
+            dateElement.style.cssText += `font-size: ${pluginConfig.format.date_font_size} !important;`;
+            // Verify it was applied
+            console.log(`Applied date font size: ${getComputedStyle(dateElement).fontSize}`);
         }
     }
     
