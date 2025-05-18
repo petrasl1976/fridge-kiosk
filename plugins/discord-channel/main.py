@@ -2,11 +2,21 @@ import os
 import requests
 import logging
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+# Get the project root directory (two levels up from this file)
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+ENV_FILE = PROJECT_ROOT / 'config' / '.env'
+
+# Load environment variables from the specific .env file
+load_dotenv(ENV_FILE)
 
 # Configure logging
 logger = logging.getLogger('fridge-kiosk')
+
+# Debug logging for .env file
+logger.info(f"Looking for .env file at: {ENV_FILE}")
+logger.info(f".env file exists: {ENV_FILE.exists()}")
 
 BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 CHANNEL_ID = os.getenv("DISCORD_TEXT_CHANNEL_ID")
