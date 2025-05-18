@@ -14,31 +14,13 @@
         }
     },
     "updateInterval": 30,
-    "warningThresholds": {
-        "temperature": {
-            "min": 2,
-            "max": 8
-        },
-        "humidity": {
-            "min": 30,
-            "max": 60
-        }
-    },
     "thresholds": {
-        "temperature": {
-            "min_normal": 18,
-            "max_normal": 25
-        },
-        "humidity": {
-            "min_normal": 40,
-            "max_normal": 60
-        },
         "cpu_temp": {
             "warning": 60,
             "critical": 70
         }
     },
-    "show_cpu_temp": true,
-    "show_room_temp": true,
-    "show_humidity": true
+    "format": {
+        "font_size": "3em"
+    }
 } 

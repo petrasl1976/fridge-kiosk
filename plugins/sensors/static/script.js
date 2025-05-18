@@ -20,32 +20,21 @@ function sensorsInit(container) {
     const temperatureElement = container.querySelector('#sensors-temperature');
     const humidityElement = container.querySelector('#sensors-humidity');
     const cpuTempElement = container.querySelector('#sensors-cpu-temp');
+    const sensorReadings = container.querySelector('.sensor-readings');
+    
+    // Apply font size from config
+    sensorReadings.style.cssText += `font-size: ${pluginConfig.format.font_size} !important;`;
     
     // Display initial data
     if (pluginData.temperature) temperatureElement.textContent = `${pluginData.temperature}°C`;
     if (pluginData.humidity) humidityElement.textContent = `${pluginData.humidity}%`;
     if (pluginData.cpu_temp) cpuTempElement.textContent = `${pluginData.cpu_temp}°C`;
     
-    // Set thresholds for warnings
-    const thresholds = pluginConfig.thresholds || {
-        temperature: {
-            min_normal: 18, max_normal: 25
-        },
-        humidity: {
-            min_normal: 40, max_normal: 60
-        },
-        cpu_temp: {
-            warning: 60, critical: 70
-        }
+    // Set thresholds for CPU temperature warnings
+    const cpuThresholds = pluginConfig.thresholds?.cpu_temp || {
+        warning: 60,
+        critical: 70
     };
-    
-    // Function to apply warning classes based on values
-    function applyWarningClasses(element, value, min, max) {
-        element.classList.remove('warning', 'critical');
-        if (value < min || value > max) {
-            element.classList.add('warning');
-        }
-    }
     
     // Function to apply CPU temperature warning classes
     function applyCpuTempWarning(element, value, warning, critical) {
@@ -64,22 +53,10 @@ function sensorsInit(container) {
             .then(data => {
                 if (data.temperature) {
                     temperatureElement.textContent = `${data.temperature}°C`;
-                    applyWarningClasses(
-                        temperatureElement, 
-                        data.temperature,
-                        thresholds.temperature.min_normal, 
-                        thresholds.temperature.max_normal
-                    );
                 }
                 
                 if (data.humidity) {
                     humidityElement.textContent = `${data.humidity}%`;
-                    applyWarningClasses(
-                        humidityElement, 
-                        data.humidity,
-                        thresholds.humidity.min_normal, 
-                        thresholds.humidity.max_normal
-                    );
                 }
                 
                 if (data.cpu_temp) {
@@ -87,8 +64,8 @@ function sensorsInit(container) {
                     applyCpuTempWarning(
                         cpuTempElement, 
                         data.cpu_temp,
-                        thresholds.cpu_temp.warning, 
-                        thresholds.cpu_temp.critical
+                        cpuThresholds.warning, 
+                        cpuThresholds.critical
                     );
                 }
             })
