@@ -1,6 +1,5 @@
 import os
 import requests
-from flask import jsonify, request
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,7 +16,7 @@ def api_data():
     API handler for /api/plugins/discord-channel/data
     """
     if not BOT_TOKEN or not CHANNEL_ID:
-        return jsonify({"error": "Discord BOT_TOKEN or CHANNEL_ID not set"}), 500
+        return {"error": "Discord BOT_TOKEN or CHANNEL_ID not set"}
     url = f"{API_BASE_URL}/channels/{CHANNEL_ID}/messages"
     headers = {"Authorization": f"Bot {BOT_TOKEN}"}
     params = {"limit": MESSAGE_COUNT}
@@ -25,10 +24,10 @@ def api_data():
         r = requests.get(url, headers=headers, params=params, timeout=5)
         if r.status_code == 200:
             messages = r.json()
-            return jsonify(messages)
-        return jsonify({"error": f"Unable to fetch messages: {r.status_code}"}), r.status_code
+            return messages
+        return {"error": f"Unable to fetch messages: {r.status_code}"}
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return {"error": str(e)}
 
 def init(config):
     """
