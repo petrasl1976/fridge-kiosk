@@ -193,9 +193,8 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
     
     def log_message(self, format, *args):
         """Log messages to our logger instead of stderr"""
-        logger.info("%s - - [%s] %s",
+        logger.info("%s - %s",
                     self.address_string(),
-                    self.log_date_time_string(),
                     format % args)
 
 
