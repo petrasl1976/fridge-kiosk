@@ -78,5 +78,6 @@ function sensorsInit(container) {
     
     // Set up automatic refresh from API
     const refreshInterval = parseInt(pluginConfig.updateInterval) || 30;
+    fetchSensorData(); // Iškart gauti duomenis
     setInterval(fetchSensorData, refreshInterval * 1000);
 } 

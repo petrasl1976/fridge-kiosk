@@ -46,5 +46,6 @@ function dateTimeInit(container) {
     
     // Set up automatic refresh from API
     const refreshInterval = parseInt(pluginConfig.updateInterval) || 10;
+    fetchDateTime(); // Iškart gauti duomenis
     setInterval(fetchDateTime, refreshInterval * 1000);
 } 
