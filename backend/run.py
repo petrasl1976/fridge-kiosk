@@ -39,10 +39,9 @@ template_env = jinja2.Environment(loader=template_loader)
 class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
     """Custom HTTP request handler for the kiosk"""
     
-    def __init__(self, *args, config=None, plugins=None, plugins_data=None, **kwargs):
+    def __init__(self, *args, config=None, plugins=None, **kwargs):
         self.config = config or {}
-        self.plugins = plugins or []
-        self.plugins_data = plugins_data or {}
+        self.plugins = plugins or {}
         self.root_dir = parent_dir
         super().__init__(*args, **kwargs)
     
@@ -63,28 +62,12 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 template = template_env.get_template('index.html')
                 
                 # Debug position values before template rendering
-                for plugin in self.plugins:
-                    logger.info(f"Plugin {plugin['name']} position before rendering: {plugin['position']}")
-                    
-                    # Additional debugging for config values
-                    if plugin['name'] == 'date-time':
-                        if 'config' in plugin and plugin['config']:
-                            logger.info(f"DATE-TIME PLUGIN CONFIG: {plugin['config']}")
-                            if 'updateInterval' in plugin['config']:
-                                logger.info(f"UPDATE INTERVAL VALUE: {plugin['config']['updateInterval']}, TYPE: {type(plugin['config']['updateInterval'])}")
-                            else:
-                                logger.error("updateInterval NOT FOUND in date-time plugin config!")
-                        else:
-                            logger.error("No config found in date-time plugin!")
-                
-                # Debug config values
-                logger.info(f"Config object: {self.config}")
-                logger.info(f"Font family from config: {self.config.get('system', {}).get('fontFamily', 'NOT FOUND')}")
+                for plugin_name, plugin in self.plugins.items():
+                    logger.info(f"Plugin {plugin_name} position before rendering: {plugin['position']}")
                 
                 html = template.render(
                     config=self.config,
-                    plugins=self.plugins,
-                    plugins_data=self.plugins_data
+                    plugins=self.plugins
                 )
                 self.wfile.write(html.encode('utf-8'))
             except Exception as e:
