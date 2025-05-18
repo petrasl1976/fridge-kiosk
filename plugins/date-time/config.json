@@ -17,7 +17,7 @@
             "z_index": 9999
         }
     },
-    "updateInterval": 1,
+    "updateInterval": 10,
     "format": {
         "time": "%H:%M",
         "date": "%Y.%m.%d",
