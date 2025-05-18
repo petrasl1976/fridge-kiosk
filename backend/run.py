@@ -27,8 +27,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler(os.path.join(parent_dir, 'logs/backend-run.log'))
+        logging.FileHandler(os.path.join(parent_dir, 'logs/backend.log'))
     ]
 )
 logger = logging.getLogger('fridge-kiosk')
