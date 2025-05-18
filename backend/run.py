@@ -33,7 +33,7 @@ logging.basicConfig(
 logger = logging.getLogger('fridge-kiosk')
 
 # Initialize Jinja2 template environment
-template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(parent_dir, "frontend"))
+template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(parent_dir, "backend/templates"))
 template_env = jinja2.Environment(loader=template_loader)
 
 class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -188,8 +188,8 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 plugin_path = get_plugin_path(plugin_name)
                 return plugin_path / resource
         
-        # For everything else, map to the frontend directory
-        return Path(self.root_dir) / 'frontend' / path
+        # For everything else, map to the templates directory
+        return Path(self.root_dir) / 'backend' / 'templates' / path
     
     def log_message(self, format, *args):
         """Log messages to our logger instead of stderr"""

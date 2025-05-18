@@ -71,7 +71,6 @@ def api_data():
         response['error'] = error_msg
     else:
         time_format = format_config['time']
-        logger.info(f"Using time format: '{time_format}'")
         try:
             response['time'] = now.strftime(time_format)
         except Exception as e:
@@ -86,7 +85,6 @@ def api_data():
         response['error'] = response['error'] or error_msg
     else:
         date_format = format_config['date']
-        logger.info(f"Using date format: '{date_format}'")
         try:
             response['date'] = now.strftime(date_format)
         except Exception as e:

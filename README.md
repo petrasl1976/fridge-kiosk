@@ -17,14 +17,14 @@ fridge-kiosk/
 ├── backend/            # Backend application
 │   ├── run.py          # Main backend entry point
 │   ├── plugin_loader.py # Plugin loading system  
+│   ├── templates/      # HTML templates and frontend assets
+│   │   ├── index.html  # Main HTML template
+│   │   ├── css/        # CSS files
+│   │   │   └── main.css # Main stylesheet
+│   │   └── js/         # JavaScript files
+│   │       └── main.js # Main JavaScript
 │   └── utils/          # Utility functions
 │       └── config.py   # Configuration utilities
-├── frontend/           # Frontend files
-│   ├── index.html      # Main HTML template
-│   ├── css/            # CSS files
-│   │   └── main.css    # Main stylesheet
-│   └── js/             # JavaScript files
-│       └── main.js     # Main JavaScript
 ├── plugins/            # Plugin directories
 │   └── sensors/        # Temperature & humidity plugin
 │       ├── view.html   # Plugin HTML template
