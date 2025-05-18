@@ -1,164 +1,105 @@
 /**
- * Sensors Plugin for Fridge Kiosk
- * Monitors temperature and humidity
+ * Sensors Plugin - Displays temperature, humidity and CPU temperature
  */
 
-// Initialize the sensors plugin when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Get plugin container
     const container = document.getElementById('plugin-sensors');
-    if (!container) {
-        console.error('Sensors plugin: Container not found');
-        return;
-    }
+    if (!container) return;
     
     // Initialize
     sensorsInit(container);
 });
 
-// Initialize the sensors plugin
 function sensorsInit(container) {
-    console.log('Initializing Sensors plugin');
-    
-    // Get config from global object
-    const config = window.KIOSK_CONFIG?.plugins?.sensors || {};
-    const pluginData = window.PLUGINS_DATA?.sensors || {};
+    // Get plugin configuration
+    const pluginObj = window.PLUGINS?.find(p => p.name === 'sensors');
+    const pluginConfig = pluginObj?.config || {};
+    const pluginData = window.PLUGINS_DATA?.['sensors']?.data || {};
     
     // DOM elements
-    const tempElement = container.querySelector('.temperature');
-    const humidityElement = container.querySelector('.humidity');
-    const statusElement = container.querySelector('.status-value');
+    const temperatureElement = container.querySelector('#sensors-temperature');
+    const humidityElement = container.querySelector('#sensors-humidity');
+    const cpuTempElement = container.querySelector('#sensors-cpu-temp');
     
-    // Plugin state
-    const state = {
-        temperature: null,
-        humidity: null,
-        lastUpdate: null,
-        updateInterval: config.updateInterval || 30, // seconds
-        warningThresholds: config.warningThresholds || {
-            temperature: { min: 2, max: 8 },
-            humidity: { min: 30, max: 60 }
+    // Display initial data
+    if (pluginData.temperature) temperatureElement.textContent = `${pluginData.temperature}°C`;
+    if (pluginData.humidity) humidityElement.textContent = `${pluginData.humidity}%`;
+    if (pluginData.cpu_temp) cpuTempElement.textContent = `${pluginData.cpu_temp}°C`;
+    
+    // Set thresholds for warnings
+    const thresholds = pluginConfig.thresholds || {
+        temperature: {
+            min_normal: 18, max_normal: 25
         },
-        status: 'initializing'
+        humidity: {
+            min_normal: 40, max_normal: 60
+        },
+        cpu_temp: {
+            warning: 60, critical: 70
+        }
     };
     
-    // Display initial data if available from the backend
-    if (pluginData.readings) {
-        state.temperature = pluginData.readings.temperature;
-        state.humidity = pluginData.readings.humidity;
-        state.lastUpdate = new Date();
-        updateStatus();
-        displayReadings();
+    // Function to apply warning classes based on values
+    function applyWarningClasses(element, value, min, max) {
+        element.classList.remove('warning', 'critical');
+        if (value < min || value > max) {
+            element.classList.add('warning');
+        }
+    }
+    
+    // Function to apply CPU temperature warning classes
+    function applyCpuTempWarning(element, value, warning, critical) {
+        element.classList.remove('warning', 'critical');
+        if (value >= critical) {
+            element.classList.add('critical');
+        } else if (value >= warning) {
+            element.classList.add('warning');
+        }
     }
     
     // Function to fetch sensor data from the API
     function fetchSensorData() {
         fetch('/api/plugins/sensors/data')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                state.temperature = data.temperature;
-                state.humidity = data.humidity;
-                state.lastUpdate = new Date();
-                updateStatus();
-                displayReadings();
+                if (data.temperature) {
+                    temperatureElement.textContent = `${data.temperature}°C`;
+                    applyWarningClasses(
+                        temperatureElement, 
+                        data.temperature,
+                        thresholds.temperature.min_normal, 
+                        thresholds.temperature.max_normal
+                    );
+                }
+                
+                if (data.humidity) {
+                    humidityElement.textContent = `${data.humidity}%`;
+                    applyWarningClasses(
+                        humidityElement, 
+                        data.humidity,
+                        thresholds.humidity.min_normal, 
+                        thresholds.humidity.max_normal
+                    );
+                }
+                
+                if (data.cpu_temp) {
+                    cpuTempElement.textContent = `${data.cpu_temp}°C`;
+                    applyCpuTempWarning(
+                        cpuTempElement, 
+                        data.cpu_temp,
+                        thresholds.cpu_temp.warning, 
+                        thresholds.cpu_temp.critical
+                    );
+                }
             })
-            .catch(error => {
-                console.error('Error fetching sensor data:', error);
-                state.status = 'connection error';
-                statusElement.textContent = 'Connection Error';
-                statusElement.className = 'status-critical';
+            .catch(() => {
+                temperatureElement.classList.add('error');
+                humidityElement.classList.add('error');
+                cpuTempElement.classList.add('error');
             });
     }
     
-    // Update status based on current readings
-    function updateStatus() {
-        const { temperature, humidity, warningThresholds } = state;
-        
-        if (temperature === null || humidity === null) {
-            state.status = 'no data';
-            return;
-        }
-        
-        const tempOk = temperature >= warningThresholds.temperature.min && 
-                        temperature <= warningThresholds.temperature.max;
-        
-        const humidityOk = humidity >= warningThresholds.humidity.min && 
-                           humidity <= warningThresholds.humidity.max;
-        
-        if (tempOk && humidityOk) {
-            state.status = 'normal';
-        } else if (!tempOk && humidityOk) {
-            state.status = temperature < warningThresholds.temperature.min 
-                ? 'temperature too low' 
-                : 'temperature too high';
-        } else if (tempOk && !humidityOk) {
-            state.status = humidity < warningThresholds.humidity.min 
-                ? 'humidity too low' 
-                : 'humidity too high';
-        } else {
-            state.status = 'critical - multiple warnings';
-        }
-    }
-    
-    // Format and display readings on the UI
-    function displayReadings() {
-        if (state.temperature !== null) {
-            tempElement.textContent = `${state.temperature.toFixed(1)} °C`;
-            
-            // Apply warning classes
-            tempElement.classList.remove('warning', 'critical');
-            if (state.temperature < state.warningThresholds.temperature.min ||
-                state.temperature > state.warningThresholds.temperature.max) {
-                tempElement.classList.add(
-                    state.temperature < state.warningThresholds.temperature.min - 2 ||
-                    state.temperature > state.warningThresholds.temperature.max + 2 
-                        ? 'critical' : 'warning'
-                );
-            }
-        }
-        
-        if (state.humidity !== null) {
-            humidityElement.textContent = `${state.humidity.toFixed(1)} %`;
-            
-            // Apply warning classes
-            humidityElement.classList.remove('warning', 'critical');
-            if (state.humidity < state.warningThresholds.humidity.min ||
-                state.humidity > state.warningThresholds.humidity.max) {
-                humidityElement.classList.add(
-                    state.humidity < state.warningThresholds.humidity.min - 10 ||
-                    state.humidity > state.warningThresholds.humidity.max + 10 
-                        ? 'critical' : 'warning'
-                );
-            }
-        }
-        
-        // Update status text
-        statusElement.textContent = state.status.charAt(0).toUpperCase() + state.status.slice(1);
-        
-        // Update status classes
-        statusElement.classList.remove('status-normal', 'status-warning', 'status-critical');
-        if (state.status === 'normal') {
-            statusElement.classList.add('status-normal');
-        } else if (state.status.includes('critical')) {
-            statusElement.classList.add('status-critical');
-        } else {
-            statusElement.classList.add('status-warning');
-        }
-    }
-    
-    // Start the update cycle
-    statusElement.textContent = 'Connecting to sensors...';
-    
-    // Initial data fetch
-    fetchSensorData();
-    
-    // Set up regular updates
-    setInterval(fetchSensorData, state.updateInterval * 1000);
-    
-    console.log('Sensors plugin initialized with interval:', state.updateInterval);
+    // Set up automatic refresh from API
+    const refreshInterval = parseInt(pluginConfig.updateInterval) || 30;
+    setInterval(fetchSensorData, refreshInterval * 1000);
 } 

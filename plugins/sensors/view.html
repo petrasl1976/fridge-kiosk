@@ -1,16 +1,9 @@
-<div id="sensors-container" class="sensor-container">
+<div class="sensors-container">
     <div class="sensor-readings">
-        <div class="sensor-item temperature">
-            <div class="sensor-icon">🌡️</div>
-            <div id="temperature-value" class="sensor-value">—</div>
-            <div class="sensor-label">°C</div>
-        </div>
-        <div class="sensor-item humidity">
-            <div class="sensor-icon">💧</div>
-            <div id="humidity-value" class="sensor-value">—</div>
-            <div class="sensor-label">%</div>
-        </div>
+        <span id="sensors-temperature">{{ plugins_data['sensors'].data.temperature|default('--') }}°C</span>
+        <span class="separator">|</span>
+        <span id="sensors-humidity">{{ plugins_data['sensors'].data.humidity|default('--') }}%</span>
+        <span class="separator">|</span>
+        <span id="sensors-cpu-temp">{{ plugins_data['sensors'].data.cpu_temp|default('--') }}°C</span>
     </div>
-    <div id="sensor-status" class="sensor-status">Connecting to sensors...</div>
-    <div id="sensor-last-update" class="sensor-last-update">Waiting for readings...</div>
 </div> 

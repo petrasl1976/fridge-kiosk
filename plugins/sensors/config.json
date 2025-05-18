@@ -1,16 +1,16 @@
 {
     "position": {
         "landscape": {
-            "top": "10%",
-            "left": "10%",
-            "width": "80%",
-            "height": "80%"
+            "top": "2%",
+            "left": "65%",
+            "width": "35%",
+            "height": "auto"
         },
         "portrait": {
-            "top": "10%",
-            "left": "10%",
-            "width": "80%", 
-            "height": "80%"
+            "top": "1%",
+            "left": "60%",
+            "width": "40%",
+            "height": "auto"
         }
     },
     "updateInterval": 30,
@@ -25,21 +25,17 @@
         }
     },
     "thresholds": {
-        "cpu_temp": {
-            "warning": 60,
-            "critical": 70
-        },
         "temperature": {
             "min_normal": 18,
-            "max_normal": 25,
-            "min_warning": 15,
-            "max_warning": 28
+            "max_normal": 25
         },
         "humidity": {
             "min_normal": 40,
-            "max_normal": 60,
-            "min_warning": 30,
-            "max_warning": 70
+            "max_normal": 60
+        },
+        "cpu_temp": {
+            "warning": 60,
+            "critical": 70
         }
     },
     "show_cpu_temp": true,
