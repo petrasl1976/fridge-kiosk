@@ -19,9 +19,9 @@
     },
     "updateInterval": 1,
     "format": {
-        "time": "%H:%M:%S",
+        "time": "%H:%M",
         "date": "%Y.%m.%d",
-        "time_font_size": "6em",
-        "date_font_size": "5em"
+        "time_font_size": "7em",
+        "date_font_size": "4em"
     }
 } 
