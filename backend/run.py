@@ -210,7 +210,8 @@ def load_plugins(config):
     
     logger.info(f"Loading {len(enabled_plugins)} enabled plugins")
     
-    for plugin_name in enabled_plugins:
+    # Loop through all enabled plugins, using enumerate to get the index
+    for plugin_index, plugin_name in enumerate(enabled_plugins):
         logger.info(f"Loading plugin: {plugin_name}")
         plugin_path = get_plugin_path(plugin_name)
         
@@ -259,10 +260,14 @@ def load_plugins(config):
                 'top': '0',
                 'left': '0',
                 'width': '100%',
-                'height': '100%',
-                'z_index': 1
+                'height': '100%'
             }
             logger.warning(f"No position config found for plugin {plugin_name}, using defaults: {position}")
+        
+        # Set z_index based on plugin's position in the enabledPlugins array (starting from 1)
+        # This will override any z_index specified in the plugin's config
+        position['z_index'] = plugin_index + 1
+        logger.info(f"Set z_index={position['z_index']} for plugin {plugin_name} based on its position in enabledPlugins")
         
         # Default plugin info
         plugin_info = {

@@ -4,15 +4,13 @@
             "top": "7%",
             "left": "65%",
             "width": "35%",
-            "height": "auto",
-            "z_index": 10
+            "height": "auto"
         },
         "portrait": {
             "top": "5%",
             "left": "60%",
             "width": "40%",
-            "height": "auto",
-            "z_index": 10
+            "height": "auto"
         }
     },
     "updateInterval": 10,
