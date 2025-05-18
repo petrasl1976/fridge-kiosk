@@ -123,7 +123,6 @@ To create a working plugin, you need these essential components:
 2. **view.html**: Simple HTML template for your plugin's UI
 
 3. **config.json**: Configuration including:
-   - `name`: Unique plugin identifier
    - `position`: Screen positioning for different orientations
    - `updateInterval`: Refresh rate in seconds
 
