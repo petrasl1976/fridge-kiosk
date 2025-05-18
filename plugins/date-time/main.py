@@ -7,6 +7,11 @@ import os
 import json
 import datetime
 
+# Plugin information
+PLUGIN_NAME = "date-time"
+PLUGIN_VERSION = "1.0.0"
+PLUGIN_DESCRIPTION = "Display current time and date with large digits"
+
 def load_config():
     """Load the plugin configuration"""
     plugin_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,6 +22,45 @@ def load_config():
     
     return config
 
+def get_formatted_datetime(config=None):
+    """
+    Get formatted date and time according to configuration
+    
+    Args:
+        config: Full plugin configuration (optional)
+        
+    Returns:
+        Dictionary with formatted time and date
+    """
+    now = datetime.datetime.now()
+    
+    # Load config if not provided
+    if config is None:
+        config = load_config()
+    
+    # Extract format configuration
+    format_config = config.get('format', {})
+    
+    return {
+        'time': now.strftime(format_config.get('time', '%H:%M')),
+        'date': now.strftime(format_config.get('date', '%Y.%m.%d'))
+    }
+
+def init(config):
+    """
+    Initialize the plugin with configuration.
+    This is called by the backend when the plugin is loaded.
+    
+    Returns:
+        Dictionary with initial data for frontend
+    """
+    formatted_data = get_formatted_datetime(config)
+    
+    # Return data for the frontend
+    return {
+        'data': formatted_data
+    }
+
 def api_data():
     """
     API handler to get the current date and time.
@@ -25,17 +69,8 @@ def api_data():
     Returns:
         Dictionary with formatted time and date
     """
-    config = load_config()
-    now = datetime.datetime.now()
-    
-    # Get the format configuration
-    format_config = config.get('format', {})
-    
     # Return formatted time and date
-    return {
-        'time': now.strftime(format_config.get('time', '%H:%M')),
-        'date': now.strftime(format_config.get('date', '%Y.%m.%d'))
-    }
+    return get_formatted_datetime()
 
 # For testing directly
 if __name__ == "__main__":
