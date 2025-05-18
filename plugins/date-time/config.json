@@ -7,14 +7,14 @@
             "left": "65%",
             "width": "35%",
             "height": "auto",
-            "z_index": 9999
+            "z_index": 10
         },
         "portrait": {
             "top": "5%",
-            "left": "55%",
+            "left": "60%",
             "width": "40%",
             "height": "auto",
-            "z_index": 9999
+            "z_index": 10
         }
     },
     "updateInterval": 10,

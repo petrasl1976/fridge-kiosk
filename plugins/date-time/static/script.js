@@ -1,123 +1,50 @@
 /**
- * Date Time Plugin for Fridge Kiosk
- * Displays current time and date
+ * Date Time Plugin - Displays current time and date
  */
 
-// Initialize the date-time plugin when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Get plugin container
     const container = document.getElementById('plugin-date-time');
-    if (!container) {
-        console.error('Date-time plugin: Container not found');
-        return;
-    }
+    if (!container) return;
     
     // Initialize
     dateTimeInit(container);
 });
 
-// Initialize the date-time plugin
 function dateTimeInit(container) {
-    console.log('Initializing Date-time plugin');
-    
-    // Get the plugin object from window.PLUGINS which contains the full configuration
+    // Get plugin configuration
     const pluginObj = window.PLUGINS?.find(p => p.name === 'date-time');
     const pluginConfig = pluginObj?.config || {};
     const pluginData = window.PLUGINS_DATA?.['date-time'] || {};
-    
-    console.log('Date-time initial plugin data:', pluginData);
-    console.log('Date-time plugin config:', pluginConfig);
     
     // DOM elements
     const timeElement = container.querySelector('#datetime-time');
     const dateElement = container.querySelector('#datetime-date');
     
     // Apply font sizes from config
-    if (pluginConfig.format) {
-        if (pluginConfig.format.time_font_size) {
-            console.log(`Setting time font size to ${pluginConfig.format.time_font_size}`);
-            timeElement.style.cssText += `font-size: ${pluginConfig.format.time_font_size} !important;`;
-            // Verify it was applied
-            console.log(`Applied time font size: ${getComputedStyle(timeElement).fontSize}`);
-        }
-        if (pluginConfig.format.date_font_size) {
-            console.log(`Setting date font size to ${pluginConfig.format.date_font_size}`);
-            dateElement.style.cssText += `font-size: ${pluginConfig.format.date_font_size} !important;`;
-            // Verify it was applied
-            console.log(`Applied date font size: ${getComputedStyle(dateElement).fontSize}`);
-        }
-    }
+    timeElement.style.cssText += `font-size: ${pluginConfig.format.time_font_size} !important;`;
+    dateElement.style.cssText += `font-size: ${pluginConfig.format.date_font_size} !important;`;
     
-    // Display initial data if available from the backend
-    if (pluginData.data) {
-        console.log('Setting initial date-time from backend data:', pluginData.data);
-        timeElement.textContent = pluginData.data.time;
-        dateElement.textContent = pluginData.data.date;
-    } else {
-        console.log('No initial date-time data available from backend');
-        displayErrorMessage("Can't get data from backend /date-time/data");
-    }
-    
-    // Function to display error message
-    function displayErrorMessage(message) {
-        console.error('Date-time error:', message);
-        
-        // Simple error placeholders
-        timeElement.textContent = "Error:";
-        dateElement.textContent = message;
-        
-        // Add error styling
-        timeElement.classList.add('error');
-        dateElement.classList.add('error');
-    }
+    // Display initial data
+    timeElement.textContent = pluginData.data?.time || '--:--';
+    dateElement.textContent = pluginData.data?.date || '----.--.--';
     
     // Function to fetch date and time from the API
     function fetchDateTime() {
-        console.log('Fetching real-time date and time...');
         fetch('/api/plugins/date-time/data')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                // Check if the response contains an error
-                if (data.error) {
-                    console.error('Backend returned an error:', data.error);
-                    displayErrorMessage(data.error);
-                    return;
-                }
-                
-                // Update the display with valid data
-                console.log('Received updated date-time:', data);
-                timeElement.textContent = data.time;
-                dateElement.textContent = data.date;
-                
-                // Remove any error styling if it was previously applied
-                timeElement.classList.remove('error');
-                dateElement.classList.remove('error');
+                if (data.time) timeElement.textContent = data.time;
+                if (data.date) dateElement.textContent = data.date;
             })
-            .catch(error => {
-                console.error('Error fetching date-time data:', error);
-                displayErrorMessage("Can't get data from backend");
+            .catch(() => {
+                timeElement.textContent = 'Error';
+                dateElement.textContent = 'Connection failed';
+                timeElement.classList.add('error');
+                dateElement.classList.add('error');
             });
     }
     
-    // Get the update interval directly from the plugin config
+    // Set up automatic refresh from API
     const refreshInterval = parseInt(pluginConfig.updateInterval) || 10;
-    console.log(`Setting up date-time refresh every ${refreshInterval} seconds (type: ${typeof refreshInterval})`);
-    
-    // Set up API update at the specified interval
     setInterval(fetchDateTime, refreshInterval * 1000);
-    
-    // Initial fetch (if not already loaded from backend)
-    if (!pluginData.data) {
-        console.log('Performing initial date-time fetch');
-        fetchDateTime();
-    } else {
-        console.log('Skipping initial fetch as data was provided by backend');
-    }
-    
-    console.log('Date-time plugin initialized with interval:', refreshInterval);
 } 

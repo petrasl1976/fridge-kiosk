@@ -1,6 +1,5 @@
 /* 
- * Date-time Plugin Styles
- * Positioned in top right corner with larger fonts like in the old app
+ * Date-time Plugin Styles - Simple version
  */
 
 .datetime-container {
@@ -11,16 +10,14 @@
     text-align: right;
     font-family: var(--font-family, 'Courier New, monospace');
     color: white;
-    position: relative;
-    display: inline-block;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
     float: right;
     width: 100%;
 }
 
-/* Time display with extra large font */
+/* Time display */
 .datetime-container .time {
-    /* Font size will be set by JavaScript from config */
+    /* Font size is set by JavaScript from config */
     font-weight: bold;
     margin-bottom: 5px;
     line-height: 1;
@@ -28,64 +25,14 @@
     white-space: nowrap;
 }
 
-/* Date display with medium font */
+/* Date display */
 .datetime-container .date {
-    /* Font size will be set by JavaScript from config */
+    /* Font size is set by JavaScript from config */
     opacity: 0.9;
     white-space: nowrap;
 }
 
-/* Error state styling */
-.datetime-container .time.error,
-.datetime-container .date.error {
+/* Basic error styling */
+.datetime-container .error {
     color: #ff5252;
-}
-
-.datetime-container .date.error {
-    font-size: 2em; /* Keep this for error state only */
-    background-color: rgba(255, 0, 0, 0.1);
-    padding: 5px;
-    border-radius: 4px;
-    word-wrap: break-word;
-    white-space: normal;
-    max-width: 100%;
-}
-
-/* Light Theme */
-body.theme-light .datetime-container {
-    background-color: rgba(255, 255, 255, 0.7);
-    color: #333;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-shadow: none;
-}
-
-body.theme-light .datetime-container .time.error,
-body.theme-light .datetime-container .date.error {
-    color: #d32f2f;
-    background-color: rgba(255, 0, 0, 0.05);
-}
-
-/* Portrait Mode Adjustments */
-body.orientation-portrait .datetime-container {
-    padding: 10px 15px;
-}
-
-/* Remove hardcoded font sizes for portrait mode */
-/* Let JavaScript set these from config */
-
-/* Animation for time change */
-@keyframes time-update {
-    0% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.7;
-    }
-    100% {
-        opacity: 1;
-    }
-}
-
-.datetime-container .time.updating {
-    animation: time-update 0.5s;
 } 
