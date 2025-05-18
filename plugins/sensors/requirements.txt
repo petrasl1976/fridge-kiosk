@@ -1,1 +1,2 @@
-broadlink>=0.18.0 
+broadlink>=0.18.0
+Adafruit_DHT 

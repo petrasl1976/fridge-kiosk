@@ -1,18 +1,18 @@
 # Flask web framework
-Flask==2.2.3
+Flask==3.1.1
 
 # Template rendering
-Jinja2==3.1.2
+Jinja2==3.1.6
 
 # Basic requirements
 pathlib==1.0.1
-python-dotenv==1.0.0
+python-dotenv==1.1.0
 
 # For the plugin system
 importlib-metadata==6.0.0
 
 # For API requests
-requests==2.28.2
+requests==2.32.3
 
 # Utility packages
 PyYAML==6.0.1
