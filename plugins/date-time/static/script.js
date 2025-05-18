@@ -25,8 +25,8 @@ function dateTimeInit(container) {
     dateElement.style.cssText += `font-size: ${pluginConfig.format.date_font_size} !important;`;
     
     // Display initial data
-    timeElement.textContent = pluginData.data?.time || 'TIME';
-    dateElement.textContent = pluginData.data?.date || 'DATE';
+    timeElement.textContent = pluginData.data?.time || '--:--';
+    dateElement.textContent = pluginData.data?.date || '----.--.--';
     
     // Function to fetch date and time from the API
     function fetchDateTime() {
