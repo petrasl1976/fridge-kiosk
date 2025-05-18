@@ -276,7 +276,7 @@ def load_plugins(config):
                     view_template = template_env.from_string(f.read())
                     plugin_info['view_content'] = view_template.render(
                         config=config,
-                        plugins=plugins
+                        plugin=plugin_info
                     )
             except Exception as e:
                 logger.error(f"Error reading or rendering plugin view for '{plugin_name}': {e}\n{traceback.format_exc()}")
