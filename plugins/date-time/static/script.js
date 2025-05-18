@@ -97,8 +97,11 @@ function dateTimeInit(container) {
     }
     
     // Set up automatic updates from backend only
-    const refreshInterval = config.updateInterval || 10;
-    console.log(`Setting up date-time refresh every ${refreshInterval} seconds`);
+    // Try to get interval only from plugin config
+    const pluginObj = window.PLUGINS?.find(p => p.name === 'date-time') || {};
+    const pluginConfig = pluginObj.config || {};
+    const refreshInterval = pluginConfig.updateInterval || 10;
+    console.log(`Setting up date-time refresh every ${refreshInterval} seconds (plugin config:`, pluginConfig, `)`);
     
     // Set up API update at the specified interval
     setInterval(fetchDateTime, refreshInterval * 1000);
