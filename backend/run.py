@@ -260,7 +260,7 @@ def load_plugins(config):
             'view_content': None,
             'data_dir': plugin_data_dir,
             'config': plugin_config,
-            'data': {}  # Initialize empty data
+            'data': {}  # Tik placeholder, nebe fetchinam realių duomenų čia
         }
         
         # Check for basic files
@@ -286,26 +286,6 @@ def load_plugins(config):
         
         if os.path.exists(style_path):
             plugin_info['style'] = 'static/style.css'
-        
-        # Check for plugin main.py
-        plugin_main = os.path.join(plugin_path, 'main.py')
-        if os.path.exists(plugin_main):
-            try:
-                # Import the plugin module
-                spec = importlib.util.spec_from_file_location(f"plugin_{plugin_name}", plugin_main)
-                plugin_module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(plugin_module)
-                
-                # Initialize the plugin if it has an init function
-                if hasattr(plugin_module, 'init'):
-                    plugin_data = plugin_module.init(plugin_config)
-                    plugin_info['data'] = plugin_data
-                    logger.info(f"Plugin {plugin_name} initialized successfully")
-                else:
-                    logger.warning(f"Plugin {plugin_name} has no init function")
-            except Exception as e:
-                logger.error(f"Error loading plugin {plugin_name}: {str(e)}")
-                plugin_info['data'] = {'error': str(e)}
         
         plugins[plugin_name] = plugin_info
     
