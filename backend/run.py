@@ -15,6 +15,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import mimetypes
 import jinja2
+import traceback
 
 # Add parent directory to sys.path to make imports work after moving to backend/
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -278,7 +279,8 @@ def load_plugins(config):
                         plugins=plugins
                     )
             except Exception as e:
-                logger.error(f"Error reading or rendering plugin view: {e}")
+                logger.error(f"Error reading or rendering plugin view for '{plugin_name}': {e}\n{traceback.format_exc()}")
+                plugin_info['view_content'] = f"<div style='color:red;'>Error rendering {plugin_name} view: {e}</div>"
         
         if os.path.exists(script_path):
             plugin_info['script'] = 'static/script.js'
