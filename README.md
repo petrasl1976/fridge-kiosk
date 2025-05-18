@@ -21,7 +21,6 @@ fridge-kiosk/
 │       └── config.py   # Configuration utilities
 ├── frontend/           # Frontend files
 │   ├── index.html      # Main HTML template
-│   ├── start-kiosk.sh  # Frontend launch script
 │   ├── css/            # CSS files
 │   │   └── main.css    # Main stylesheet
 │   └── js/             # JavaScript files
@@ -41,7 +40,8 @@ fridge-kiosk/
 ├── scripts/            # Installation scripts
 │   ├── install.sh      # Package installation and Python venv setup
 │   ├── setup.sh        # System configuration and services setup 
-│   └── uninstall.sh    # Complete uninstallation script
+│   ├── uninstall.sh    # Complete uninstallation script
+│   └── fridge-kiosk-display.sh  # Kiosk display launch script
 ```
 
 ## Installation

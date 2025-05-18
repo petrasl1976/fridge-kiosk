@@ -20,23 +20,25 @@ document.addEventListener('DOMContentLoaded', function() {
 function dateTimeInit(container) {
     console.log('Initializing Date-time plugin');
     
-    // Get config from global object
-    const config = window.KIOSK_CONFIG?.plugins?.['date-time'] || {};
+    // Get the plugin object from window.PLUGINS which contains the full configuration
+    const pluginObj = window.PLUGINS?.find(p => p.name === 'date-time');
+    const pluginConfig = pluginObj?.config || {};
     const pluginData = window.PLUGINS_DATA?.['date-time'] || {};
     
     console.log('Date-time initial plugin data:', pluginData);
+    console.log('Date-time plugin config:', pluginConfig);
     
     // DOM elements
     const timeElement = container.querySelector('#datetime-time');
     const dateElement = container.querySelector('#datetime-date');
     
     // Apply font sizes from config
-    if (config.format) {
-        if (config.format.time_font_size) {
-            timeElement.style.fontSize = config.format.time_font_size;
+    if (pluginConfig.format) {
+        if (pluginConfig.format.time_font_size) {
+            timeElement.style.fontSize = pluginConfig.format.time_font_size;
         }
-        if (config.format.date_font_size) {
-            dateElement.style.fontSize = config.format.date_font_size;
+        if (pluginConfig.format.date_font_size) {
+            dateElement.style.fontSize = pluginConfig.format.date_font_size;
         }
     }
     
@@ -96,12 +98,9 @@ function dateTimeInit(container) {
             });
     }
     
-    // Set up automatic updates from backend only
-    // Try to get interval only from plugin config
-    const pluginObj = window.PLUGINS?.find(p => p.name === 'date-time') || {};
-    const pluginConfig = pluginObj.config || {};
-    const refreshInterval = pluginConfig.updateInterval || 10;
-    console.log(`Setting up date-time refresh every ${refreshInterval} seconds (plugin config:`, pluginConfig, `)`);
+    // Get the update interval directly from the plugin config
+    const refreshInterval = parseInt(pluginConfig.updateInterval) || 10;
+    console.log(`Setting up date-time refresh every ${refreshInterval} seconds (type: ${typeof refreshInterval})`);
     
     // Set up API update at the specified interval
     setInterval(fetchDateTime, refreshInterval * 1000);

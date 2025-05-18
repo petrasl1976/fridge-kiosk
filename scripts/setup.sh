@@ -60,7 +60,7 @@ sed -i "1c #!$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/backend/run.py"
 print_step "Making scripts executable..."
 chmod +x "$INSTALL_DIR/backend/run.py"
 chmod +x "$INSTALL_DIR/scripts/"*.sh 
-chmod +x "$INSTALL_DIR/frontend/start-kiosk.sh"
+chmod +x "$INSTALL_DIR/scripts/fridge-kiosk-display.sh"
 
 print_step "Enabling display compositor service (seatd)..."
 systemctl enable --now seatd
@@ -162,7 +162,7 @@ ExecStartPre=/bin/mkdir -p /tmp/xdg-runtime-dir
 ExecStartPre=/bin/chmod 700 /tmp/xdg-runtime-dir
 ExecStartPre=/bin/chown $SUDO_USER:$SUDO_USER /tmp/xdg-runtime-dir
 ExecStartPre=/bin/bash -c "until curl -s http://localhost:8080 > /dev/null 2>&1; do sleep 2; done"
-ExecStart=$INSTALL_DIR/frontend/start-kiosk.sh
+ExecStart=$INSTALL_DIR/scripts/fridge-kiosk-display.sh
 Restart=always
 
 [Install]
