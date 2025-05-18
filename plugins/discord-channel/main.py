@@ -9,7 +9,7 @@ load_dotenv()
 logger = logging.getLogger('fridge-kiosk')
 
 BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-CHANNEL_ID = os.getenv("DISCORD_CHANNEL_ID")
+CHANNEL_ID = os.getenv("DISCORD_TEXT_CHANNEL_ID")
 API_BASE_URL = "https://discord.com/api/v9"
 MESSAGE_COUNT = int(os.getenv("DISCORD_MESSAGE_COUNT", 10))
 
