@@ -272,9 +272,13 @@ def load_plugins(config):
             plugin_info['view'] = 'view.html'
             try:
                 with open(view_path, 'r') as f:
-                    plugin_info['view_content'] = f.read()
+                    view_template = template_env.from_string(f.read())
+                    plugin_info['view_content'] = view_template.render(
+                        config=config,
+                        plugins=plugins
+                    )
             except Exception as e:
-                logger.error(f"Error reading plugin view: {e}")
+                logger.error(f"Error reading or rendering plugin view: {e}")
         
         if os.path.exists(script_path):
             plugin_info['script'] = 'static/script.js'
