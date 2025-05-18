@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function dateTimeInit(container) {
-    // Get plugin configuration
-    const pluginObj = window.PLUGINS?.find(p => p.name === 'date-time');
-    const pluginConfig = pluginObj?.config || {};
-    const pluginData = window.PLUGINS_DATA?.['date-time'] || {};
+    // Get plugin configuration and data
+    const plugin = window.PLUGINS?.['date-time'] || {};
+    const pluginConfig = plugin.config || {};
+    const pluginData = plugin.data || {};
     
     // DOM elements
     const timeElement = container.querySelector('#datetime-time');
@@ -25,8 +25,8 @@ function dateTimeInit(container) {
     dateElement.style.cssText += `font-size: ${pluginConfig.format.date_font_size} !important;`;
     
     // Display initial data
-    timeElement.textContent = pluginData.data?.time || '--:--';
-    dateElement.textContent = pluginData.data?.date || '----.--.--';
+    timeElement.textContent = pluginData.time || '--:--';
+    dateElement.textContent = pluginData.date || '----.--.--';
     
     // Function to fetch date and time from the API
     function fetchDateTime() {

@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/css/main.css">
     
     <!-- Plugin CSS -->
-    {% for plugin in plugins %}
+    {% for plugin_name, plugin in plugins.items() %}
     {% if plugin.name %}
     <link rel="stylesheet" href="/plugins/{{ plugin.name }}/static/style.css">
     {% endif %}
@@ -25,7 +25,7 @@
         }
         
         /* Dynamic plugin positioning */
-        {% for plugin in plugins %}
+        {% for plugin_name, plugin in plugins.items() %}
         /* Position debug: {{ plugin.name }} - {{ plugin.position|tojson|safe }} */
         #plugin-{{ plugin.name }} {
             position: absolute;
@@ -48,7 +48,7 @@
     
     <div id="kiosk-container">
         <!-- Plugins -->
-        {% for plugin in plugins %}
+        {% for plugin_name, plugin in plugins.items() %}
             {% if plugin.view_content %}
             <div id="plugin-{{ plugin.name }}">
                 {{ plugin.view_content|safe }}
@@ -60,7 +60,6 @@
     <!-- Plugin data for JavaScript -->
     <script>
         window.KIOSK_CONFIG = {{ config|tojson|safe }};
-        window.PLUGINS_DATA = {{ plugins_data|tojson|safe }};
         window.PLUGINS = {{ plugins|tojson|safe }};
     </script>
 
@@ -72,7 +71,7 @@
     <script src="/js/diagnostics.js"></script>
     -->
     <!-- Plugin JavaScript -->
-    {% for plugin in plugins %}
+    {% for plugin_name, plugin in plugins.items() %}
     {% if plugin.name %}
     <script src="/plugins/{{ plugin.name }}/static/script.js"></script>
     {% endif %}

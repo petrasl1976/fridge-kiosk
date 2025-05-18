@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function sensorsInit(container) {
-    // Get plugin configuration
-    const pluginObj = window.PLUGINS?.find(p => p.name === 'sensors');
-    const pluginConfig = pluginObj?.config || {};
-    const pluginData = window.PLUGINS_DATA?.['sensors']?.data || {};
+    // Get plugin configuration and data
+    const plugin = window.PLUGINS?.['sensors'] || {};
+    const pluginConfig = plugin.config || {};
+    const pluginData = plugin.data || {};
     
     // DOM elements
     const temperatureElement = container.querySelector('#sensors-temperature');

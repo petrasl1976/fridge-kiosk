@@ -200,8 +200,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
 
 def load_plugins(config):
     """Load all enabled plugins"""
-    plugins = []
-    plugins_data = {}
+    plugins = {}
     enabled_plugins = config.get('enabledPlugins', [])
     
     # Get orientation from system config for position selection
@@ -210,7 +209,7 @@ def load_plugins(config):
     
     logger.info(f"Loading {len(enabled_plugins)} enabled plugins")
     
-    # Loop through all enabled plugins, using enumerate to get the index
+    # Loop through all enabled plugins
     for plugin_index, plugin_name in enumerate(enabled_plugins):
         logger.info(f"Loading plugin: {plugin_name}")
         plugin_path = get_plugin_path(plugin_name)
@@ -265,7 +264,6 @@ def load_plugins(config):
             logger.warning(f"No position config found for plugin {plugin_name}, using defaults: {position}")
         
         # Set z_index based on plugin's position in the enabledPlugins array (starting from 1)
-        # This will override any z_index specified in the plugin's config
         position['z_index'] = plugin_index + 1
         logger.info(f"Set z_index={position['z_index']} for plugin {plugin_name} based on its position in enabledPlugins")
         
@@ -278,7 +276,8 @@ def load_plugins(config):
             'style': None,
             'view_content': None,
             'data_dir': plugin_data_dir,
-            'config': plugin_config
+            'config': plugin_config,
+            'data': {}  # Initialize empty data
         }
         
         # Check for basic files
@@ -312,18 +311,17 @@ def load_plugins(config):
                 # Initialize the plugin if it has an init function
                 if hasattr(plugin_module, 'init'):
                     plugin_data = plugin_module.init(plugin_config)
-                    plugins_data[plugin_name] = plugin_data
+                    plugin_info['data'] = plugin_data
                     logger.info(f"Plugin {plugin_name} initialized successfully")
                 else:
                     logger.warning(f"Plugin {plugin_name} has no init function")
-                    plugins_data[plugin_name] = {}
             except Exception as e:
                 logger.error(f"Error loading plugin {plugin_name}: {str(e)}")
-                plugins_data[plugin_name] = {'error': str(e)}
+                plugin_info['data'] = {'error': str(e)}
         
-        plugins.append(plugin_info)
+        plugins[plugin_name] = plugin_info
     
-    return plugins, plugins_data
+    return plugins
 
 
 def parse_args():
@@ -354,7 +352,7 @@ def main():
         logger.setLevel(log_level)
     
     # Load plugins
-    plugins, plugins_data = load_plugins(config)
+    plugins = load_plugins(config)
     
     # Create handler factory with app config
     def handler(*args, **kwargs):
@@ -362,7 +360,6 @@ def main():
             *args,
             config=config,
             plugins=plugins,
-            plugins_data=plugins_data,
             **kwargs
         )
     
