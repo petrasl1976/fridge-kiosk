@@ -64,11 +64,16 @@ def get_sensor_data(config=None):
                 if humidity is not None and temperature is not None:
                     result["temperature"] = round(temperature, 1)
                     result["humidity"] = round(humidity, 1)
+                else:
+                    result["temperature"] = "err"
+                    result["humidity"] = "err"
             except ImportError:
-                # Neither sensor available, use dummy data when not in production
-                if os.environ.get('FLASK_ENV') != 'production':
-                    result["temperature"] = 22.5
-                    result["humidity"] = 45.0
+                result["temperature"] = "err"
+                result["humidity"] = "err"
+            except Exception as e:
+                print(f"Error reading temperature/humidity sensor: {e}")
+                result["temperature"] = "err"
+                result["humidity"] = "err"
     except Exception as e:
         print(f"Error reading temperature/humidity sensor: {e}")
     
