@@ -7,5 +7,10 @@
     "logLevel": "info",
     "fontFamily": "Courier New, monospace"
   },
-  "enabledPlugins": ["sensors", "date-time"]
+  "enabledPlugins": ["sensors", "date-time"],
+  "userColors": {
+    "Jonas": "#ff0000",
+    "Petras": "#00ff00",
+    "Mantas": "#0000ff"
+  }
 } 
