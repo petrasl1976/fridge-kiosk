@@ -84,7 +84,7 @@ print_info "Available plugins: $AVAILABLE_PLUGINS"
 
 print_step "Reading plugins from configuration..."
 if [ -f "$CONFIG_FILE" ]; then
-    ENABLED_PLUGINS=$(jq -r '.enabled_plugins[]' "$CONFIG_FILE" 2>/dev/null | tr '\n' ' ' || echo "")
+    ENABLED_PLUGINS=$(jq -r '.enabledPlugins[]' "$CONFIG_FILE" 2>/dev/null | tr '\n' ' ' || echo "")
 fi
 
 if [ -z "$ENABLED_PLUGINS" ]; then
