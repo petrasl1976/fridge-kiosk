@@ -19,8 +19,8 @@
     },
     "updateInterval": 1,
     "format": {
-        "time": "HH:MM:SS",
-        "date": "YYYY.MM.DD",
+        "time": "%H:%M:%S",
+        "date": "%Y.%m.%d",
         "time_font_size": "7.2em",
         "date_font_size": "3.5em"
     }

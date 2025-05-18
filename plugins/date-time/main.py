@@ -43,25 +43,59 @@ def api_data():
     """
     logger.info("Date-time API endpoint called via main.py")
     
+    # Always return the same structure in all cases:
+    # {
+    #    'error': null or error message,
+    #    'time': formatted time or error message,
+    #    'date': formatted date or error message,
+    #    'timestamp': current timestamp
+    # }
+    response = {
+        'error': None,
+        'time': "missing format",
+        'date': "missing format",
+        'timestamp': time.time()
+    }
+    
     config = load_config()
     now = datetime.datetime.now()
     logger.debug(f"Current server time: {now}")
     
-    # Format the time and date according to config
-    time_format = config.get('format', {}).get('time', 'HH:MM')
-    date_format = config.get('format', {}).get('date', 'YYYY.MM.DD')
+    # Get the format configuration section
+    format_config = config.get('format', {})
     
-    # Convert to appropriate format
-    formatted_time = now.strftime('%H:%M') if time_format == 'HH:MM' else now.strftime('%I:%M %p')
-    formatted_date = now.strftime('%Y.%m.%d')
+    # Check if time format exists and format the time
+    if 'time' not in format_config:
+        error_msg = "Time format undefined in configuration"
+        logger.error(error_msg)
+        response['error'] = error_msg
+    else:
+        time_format = format_config['time']
+        logger.info(f"Using time format: '{time_format}'")
+        try:
+            response['time'] = now.strftime(time_format)
+        except Exception as e:
+            error_msg = f"Error formatting time: {str(e)}"
+            logger.error(error_msg)
+            response['error'] = error_msg
     
-    logger.info(f"Returning formatted time: {formatted_time}, date: {formatted_date}")
+    # Check if date format exists and format the date
+    if 'date' not in format_config:
+        error_msg = "Date format undefined in configuration"
+        logger.error(error_msg)
+        response['error'] = response['error'] or error_msg
+    else:
+        date_format = format_config['date']
+        logger.info(f"Using date format: '{date_format}'")
+        try:
+            response['date'] = now.strftime(date_format)
+        except Exception as e:
+            error_msg = f"Error formatting date: {str(e)}"
+            logger.error(error_msg)
+            response['error'] = response['error'] or error_msg
     
-    return {
-        'time': formatted_time,
-        'date': formatted_date,
-        'timestamp': time.time()
-    }
+    logger.info(f"Returning response: {response}")
+    return response
 
 # For testing directly
 if __name__ == "__main__":

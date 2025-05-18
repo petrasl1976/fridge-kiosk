@@ -53,8 +53,11 @@ function dateTimeInit(container) {
     // Function to display error message
     function displayErrorMessage(message) {
         console.error('Date-time error:', message);
-        timeElement.textContent = "--:--";
-        dateElement.textContent = "Error: " + message;
+        
+        // Simple error placeholders
+        timeElement.textContent = "Error:";
+        dateElement.textContent = message;
+        
         // Add error styling
         timeElement.classList.add('error');
         dateElement.classList.add('error');
@@ -71,7 +74,14 @@ function dateTimeInit(container) {
                 return response.json();
             })
             .then(data => {
-                // Update the display
+                // Check if the response contains an error
+                if (data.error) {
+                    console.error('Backend returned an error:', data.error);
+                    displayErrorMessage(data.error);
+                    return;
+                }
+                
+                // Update the display with valid data
                 console.log('Received updated date-time:', data);
                 timeElement.textContent = data.time;
                 dateElement.textContent = data.date;
