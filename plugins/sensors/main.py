@@ -40,11 +40,14 @@ def get_sensor_data(config=None):
     # Try to get temperature and humidity from sensor
     try:
         # Try to use BroadLink sensor first
+        broadlink_config = (config or {}).get('broadlink', {})
+        discover_timeout = broadlink_config.get('discover_timeout', 5)
+        target_type_prefix = broadlink_config.get('target_type_prefix', 'RM4')
         try:
             import broadlink
-            devices = broadlink.discover(timeout=5)
+            devices = broadlink.discover(timeout=discover_timeout)
             for device in devices:
-                if device.type.startswith('RM4'):
+                if device.type.startswith(target_type_prefix):
                     device.auth()
                     sensor_data = device.check_sensors()
                     if sensor_data:
