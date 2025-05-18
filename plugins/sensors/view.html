@@ -1,9 +1,9 @@
 <div class="sensors-container">
     <div class="sensor-readings">
-        <span id="sensors-temperature">{{ plugins['sensors'].data.temperature|default('--') }}°C</span>
+        <span id="sensors-temperature">{{ plugins['sensors']['data']['temperature']|default('--') }}°C</span>
         <span class="separator">|</span>
-        <span id="sensors-humidity">{{ plugins['sensors'].data.humidity|default('--') }}%</span>
+        <span id="sensors-humidity">{{ plugins['sensors']['data']['humidity']|default('--') }}%</span>
         <span class="separator">|</span>
-        <span id="sensors-cpu-temp">{{ plugins['sensors'].data.cpu_temp|default('--') }}°C</span>
+        <span id="sensors-cpu-temp">{{ plugins['sensors']['data']['cpu_temp']|default('--') }}°C</span>
     </div>
 </div> 
