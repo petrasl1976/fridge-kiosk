@@ -35,12 +35,34 @@
     white-space: nowrap;
 }
 
+/* Error state styling */
+.datetime-container .time.error,
+.datetime-container .date.error {
+    color: #ff5252;
+}
+
+.datetime-container .date.error {
+    font-size: 2em;
+    background-color: rgba(255, 0, 0, 0.1);
+    padding: 5px;
+    border-radius: 4px;
+    word-wrap: break-word;
+    white-space: normal;
+    max-width: 100%;
+}
+
 /* Light Theme */
 body.theme-light .datetime-container {
     background-color: rgba(255, 255, 255, 0.7);
     color: #333;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     text-shadow: none;
+}
+
+body.theme-light .datetime-container .time.error,
+body.theme-light .datetime-container .date.error {
+    color: #d32f2f;
+    background-color: rgba(255, 0, 0, 0.05);
 }
 
 /* Portrait Mode Adjustments */

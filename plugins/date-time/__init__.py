@@ -55,7 +55,9 @@ def setup(app):
         Returns:
             JSON response with date and time data
         """
+        logger.info("Date-time API endpoint called")
         now = datetime.datetime.now()
+        logger.debug(f"Current server time: {now}")
         
         # Format the time and date according to config
         time_format = config.get('format', {}).get('time', 'HH:MM')
@@ -64,6 +66,8 @@ def setup(app):
         # Convert to appropriate format
         formatted_time = now.strftime('%H:%M') if time_format == 'HH:MM' else now.strftime('%I:%M %p')
         formatted_date = now.strftime('%Y.%m.%d')
+        
+        logger.info(f"Returning formatted time: {formatted_time}, date: {formatted_date}")
         
         return jsonify({
             'time': formatted_time,
@@ -98,13 +102,18 @@ def get_data():
     """
     global config
     
+    logger.info("Generating initial date-time data for template")
+    
     # Get current date and time
     now = datetime.datetime.now()
+    logger.debug(f"Current server time for template: {now}")
     time_format = config.get('format', {}).get('time', 'HH:MM')
     
     # Format the time and date
     formatted_time = now.strftime('%H:%M') if time_format == 'HH:MM' else now.strftime('%I:%M %p')
     formatted_date = now.strftime('%Y.%m.%d')
+    
+    logger.info(f"Initial template time: {formatted_time}, date: {formatted_date}")
     
     # Return data for the frontend
     return {
