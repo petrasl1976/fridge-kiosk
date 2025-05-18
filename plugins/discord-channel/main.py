@@ -13,6 +13,10 @@ CHANNEL_ID = os.getenv("DISCORD_TEXT_CHANNEL_ID")
 API_BASE_URL = "https://discord.com/api/v9"
 MESSAGE_COUNT = int(os.getenv("DISCORD_MESSAGE_COUNT", 10))
 
+# Debug logging for environment variables
+logger.info(f"Discord BOT_TOKEN length: {len(BOT_TOKEN) if BOT_TOKEN else 0}")
+logger.info(f"Discord CHANNEL_ID: {CHANNEL_ID}")
+
 # Spalvos paimamos iš pagrindinio config per JS, čia backend nieko nehardcodina
 
 def get_username_color(username):
@@ -27,7 +31,7 @@ def api_data():
     API handler for /api/plugins/discord-channel/data
     """
     if not BOT_TOKEN or not CHANNEL_ID:
-        logger.error("Discord BOT_TOKEN or CHANNEL_ID not set")
+        logger.error(f"Discord configuration missing - BOT_TOKEN: {'present' if BOT_TOKEN else 'missing'}, CHANNEL_ID: {'present' if CHANNEL_ID else 'missing'}")
         return {"error": "Discord BOT_TOKEN or CHANNEL_ID not set"}
 
     url = f"{API_BASE_URL}/channels/{CHANNEL_ID}/messages"
