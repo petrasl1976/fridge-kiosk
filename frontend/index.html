@@ -61,10 +61,14 @@
     <script>
         window.KIOSK_CONFIG = {{ config|tojson|safe }};
         window.PLUGINS_DATA = {{ plugins_data|tojson|safe }};
+        window.PLUGINS = {{ plugins|tojson|safe }};
     </script>
 
     <!-- Main JavaScript -->
     <script src="/js/main.js"></script>
+    
+    <!-- Diagnostics Tool -->
+    <script src="/js/diagnostics.js"></script>
     
     <!-- Plugin JavaScript -->
     {% for plugin in plugins %}

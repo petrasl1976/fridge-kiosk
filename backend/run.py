@@ -65,6 +65,17 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 # Debug position values before template rendering
                 for plugin in self.plugins:
                     logger.info(f"Plugin {plugin['name']} position before rendering: {plugin['position']}")
+                    
+                    # Additional debugging for config values
+                    if plugin['name'] == 'date-time':
+                        if 'config' in plugin and plugin['config']:
+                            logger.info(f"DATE-TIME PLUGIN CONFIG: {plugin['config']}")
+                            if 'updateInterval' in plugin['config']:
+                                logger.info(f"UPDATE INTERVAL VALUE: {plugin['config']['updateInterval']}, TYPE: {type(plugin['config']['updateInterval'])}")
+                            else:
+                                logger.error("updateInterval NOT FOUND in date-time plugin config!")
+                        else:
+                            logger.error("No config found in date-time plugin!")
                 
                 # Debug config values
                 logger.info(f"Config object: {self.config}")
@@ -262,7 +273,8 @@ def load_plugins(config):
             'script': None,
             'style': None,
             'view_content': None,
-            'data_dir': plugin_data_dir
+            'data_dir': plugin_data_dir,
+            'config': plugin_config
         }
         
         # Check for basic files
