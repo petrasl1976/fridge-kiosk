@@ -19,7 +19,7 @@
     "format": {
         "time": "%H:%M",
         "date": "%Y.%m.%d",
-        "time_font_size": "7em",
+        "time_font_size": "8em",
         "date_font_size": "4em"
     }
 } 
