@@ -2,7 +2,7 @@
   "system": {
     "name": "Fridge Kiosk",
     "theme": "dark",
-    "orientation": "landscape",
+    "orientation": "portrait",
     "displayTimeout": 60,
     "logLevel": "info",
     "fontFamily": "Courier New, monospace"
