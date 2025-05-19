@@ -264,7 +264,20 @@ def load_plugins(config):
         position['z_index'] = plugin_index + 1
         logger.info(f"Set z_index={position['z_index']} for plugin {plugin_name} based on its position in enabledPlugins")
         
-        # Default plugin info
+        # Try to call init(config) if it exists
+        plugin_data = {}
+        main_py = os.path.join(plugin_path, 'main.py')
+        if os.path.exists(main_py):
+            try:
+                import importlib.util
+                spec = importlib.util.spec_from_file_location(f"plugin_{plugin_name}", main_py)
+                plugin_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(plugin_module)
+                if hasattr(plugin_module, 'init'):
+                    plugin_data = plugin_module.init(plugin_config).get('data', {})
+            except Exception as e:
+                logger.error(f"Error calling init() for plugin {plugin_name}: {e}")
+
         plugin_info = {
             'name': plugin_name,
             'position': position,
@@ -274,7 +287,7 @@ def load_plugins(config):
             'view_content': None,
             'data_dir': plugin_data_dir,
             'config': plugin_config,
-            'data': {}  # Tik placeholder, nebe fetchinam realių duomenų čia
+            'data': plugin_data
         }
         
         # Check for basic files
