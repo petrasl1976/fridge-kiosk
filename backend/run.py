@@ -42,7 +42,12 @@ def datetime_fromtimestamp(timestamp):
     """Convert Unix timestamp to datetime object"""
     return datetime.datetime.fromtimestamp(timestamp)
 
+def strftime(dt, format_str):
+    """Format datetime object using strftime"""
+    return dt.strftime(format_str)
+
 template_env.filters['datetime_fromtimestamp'] = datetime_fromtimestamp
+template_env.filters['strftime'] = strftime
 
 class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
     """Custom HTTP request handler for the kiosk"""
