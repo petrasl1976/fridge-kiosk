@@ -3,7 +3,7 @@
  */
 
 .sensors-container {
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: transparent;
     border-radius: 8px;
     padding: 10px 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
@@ -42,7 +42,7 @@
 }
 
 .sensors-widget {
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: transparent;
     border-radius: 8px;
     padding: 8px 12px;
     color: #fff;
