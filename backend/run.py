@@ -60,11 +60,6 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             # Render the template
             try:
                 template = template_env.get_template('index.html')
-                
-                # Debug position values before template rendering
-                for plugin_name, plugin in self.plugins.items():
-                    logger.info(f"Plugin {plugin_name} position before rendering: {plugin['position']}")
-                
                 html = template.render(
                     config=self.config,
                     plugins=self.plugins
@@ -297,7 +292,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Fridge Kiosk Application')
     parser.add_argument('-p', '--port', type=int, default=8080, help='Port to run the HTTP server on')
     parser.add_argument('-c', '--config', type=str, default='config/main.json', help='Path to configuration file')
-    parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
     return parser.parse_args()
 
 
@@ -306,16 +300,11 @@ def main():
     # Parse command line arguments
     args = parse_args()
     
-    # Configure logging level based on arguments
-    if args.debug:
-        logger.setLevel(logging.DEBUG)
-        logger.debug("Debug mode enabled")
-    
     # Load configuration
     config = load_config()
     
-    # Configure logging level from config if not in debug mode
-    if not args.debug and 'logLevel' in config.get('system', {}):
+    # Configure logging level from config
+    if 'logLevel' in config.get('system', {}):
         log_level = getattr(logging, config['system']['logLevel'].upper(), logging.INFO)
         logger.setLevel(log_level)
     

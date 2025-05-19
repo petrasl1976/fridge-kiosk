@@ -5,8 +5,6 @@
 
 // When DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Fridge Kiosk - Initializing frontend');
-    
     // Get configuration from window object (set by the backend)
     const config = window.KIOSK_CONFIG || {};
     
@@ -50,8 +48,6 @@ function updateOrientation() {
  * Initialize the kiosk
  */
 function initKiosk() {
-    console.log('Kiosk initialized');
-    
     // Any additional initialization can go here
 }
 
@@ -60,7 +56,6 @@ function initKiosk() {
  */
 function checkSystemStatus() {
     // Check the status of plugins and system
-    console.debug('Performing system status check');
     
     // You could ping the backend for status updates if needed
     // fetch('/api/system/status').then(response => response.json()).then(data => {...});

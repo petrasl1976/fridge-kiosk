@@ -19,10 +19,10 @@
             "warning": 60,
             "critical": 70
         }
-    },
+        },
     "format": {
         "font_size": "2em"
-    },
+        },
     "broadlink": {
         "discover_timeout": 5,
         "target_type_prefix": "RM4"

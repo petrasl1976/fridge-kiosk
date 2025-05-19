@@ -53,8 +53,8 @@ function sensorsInit(container) {
             .then(data => {
                 if (data.temperature) {
                     temperatureElement.textContent = `${data.temperature}°C`;
-                }
-                
+    }
+    
                 if (data.humidity) {
                     humidityElement.textContent = `${data.humidity}%`;
                 }
@@ -66,16 +66,16 @@ function sensorsInit(container) {
                         data.cpu_temp,
                         cpuThresholds.warning, 
                         cpuThresholds.critical
-                    );
-                }
+                );
+            }
             })
             .catch(() => {
                 temperatureElement.classList.add('error');
                 humidityElement.classList.add('error');
                 cpuTempElement.classList.add('error');
             });
-    }
-    
+        }
+        
     // Set up automatic refresh from API
     const refreshInterval = parseInt(pluginConfig.updateInterval) || 30;
     fetchSensorData(); // Iškart gauti duomenis

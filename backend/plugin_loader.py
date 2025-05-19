@@ -209,7 +209,6 @@ def get_plugin_routes(app, plugins: List[Plugin]):
         if not plugin.enabled:
             continue
             
-        logger.debug(f"Getting routes for plugin: {plugin.name}")
         routes = plugin.get_routes(app)
         
         if routes:

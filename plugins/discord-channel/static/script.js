@@ -51,8 +51,7 @@ function discordChannelInit(container) {
         }
         container.innerHTML = html;
       })
-      .catch(e => {
-        console.error("Error fetching Discord messages:", e);
+      .catch(() => {
         container.innerHTML = "Error loading messages.";
       });
   }

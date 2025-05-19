@@ -26,7 +26,6 @@
         
         /* Dynamic plugin positioning */
         {% for plugin_name, plugin in plugins.items() %}
-        /* Position debug: {{ plugin.name }} - {{ plugin.position|tojson|safe }} */
         #plugin-{{ plugin.name }} {
             position: absolute;
             top: {{ plugin.position.top|default('0') }};
@@ -39,13 +38,6 @@
     </style>
 </head>
 <body class="theme-{{ config.system.theme|default('dark') }} orientation-{{ config.system.orientation|default('landscape') }}">
-    <!-- Debug info -->
-    <div style="position: fixed; bottom: 5px; left: 5px; background: rgba(0,0,0,0.8); color: white; padding: 5px; font-size: 10px; z-index: 10000; font-family: monospace;">
-        Font: {{ config.system.fontFamily|default('none') }}<br>
-        Theme: {{ config.system.theme|default('none') }}<br>
-        Config: {{ config|tojson|safe }}
-    </div>
-    
     <div id="kiosk-container">
         <!-- Plugins -->
         {% for plugin_name, plugin in plugins.items() %}
@@ -66,10 +58,6 @@
     <!-- Main JavaScript -->
     <script src="/js/main.js"></script>
     
-    <!-- Diagnostics Tool -->
-     <!--
-    <script src="/js/diagnostics.js"></script>
-    -->
     <!-- Plugin JavaScript -->
     {% for plugin_name, plugin in plugins.items() %}
     {% if plugin.name %}
