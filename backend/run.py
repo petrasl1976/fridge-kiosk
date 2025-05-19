@@ -235,6 +235,7 @@ def load_plugins(config):
         # Get the position configuration based on orientation
         position = {}
         if 'position' in plugin_config:
+            logger.debug(f"Found position config for {plugin_name}: {plugin_config['position']}")
             # If plugin has orientation-specific positions
             if orientation in plugin_config['position']:
                 position = plugin_config['position'][orientation]
@@ -243,6 +244,10 @@ def load_plugins(config):
             elif isinstance(plugin_config['position'], dict) and not ('landscape' in plugin_config['position'] or 'portrait' in plugin_config['position']):
                 position = plugin_config['position']
                 logger.info(f"Using default position for plugin {plugin_name}: {position}")
+            else:
+                logger.warning(f"Position config for {plugin_name} does not match expected format: {plugin_config['position']}")
+        else:
+            logger.warning(f"No position key found in config for plugin {plugin_name}")
         
         # Default fallback if no position found
         if not position:

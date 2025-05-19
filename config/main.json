@@ -4,7 +4,7 @@
     "theme": "dark",
     "orientation": "portrait",
     "displayTimeout": 60,
-    "logLevel": "info",
+    "logLevel": "debug",
     "fontFamily": "Courier New, monospace"
   },
   "enabledPlugins": ["sensors", "date-time", "discord-channel", "weather-forecast"],
