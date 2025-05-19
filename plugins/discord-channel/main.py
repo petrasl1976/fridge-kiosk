@@ -14,18 +14,10 @@ load_dotenv(ENV_FILE)
 # Configure logging
 logger = logging.getLogger('fridge-kiosk')
 
-# Debug logging for .env file
-logger.info(f"Looking for .env file at: {ENV_FILE}")
-logger.info(f".env file exists: {ENV_FILE.exists()}")
-
 BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 CHANNEL_ID = os.getenv("DISCORD_TEXT_CHANNEL_ID")
 API_BASE_URL = "https://discord.com/api/v9"
 MESSAGE_COUNT = int(os.getenv("DISCORD_MESSAGE_COUNT", 10))
-
-# Debug logging for environment variables
-logger.info(f"Discord BOT_TOKEN length: {len(BOT_TOKEN) if BOT_TOKEN else 0}")
-logger.info(f"Discord CHANNEL_ID: {CHANNEL_ID}")
 
 # Spalvos paimamos iš pagrindinio config per JS, čia backend nieko nehardcodina
 
