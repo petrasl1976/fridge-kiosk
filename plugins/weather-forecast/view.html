@@ -1,10 +1,10 @@
-{% if data and data.daily %}
+{% if plugin['data'] and plugin['data'].daily %}
 <div class="weather-forecast" style="
     --font-size: {{ config.format.font_size }};
     --text-color: {{ config.format.color }};
     --padding: {{ config.format.padding }};
 ">
-    {% for day in data.daily %}
+    {% for day in plugin['data'].daily %}
     <div class="weather-day">
         <div class="date">{{ day.dt|datetime_fromtimestamp|strftime('%a') }}</div>
         <div class="temp">
