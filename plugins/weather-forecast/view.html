@@ -2,9 +2,9 @@
 
 {% if plugin['data'] and plugin['data'].daily %}
 <div class="weather-forecast" style="
-    --font-size: {{ config.format.font_size }};
-    --text-color: {{ config.format.color }};
-    --padding: {{ config.format.padding }};
+    --font-size: {{ plugin['config'].format.font_size }};
+    --text-color: {{ plugin['config'].format.color }};
+    --padding: {{ plugin['config'].format.padding }};
 ">
     {% for day in plugin['data'].daily %}
     <div class="weather-day">
