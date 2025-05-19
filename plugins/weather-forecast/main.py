@@ -75,4 +75,7 @@ def api_data():
 
 def get_refresh_interval():
     config = load_config()
-    return config.get('updateInterval', 3600) 
+    return config.get('updateInterval', 3600)
+
+def init(config):
+    return {'data': get_weather(config)} 
