@@ -218,6 +218,7 @@ def load_plugins(config):
                 with open(plugin_config_path, 'r') as f:
                     plugin_config = json.load(f)
                 logger.info(f"Loaded configuration for plugin {plugin_name}: {plugin_config_path}")
+                logger.debug(f"Plugin config content: {json.dumps(plugin_config, indent=2)}")
             except Exception as e:
                 logger.error(f"Error loading plugin config: {e}")
         else:
