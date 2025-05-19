@@ -16,6 +16,7 @@ from urllib.parse import urlparse, parse_qs
 import mimetypes
 import jinja2
 import traceback
+import datetime
 
 # Add parent directory to sys.path to make imports work after moving to backend/
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -35,6 +36,13 @@ logger = logging.getLogger('fridge-kiosk')
 # Initialize Jinja2 template environment
 template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(parent_dir, "backend/templates"))
 template_env = jinja2.Environment(loader=template_loader)
+
+# Add custom filters
+def datetime_fromtimestamp(timestamp):
+    """Convert Unix timestamp to datetime object"""
+    return datetime.datetime.fromtimestamp(timestamp)
+
+template_env.filters['datetime_fromtimestamp'] = datetime_fromtimestamp
 
 class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
     """Custom HTTP request handler for the kiosk"""
