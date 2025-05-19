@@ -1,16 +1,16 @@
 {
   "position": {
     "landscape": {
-      "top": "60%",
+      "top": "14%",
       "left": "0%",
-      "width": "100%",
-      "height": "40%"
+      "width": "65%",
+      "height": "45%"
     },
     "portrait": {
-      "top": "70%",
+      "top": "14%",
       "left": "0%",
-      "width": "100%",
-      "height": "30%"
+      "width": "65%",
+      "height": "45%"
     }
   },
   "updateInterval": 60,
