@@ -77,7 +77,7 @@ def get_cpu_temperature():
             with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
                 temp = float(f.read()) / 1000.0
                 return round(temp, 1)
-            
+        
         # Method 2: Try using vcgencmd (Raspberry Pi only)
         result = subprocess.run(['vcgencmd', 'measure_temp'], capture_output=True, text=True)
         if result.returncode == 0:
@@ -89,7 +89,7 @@ def get_cpu_temperature():
         if os.environ.get('FLASK_ENV') != 'production':
             return 45.6
         return None
-        except Exception as e:
+    except Exception as e:
         print(f"Error getting CPU temperature: {e}")
         return None
 
