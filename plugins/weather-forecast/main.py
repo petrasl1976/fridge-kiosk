@@ -7,7 +7,7 @@ from pathlib import Path
 class WeatherForecastPlugin:
     def __init__(self):
         self.config = self._load_config()
-        self.api_base_url = "https://api.meteo.lt/v1"
+        self.api_base_url = self.config.get('api', {}).get('base_url', "https://api.meteo.lt/v1")
         
     def _load_config(self):
         config_path = Path(__file__).parent / "config.json"
@@ -25,7 +25,8 @@ class WeatherForecastPlugin:
         
     def get_weather(self):
         """Get weather forecast data from meteo.lt API"""
-        url = f"{self.api_base_url}/places/{self.config['config']['location']}/forecasts/long-term"
+        location = self.config.get('api', {}).get('location', 'vilnius-paneriai')
+        url = f"{self.api_base_url}/places/{location}/forecasts/long-term"
         try:
             r = requests.get(url)
             if r.status_code != 200:
@@ -90,4 +91,4 @@ class WeatherForecastPlugin:
         
     def get_refresh_interval(self):
         """Return refresh interval in seconds"""
-        return self.config['config']['refresh_interval'] 
+        return self.config.get('updateInterval', 3600) 
