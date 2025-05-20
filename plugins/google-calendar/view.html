@@ -1,71 +1,104 @@
 {% if plugin['data'] %}
-<div class="calendar-widget" style="
-    font-size: {{ plugin['config'].format.font_size }};
-    color: {{ plugin['config'].format.color }};
-    padding: {{ plugin['config'].format.padding }};
-">
-  <!-- Calendar table -->
-  <table class="calendar-table">
-    <thead>
-      <tr>
-        <th>Pir</th>
-        <th>Ant</th>
-        <th>Tre</th>
-        <th>Ket</th>
-        <th>Pen</th>
-        <th>Šeš</th>
-        <th>Sek</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% set today = plugin['data'].today %}
-      {% set row_count = plugin['data'].weeks|length %}
-      {% for week in plugin['data'].weeks %}
-        <tr style="height: calc(100% / {{ row_count }});">
-          {% for day in week %}
-            {% if day %}
-              {% set day_str = day|strftime("%Y-%m-%d") %}
-              {% if day_str == today %}
-                {% set cell_bg = "rgba(0,128,0,0.7)" %}
-                {% set text_color = "white" %}
-              {% else %}
-                {% set cell_bg = "black" %}
-                {% set text_color = "lightgray" %}
-                {% if plugin['data'].show_holidays and day_str in plugin['data'].holidays %}
-                  {% set text_color = "#f88" %}
-                {% elif day|datetime_fromtimestamp|strftime('%w')|int in [6,0] %}
-                  {% set text_color = "lightgreen" %}
-                {% endif %}
-              {% endif %}
-              <td style="background: {{ cell_bg }}; color: {{ text_color }};">
-                <div class="day-header">{{ day|datetime_fromtimestamp|strftime('%d') }}</div>
-                {% if plugin['data'].show_holidays and day_str in plugin['data'].holidays %}
-                  <div class="holiday">{{ plugin['data'].holidays[day_str] }}</div>
-                {% endif %}
-                <div class="events">
-                  <ul>
-                    {% for event in plugin['data'].events_by_day.get(day_str, []) %}
-                      {% set truncated_summary = event.summary|truncate(plugin['data'].summary_max_length, True, '...') %}
-                      <li style="background: {{ event.color }}; color: {{ '#000' if event.color == '#FFFFFF' else '#fff' }};">
-                        {% if event.start.dateTime %}
-                          {% set dt = event.start.dateTime %}
-                          {% set time_str = dt|string|slice(11, 16) %}
-                          {{ time_str }} {{ truncated_summary }}
-                        {% else %}
-                          {{ truncated_summary }}
-                        {% endif %}
-                      </li>
-                    {% endfor %}
-                  </ul>
-                </div>
-              </td>
-            {% else %}
-              <td style="background: black;"></td>
-            {% endif %}
-          {% endfor %}
+  {% if plugin['data'].error %}
+  <div class="calendar-widget" style="
+      font-size: {{ plugin['config'].format.font_size }};
+      color: red;
+      padding: {{ plugin['config'].format.padding }};
+  ">
+    <h3>Google Calendar Error</h3>
+    <p>{{ plugin['data'].error }}</p>
+    <p>Make sure you have:<br>
+    1. Placed client_secret.json in the config folder<br>
+    2. Forwarded port 8080 if accessing via SSH (e.g., ssh -L 8080:localhost:8080 user@host)<br>
+    3. Complete the authentication in a browser when prompted</p>
+  </div>
+  {% elif plugin['data'].weeks %}
+  <div class="calendar-widget" style="
+      font-size: {{ plugin['config'].format.font_size }};
+      color: {{ plugin['config'].format.color }};
+      padding: {{ plugin['config'].format.padding }};
+  ">
+    <!-- Calendar table -->
+    <table class="calendar-table">
+      <thead>
+        <tr>
+          <th>Pir</th>
+          <th>Ant</th>
+          <th>Tre</th>
+          <th>Ket</th>
+          <th>Pen</th>
+          <th>Šeš</th>
+          <th>Sek</th>
         </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {% set today = plugin['data'].today %}
+        {% set row_count = plugin['data'].weeks|length %}
+        {% for week in plugin['data'].weeks %}
+          <tr style="height: calc(100% / {{ row_count }});">
+            {% for day in week %}
+              {% if day %}
+                {% set day_str = day|strftime("%Y-%m-%d") %}
+                {% if day_str == today %}
+                  {% set cell_bg = "rgba(0,128,0,0.7)" %}
+                  {% set text_color = "white" %}
+                {% else %}
+                  {% set cell_bg = "black" %}
+                  {% set text_color = "lightgray" %}
+                  {% if plugin['data'].show_holidays and day_str in plugin['data'].holidays %}
+                    {% set text_color = "#f88" %}
+                  {% elif day|datetime_fromtimestamp|strftime('%w')|int in [6,0] %}
+                    {% set text_color = "lightgreen" %}
+                  {% endif %}
+                {% endif %}
+                <td style="background: {{ cell_bg }}; color: {{ text_color }};">
+                  <div class="day-header">{{ day|datetime_fromtimestamp|strftime('%d') }}</div>
+                  {% if plugin['data'].show_holidays and day_str in plugin['data'].holidays %}
+                    <div class="holiday">{{ plugin['data'].holidays[day_str] }}</div>
+                  {% endif %}
+                  <div class="events">
+                    <ul>
+                      {% for event in plugin['data'].events_by_day.get(day_str, []) %}
+                        {% set truncated_summary = event.summary|truncate(plugin['data'].summary_max_length, True, '...') %}
+                        <li style="background: {{ event.color }}; color: {{ '#000' if event.color == '#FFFFFF' else '#fff' }};">
+                          {% if event.start.dateTime %}
+                            {% set dt = event.start.dateTime %}
+                            {% set time_str = dt|string|slice(11, 16) %}
+                            {{ time_str }} {{ truncated_summary }}
+                          {% else %}
+                            {{ truncated_summary }}
+                          {% endif %}
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </td>
+              {% else %}
+                <td style="background: black;"></td>
+              {% endif %}
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="calendar-widget" style="
+      font-size: {{ plugin['config'].format.font_size }};
+      color: orange;
+      padding: {{ plugin['config'].format.padding }};
+  ">
+    <h3>Calendar Initializing</h3>
+    <p>If this message persists, there may be an issue with Google Calendar authentication.</p>
+    <p>Make sure you have:<br>
+    1. Placed client_secret.json in the config folder<br>
+    2. Forwarded port 8080 if accessing via SSH (e.g., ssh -L 8080:localhost:8080 user@host)<br>
+    3. Open browser window by visiting http://localhost:8080 in your browser</p>
+  </div>
+  {% endif %}
+{% else %}
+<div class="calendar-widget" style="color: red; padding: 20px;">
+  <h3>Google Calendar Plugin Error</h3>
+  <p>No data available from the plugin.</p>
 </div>
 {% endif %} 

@@ -107,11 +107,8 @@ def get_events(config=None):
     if config is None:
         config = load_config()
     
-    # Get calendar ID from environment variable
-    calendar_id = os.getenv("FAMILY_CALENDAR_ID")
-    if not calendar_id:
-        print("Error: FAMILY_CALENDAR_ID not set in environment variables")
-        return {}
+    # Get calendar ID from environment variable or use default ("primary")
+    calendar_id = os.getenv("FAMILY_CALENDAR_ID", "primary")
     
     # Get credentials
     creds = get_credentials()
@@ -211,11 +208,8 @@ def get_today_events(config=None):
     if config is None:
         config = load_config()
     
-    # Get calendar ID from environment variable
-    calendar_id = os.getenv("FAMILY_CALENDAR_ID")
-    if not calendar_id:
-        print("Error: FAMILY_CALENDAR_ID not set in environment variables")
-        return {}
+    # Get calendar ID from environment variable or use default ("primary")
+    calendar_id = os.getenv("FAMILY_CALENDAR_ID", "primary")
     
     # Get credentials
     creds = get_credentials()
@@ -288,8 +282,22 @@ def get_refresh_interval():
 
 def init(config):
     """Initialize the plugin"""
-    # Register the event_color filter with the template environment
-    from backend.run import template_env
-    template_env.filters['event_color'] = get_event_color
+    # Log the plugin initialization
+    logger.info("Initializing Google Calendar plugin")
     
-    return {'data': get_events(config)} 
+    try:
+        # Check if client_secret.json exists
+        client_secrets_file = PROJECT_ROOT / "config" / "client_secret.json"
+        if not client_secrets_file.exists():
+            logger.error(f"client_secret.json not found at {client_secrets_file}")
+            return {'data': {}, 'error': 'Client secret file not found'}
+        
+        # Try to get the events
+        data = get_events(config)
+        logger.info(f"Google Calendar plugin initialized successfully with {len(data.get('events_by_day', {}))} days of events")
+        return {'data': data}
+    except Exception as e:
+        logger.error(f"Error initializing Google Calendar plugin: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return {'data': {}, 'error': str(e)} 
