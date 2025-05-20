@@ -43,11 +43,6 @@ function weatherForecastInit(container) {
                         html += `
                             <div class="weather-current">
                                 <div class="current-header">Now: ${timeStr}</div>
-                                <div class="current-icon">
-                                    <img src="${iconPath}" 
-                                         alt="${current.conditionCode}"
-                                         onerror="this.src='/plugins/weather-forecast/icons/clear.png'">
-                                </div>
                                 <div class="current-details">
                                     <div class="current-temp">Temp: ${Math.round(current.temperature)}°</div>
                                     <div class="current-feels">Feels like: ${Math.round(current.feelsLike)}°</div>
