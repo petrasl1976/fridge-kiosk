@@ -6,7 +6,7 @@
 ">
     {% if plugin['data'].current %}
     <div class="weather-current">
-        <div class="date">Now: {{ plugin['data'].current.forecastTimeUtc|string|slice(11, 16) }}</div>
+        <div class="date">{{ plugin['data'].current.forecastTimeUtc|string|slice(11, 16) }}</div>
         <div class="temp">
             <div class="max">{{ plugin['data'].current.temperature|round|int }}° ({{ plugin['data'].current.feelsLike|round|int }}°)</div>
             <div class="max">{{ plugin['data'].current.windSpeed }} m/s {{ plugin['data'].current.precipitation }} mm</div>

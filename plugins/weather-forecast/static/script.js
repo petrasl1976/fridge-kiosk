@@ -42,14 +42,11 @@ function weatherForecastInit(container) {
                         
                         html += `
                             <div class="weather-current">
-                                <div class="current-header">Now: ${timeStr}</div>
-                                <div class="current-details">
-                                    <div class="current-temp">Temp: ${Math.round(current.temperature)}°</div>
-                                    <div class="current-feels">Feels like: ${Math.round(current.feelsLike)}°</div>
-                                    <div class="current-wind">Wind: ${current.windSpeed} m/s</div>
-                                    <div class="current-pressure">Pressure: ${current.pressure} hPa</div>
-                                    <div class="current-humidity">Humidity: ${current.humidity}%</div>
-                                    <div class="current-precipitation">Precipitation: ${current.precipitation} mm</div>
+                                <div class="date">${timeStr}</div>
+                                <div class="temp">
+                                    <div class="max">${Math.round(current.temperature)}° (${Math.round(current.feelsLike)}°</div>
+                                    <div class="max">${current.windSpeed} m/s ${current.precipitation} mm</div>
+                                    <div class="max">${current.pressure} hPa - ${current.humidity}%</div>
                                 </div>
                             </div>
                             <div class="divider"></div>
