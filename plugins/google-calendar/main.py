@@ -55,52 +55,43 @@ def get_credentials():
     """Get credentials for Google Calendar API"""
     # The file token.json stores the user's access and refresh tokens
     token_path = PROJECT_ROOT / "config" / "token.json"
-    creds = None
     
-    # Load client secrets file from config directory
-    client_secrets_file = PROJECT_ROOT / "config" / "client_secret.json"
-    
-    # Check if token.json exists
+    # First try to load from token.json
     if token_path.exists():
         try:
-            creds = Credentials.from_authorized_user_info(
-                json.loads(token_path.read_text()), 
-                SCOPES
-            )
+            with open(token_path, 'r') as token_file:
+                token_data = json.load(token_file)
+                return google.oauth2.credentials.Credentials(**token_data)
         except Exception as e:
-            logger.error(f"Error loading credentials: {e}")
-            creds = None
-
-    # If there are no valid credentials, let the user log in
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            try:
-                creds.refresh(Request())
-            except Exception as e:
-                logger.error(f"Error refreshing credentials: {e}")
-                creds = None
+            logger.error(f"Error loading credentials from token.json: {e}")
+    
+    # If no token or failed to load, initialize the flow
+    client_secrets_file = PROJECT_ROOT / "config" / "client_secret.json"
+    if not client_secrets_file.exists():
+        logger.error(f"client_secret.json not found at {client_secrets_file}")
+        return None
+    
+    try:
+        # Create the flow instance
+        flow = InstalledAppFlow.from_client_secrets_file(
+            client_secrets_file,
+            SCOPES
+        )
         
-        if not creds:
-            if client_secrets_file.exists():
-                try:
-                    flow = InstalledAppFlow.from_client_secrets_file(
-                        client_secrets_file,
-                        SCOPES
-                    )
-                    # This will open a browser window for authentication
-                    creds = flow.run_local_server(port=8080)
-                    
-                    # Save the credentials for the next run
-                    with open(token_path, 'w') as token:
-                        token.write(json.dumps(credentials_to_dict(creds)))
-                except Exception as e:
-                    logger.error(f"Error during authentication flow: {e}")
-                    return None
-            else:
-                logger.error("client_secret.json not found")
-                return None
-
-    return creds
+        # Run the OAuth flow
+        creds = flow.run_local_server(port=8080)
+        
+        # Save the credentials for the next run
+        token_data = credentials_to_dict(creds)
+        with open(token_path, 'w') as token:
+            json.dump(token_data, token)
+        
+        return creds
+    except Exception as e:
+        logger.error(f"Error during authentication flow: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return None
 
 def get_events(config=None):
     """Get events from Google Calendar"""
@@ -108,7 +99,7 @@ def get_events(config=None):
         config = load_config()
     
     # Get calendar ID from environment variable or use default ("primary")
-    calendar_id = os.getenv("FAMILY_CALENDAR_ID", "primary")
+    calendar_id = os.getenv("GOOGLE_CLIENT_ID", "primary")
     
     # Get credentials
     creds = get_credentials()
@@ -209,7 +200,7 @@ def get_today_events(config=None):
         config = load_config()
     
     # Get calendar ID from environment variable or use default ("primary")
-    calendar_id = os.getenv("FAMILY_CALENDAR_ID", "primary")
+    calendar_id = os.getenv("GOOGLE_CLIENT_ID", "primary")
     
     # Get credentials
     creds = get_credentials()
