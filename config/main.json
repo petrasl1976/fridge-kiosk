@@ -7,7 +7,7 @@
     "logLevel": "debug",
     "fontFamily": "Courier New, monospace"
   },
-  "enabledPlugins": ["sensors", "date-time", "discord-channel", "weather-forecast"],
+  "enabledPlugins": ["weather-forecast", "discord-channel", "sensors", "date-time"],
   "userColors": {
     "Jonas": "#ff0000",
     "Petras": "#00ff00",
