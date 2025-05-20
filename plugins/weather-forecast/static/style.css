@@ -26,12 +26,11 @@
 }
 
 .date {
-    font-weight: bold;
     margin-bottom: 5px;
 }
 
 .temp {
-    font-size: 1.2em;
+    margin: 5px 0;
 }
 
 .temp .min {
@@ -56,8 +55,6 @@
 }
 
 .current-header {
-    font-weight: bold;
-    font-size: 1.2em;
     margin-bottom: 5px;
 }
 
@@ -71,12 +68,6 @@
     flex-direction: column;
     align-items: flex-start;
     text-align: left;
-    font-size: 0.9em;
-}
-
-.current-temp {
-    font-size: 1.2em;
-    font-weight: bold;
 }
 
 .divider {
