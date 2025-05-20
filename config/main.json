@@ -7,10 +7,14 @@
     "logLevel": "debug",
     "fontFamily": "Courier New, monospace"
   },
-  "enabledPlugins": ["weather-forecast", "discord-channel", "sensors", "date-time"],
+  "enabledPlugins": ["google-calendar", "weather-forecast", "discord-channel", "sensors", "date-time"],
   "userColors": {
-    "Jonas": "#ff0000",
-    "Petras": "#00ff00",
-    "Mantas": "#0000ff"
+    "PE": "#4d26f0",
+    "BU": "#4d26f0",
+    "LI": "#003300",
+    "MA": "#F44336",
+    "LA": "#3e5393",
+    "DA": "#607D8B",
+    "GI": "#E91E63"
   }
 } 
