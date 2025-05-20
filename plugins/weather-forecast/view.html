@@ -6,11 +6,11 @@
 ">
     {% if plugin['data'].current %}
     <div class="weather-current">
-        <div class="date">{{ plugin['data'].current.forecastTimeUtc|string|slice(11, 16) }}</div>
         <div class="temp">
-            <div class="max">{{ plugin['data'].current.temperature|round|int }}° {{ plugin['data'].current.feelsLike|round|int }}°</div>
+            <div class="max">{{ plugin['data'].current.forecastTimeUtc|string|slice(11, 16) }} {{ plugin['data'].current.temperature|round|int }}° {{ plugin['data'].current.feelsLike|round|int }}°</div>
             <div class="max">{{ plugin['data'].current.windSpeed }} m/s {{ plugin['data'].current.precipitation }} mm</div>
             <div class="max"><nobr>{{ plugin['data'].current.pressure }} hPa {{ plugin['data'].current.humidity }}%</nobr></div>
+            <div class="max">{{ plugin['data'].current.conditionCode }}</div>
         </div>
     </div>
     {% endif %}
