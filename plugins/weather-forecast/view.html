@@ -6,7 +6,7 @@
 ">
     {% if plugin['data'].current %}
     <div class="weather-current">
-        <div class="current-header">Now: {{ plugin['data'].current.forecastTimeUtc|string[-8:-3] }}</div>
+        <div class="current-header">Now: {{ plugin['data'].current.forecastTimeUtc|string|slice(11, 16) }}</div>
         <div class="current-icon">
             <img src="/plugins/weather-forecast/icons/{{ plugin['data'].current.conditionCode }}.png" 
                  alt="{{ plugin['data'].current.conditionCode }}"
