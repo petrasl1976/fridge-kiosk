@@ -18,7 +18,6 @@
     display: flex;
     justify-content: center;
     font-size: 3em;
-    font-weight: bold;
     white-space: nowrap;
 }
 
@@ -57,7 +56,6 @@
 }
 
 .sensor-label {
-    font-weight: bold;
     margin-right: 8px;
     min-width: 65px;
 }
