@@ -5,6 +5,7 @@ from pathlib import Path
 import dotenv
 from zoneinfo import ZoneInfo
 from collections import defaultdict
+import logging
 
 # Import local plugin helpers
 from .helpers import get_event_color, format_time
@@ -23,45 +24,77 @@ ENV_FILE = PROJECT_ROOT / 'config' / '.env'
 # Load environment variables from the project-wide .env file
 dotenv.load_dotenv(ENV_FILE)
 
+# Configure logging
+logger = logging.getLogger(__name__)
+
+# If modifying these scopes, delete the token.json file.
+SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+
 def load_config():
     """Load plugin configuration"""
     config_path = Path(__file__).parent / "config.json"
     with open(config_path) as f:
         return json.load(f)
 
+def credentials_to_dict(credentials):
+    """Convert credentials object to dictionary"""
+    return {
+        'token': credentials.token,
+        'refresh_token': credentials.refresh_token,
+        'token_uri': credentials.token_uri,
+        'client_id': credentials.client_id,
+        'client_secret': credentials.client_secret,
+        'scopes': credentials.scopes
+    }
+
 def get_credentials():
     """Get credentials for Google Calendar API"""
     # The file token.json stores the user's access and refresh tokens
-    token_path = Path(__file__).parent / "token.json"
+    token_path = PROJECT_ROOT / "config" / "token.json"
     creds = None
     
-    # Load client secrets file
-    client_secrets_file = Path(__file__).parent / "client_secret.json"
+    # Load client secrets file from config directory
+    client_secrets_file = PROJECT_ROOT / "config" / "client_secret.json"
     
     # Check if token.json exists
     if token_path.exists():
-        creds = Credentials.from_authorized_user_info(
-            json.loads(token_path.read_text()), 
-            ['https://www.googleapis.com/auth/calendar.readonly']
-        )
+        try:
+            creds = Credentials.from_authorized_user_info(
+                json.loads(token_path.read_text()), 
+                SCOPES
+            )
+        except Exception as e:
+            logger.error(f"Error loading credentials: {e}")
+            creds = None
 
     # If there are no valid credentials, let the user log in
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                logger.error(f"Error refreshing credentials: {e}")
+                creds = None
+        
+        if not creds:
             if client_secrets_file.exists():
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    client_secrets_file,
-                    ['https://www.googleapis.com/auth/calendar.readonly']
-                )
-                creds = flow.run_local_server(port=0)
+                try:
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        client_secrets_file,
+                        SCOPES
+                    )
+                    # This will open a browser window for authentication
+                    creds = flow.run_local_server(port=8080)
+                    
+                    # Save the credentials for the next run
+                    with open(token_path, 'w') as token:
+                        token.write(json.dumps(credentials_to_dict(creds)))
+                except Exception as e:
+                    logger.error(f"Error during authentication flow: {e}")
+                    return None
             else:
+                logger.error("client_secret.json not found")
                 return None
-                
-        # Save the credentials for the next run
-        with open(token_path, 'w') as token:
-            token.write(creds.to_json())
 
     return creds
 
