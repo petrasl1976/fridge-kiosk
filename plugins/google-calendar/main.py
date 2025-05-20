@@ -30,6 +30,10 @@ logger = logging.getLogger(__name__)
 # If modifying these scopes, delete the token.json file.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
+def event_color_filter(event_summary):
+    """Template filter to get event color based on summary"""
+    return get_event_color(event_summary)
+
 def load_config():
     """Load plugin configuration"""
     config_path = Path(__file__).parent / "config.json"
@@ -284,4 +288,8 @@ def get_refresh_interval():
 
 def init(config):
     """Initialize the plugin"""
+    # Register the event_color filter with the template environment
+    from backend.run import template_env
+    template_env.filters['event_color'] = get_event_color
+    
     return {'data': get_events(config)} 
