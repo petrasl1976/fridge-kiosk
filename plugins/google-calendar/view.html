@@ -46,8 +46,7 @@
                   <ul>
                     {% for event in plugin['data'].events_by_day.get(day_str, []) %}
                       {% set truncated_summary = event.summary|truncate(plugin['data'].summary_max_length, True, '...') %}
-                      {% set bg_color = event.summary|event_color %}
-                      <li style="background: {{ bg_color }}; color: {{ '#000' if bg_color == '#FFFFFF' else '#fff' }};">
+                      <li style="background: {{ event.color }}; color: {{ '#000' if event.color == '#FFFFFF' else '#fff' }};">
                         {% if event.start.dateTime %}
                           {% set dt = event.start.dateTime %}
                           {% set time_str = dt|string|slice(11, 16) %}
