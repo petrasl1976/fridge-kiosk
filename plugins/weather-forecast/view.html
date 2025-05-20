@@ -4,6 +4,26 @@
     --text-color: {{ plugin['config'].format.color }};
     --padding: {{ plugin['config'].format.padding }};
 ">
+    {% if plugin['data'].current %}
+    <div class="weather-current">
+        <div class="current-header">Now: {{ plugin['data'].current.forecastTimeUtc|string[-8:-3] }}</div>
+        <div class="current-icon">
+            <img src="/plugins/weather-forecast/icons/{{ plugin['data'].current.conditionCode }}.png" 
+                 alt="{{ plugin['data'].current.conditionCode }}"
+                 onerror="this.src='/plugins/weather-forecast/icons/clear.png'">
+        </div>
+        <div class="current-details">
+            <div class="current-temp">Temp: {{ plugin['data'].current.temperature|round|int }}°</div>
+            <div class="current-feels">Feels like: {{ plugin['data'].current.feelsLike|round|int }}°</div>
+            <div class="current-wind">Wind: {{ plugin['data'].current.windSpeed }} m/s</div>
+            <div class="current-pressure">Pressure: {{ plugin['data'].current.pressure }} hPa</div>
+            <div class="current-humidity">Humidity: {{ plugin['data'].current.humidity }}%</div>
+            <div class="current-precipitation">Precipitation: {{ plugin['data'].current.precipitation }} mm</div>
+        </div>
+    </div>
+    <div class="divider"></div>
+    {% endif %}
+    
     {% for day in plugin['data'].daily %}
     <div class="weather-day">
         <div class="date">{{ day.dt|datetime_fromtimestamp|strftime('%a') }}</div>

@@ -13,7 +13,7 @@
             "height": "10%"
         }
     },
-    "updateInterval": 1800,
+    "updateInterval": 900,
     "format": {
         "font_size": "1.7em",
         "color": "#fff",

@@ -30,29 +30,61 @@ function weatherForecastInit(container) {
         fetch('/api/plugins/weather-forecast/data')
             .then(response => response.json())
             .then(data => {
-                if (data && data.daily) {
-                    // Update the view with new data
-                    const html = data.daily.map(day => {
-                        const date = new Date(day.dt * 1000);
-                        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-                        const condition = day.weather[0].description;
-                        const iconPath = `/plugins/weather-forecast/icons/${condition}.png`;
+                if (data) {
+                    let html = '';
+                    
+                    // Add current weather section if available
+                    if (data.current) {
+                        const current = data.current;
+                        const currentTime = new Date(current.dt * 1000);
+                        const timeStr = currentTime.toTimeString().substring(0, 5);
+                        const iconPath = `/plugins/weather-forecast/icons/${current.conditionCode}.png`;
                         
-                        return `
-                            <div class="weather-day">
-                                <div class="date">${dayName}</div>
-                                <div class="temp">
-                                    <span class="max">${Math.round(day.main.temp_max)}°</span>
-                                    <span class="min">${Math.round(day.main.temp_min)}°</span>
-                                </div>
-                                <div class="condition">
+                        html += `
+                            <div class="weather-current">
+                                <div class="current-header">Now: ${timeStr}</div>
+                                <div class="current-icon">
                                     <img src="${iconPath}" 
-                                         alt="${condition}"
+                                         alt="${current.conditionCode}"
                                          onerror="this.src='/plugins/weather-forecast/icons/clear.png'">
                                 </div>
+                                <div class="current-details">
+                                    <div class="current-temp">Temp: ${Math.round(current.temperature)}°</div>
+                                    <div class="current-feels">Feels like: ${Math.round(current.feelsLike)}°</div>
+                                    <div class="current-wind">Wind: ${current.windSpeed} m/s</div>
+                                    <div class="current-pressure">Pressure: ${current.pressure} hPa</div>
+                                    <div class="current-humidity">Humidity: ${current.humidity}%</div>
+                                    <div class="current-precipitation">Precipitation: ${current.precipitation} mm</div>
+                                </div>
                             </div>
+                            <div class="divider"></div>
                         `;
-                    }).join('');
+                    }
+                    
+                    // Add daily forecast
+                    if (data.daily) {
+                        html += data.daily.map(day => {
+                            const date = new Date(day.dt * 1000);
+                            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                            const condition = day.weather[0].description;
+                            const iconPath = `/plugins/weather-forecast/icons/${condition}.png`;
+                            
+                            return `
+                                <div class="weather-day">
+                                    <div class="date">${dayName}</div>
+                                    <div class="temp">
+                                        <span class="max">${Math.round(day.main.temp_max)}°</span>
+                                        <span class="min">${Math.round(day.main.temp_min)}°</span>
+                                    </div>
+                                    <div class="condition">
+                                        <img src="${iconPath}" 
+                                             alt="${condition}"
+                                             onerror="this.src='/plugins/weather-forecast/icons/clear.png'">
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
                     
                     container.innerHTML = html;
                 }

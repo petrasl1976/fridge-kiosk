@@ -42,4 +42,46 @@
 .condition img {
     width: 60px;
     height: 60px;
+}
+
+/* Current weather styles */
+.weather-current {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0 15px;
+    margin-right: 10px;
+    min-width: 200px;
+}
+
+.current-header {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 5px;
+}
+
+.current-icon img {
+    width: 80px;
+    height: 80px;
+}
+
+.current-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    font-size: 0.9em;
+}
+
+.current-temp {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.divider {
+    width: 2px;
+    height: 100px;
+    background-color: rgba(255,255,255,0.5);
+    margin: 0 10px;
 } 

@@ -29,6 +29,25 @@ def get_weather(config=None):
             return {}
         data = r.json()
         forecasts = data.get("forecastTimestamps", [])
+        
+        # Add current weather data
+        current_weather = None
+        if forecasts:
+            # Get the first (most recent) forecast as current weather
+            current_weather = forecasts[0]
+            current_dt_obj = parse_meteo_lt_time(current_weather["forecastTimeUtc"])
+            current_weather_data = {
+                "dt": int(current_dt_obj.timestamp()),
+                "forecastTimeUtc": current_weather["forecastTimeUtc"],
+                "temperature": current_weather["airTemperature"],
+                "feelsLike": current_weather["feelsLikeTemperature"],
+                "windSpeed": current_weather["windSpeed"],
+                "pressure": current_weather["seaLevelPressure"],
+                "humidity": current_weather["relativeHumidity"],
+                "precipitation": current_weather["totalPrecipitation"],
+                "conditionCode": current_weather["conditionCode"]
+            }
+        
         by_date = {}
         for entry in forecasts:
             dt_obj = parse_meteo_lt_time(entry["forecastTimeUtc"])
@@ -65,7 +84,7 @@ def get_weather(config=None):
                 "weather": [{"description": best_condition}]
             })
         daily_list = daily_list[:7]  # Get only 7 days forecast
-        return {"daily": daily_list}
+        return {"daily": daily_list, "current": current_weather_data}
     except Exception as e:
         print(f"Error fetching weather data: {e}")
         return {}
