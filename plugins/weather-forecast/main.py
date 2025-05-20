@@ -2,6 +2,7 @@ import json
 import requests
 import datetime
 from pathlib import Path
+import pytz
 
 def load_config():
     config_path = Path(__file__).parent / "config.json"
@@ -12,7 +13,7 @@ def parse_meteo_lt_time(dt_str):
     fmts = ["%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S"]
     for fmt in fmts:
         try:
-            return datetime.datetime.strptime(dt_str, fmt)
+            return datetime.datetime.strptime(dt_str, fmt).replace(tzinfo=datetime.timezone.utc)
         except:
             pass
     raise ValueError(f"Bad time format: {dt_str}")
@@ -30,23 +31,36 @@ def get_weather(config=None):
         data = r.json()
         forecasts = data.get("forecastTimestamps", [])
         
-        # Add current weather data
+        # Find the forecast closest to now (but not earlier)
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        vilnius_tz = pytz.timezone('Europe/Vilnius')
         current_weather = None
-        if forecasts:
-            # Get the first (most recent) forecast as current weather
-            current_weather = forecasts[0]
-            current_dt_obj = parse_meteo_lt_time(current_weather["forecastTimeUtc"])
-            current_weather_data = {
-                "dt": int(current_dt_obj.timestamp()),
-                "forecastTimeUtc": current_weather["forecastTimeUtc"],
-                "temperature": current_weather["airTemperature"],
-                "feelsLike": current_weather["feelsLikeTemperature"],
-                "windSpeed": current_weather["windSpeed"],
-                "pressure": current_weather["seaLevelPressure"],
-                "humidity": current_weather["relativeHumidity"],
-                "precipitation": current_weather["totalPrecipitation"],
-                "conditionCode": current_weather["conditionCode"]
-            }
+        min_diff = None
+        for entry in forecasts:
+            entry_time = parse_meteo_lt_time(entry["forecastTimeUtc"])
+            diff = (entry_time - now_utc).total_seconds()
+            if diff >= 0 and (min_diff is None or diff < min_diff):
+                min_diff = diff
+                current_weather = entry
+        if not current_weather and forecasts:
+            # fallback: use the last available forecast
+            current_weather = forecasts[-1]
+            entry_time = parse_meteo_lt_time(current_weather["forecastTimeUtc"])
+        else:
+            entry_time = parse_meteo_lt_time(current_weather["forecastTimeUtc"])
+        # Convert UTC time to Europe/Vilnius
+        local_time = entry_time.astimezone(vilnius_tz)
+        current_weather_data = {
+            "dt": int(local_time.timestamp()),
+            "forecastTimeUtc": local_time.strftime("%Y-%m-%d %H:%M"),
+            "temperature": current_weather["airTemperature"],
+            "feelsLike": current_weather["feelsLikeTemperature"],
+            "windSpeed": current_weather["windSpeed"],
+            "pressure": current_weather["seaLevelPressure"],
+            "humidity": current_weather["relativeHumidity"],
+            "precipitation": current_weather["totalPrecipitation"],
+            "conditionCode": current_weather["conditionCode"]
+        }
         
         by_date = {}
         for entry in forecasts:
