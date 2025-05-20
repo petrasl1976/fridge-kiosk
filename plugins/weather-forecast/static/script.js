@@ -49,7 +49,6 @@ function weatherForecastInit(container) {
                                     <div class="max"><nobr>${current.pressure} hPa ${current.humidity}%</nobr></div>
                                 </div>
                             </div>
-                            <div class="divider"></div>
                         `;
                     }
                     
