@@ -1,13 +1,13 @@
 {
     "position": {
         "landscape": {
-            "top": "7%",
+            "top": "15%",
             "left": "65%",
             "width": "35%",
             "height": "auto"
         },
         "portrait": {
-            "top": "1%",
+            "top": "10%",
             "left": "60%",
             "width": "40%",
             "height": "auto"
