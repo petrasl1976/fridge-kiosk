@@ -99,7 +99,7 @@ def get_events(config=None):
         config = load_config()
     
     # Get calendar ID from environment variable or use default ("primary")
-    calendar_id = os.getenv("GOOGLE_CLIENT_ID", "primary")
+    calendar_id = os.getenv("GOOGLE_CALENDAR_ID", os.getenv("GOOGLE_CLIENT_ID", "primary"))
     
     # Get credentials
     creds = get_credentials()
@@ -200,7 +200,7 @@ def get_today_events(config=None):
         config = load_config()
     
     # Get calendar ID from environment variable or use default ("primary")
-    calendar_id = os.getenv("GOOGLE_CLIENT_ID", "primary")
+    calendar_id = os.getenv("GOOGLE_CALENDAR_ID", os.getenv("GOOGLE_CLIENT_ID", "primary"))
     
     # Get credentials
     creds = get_credentials()
