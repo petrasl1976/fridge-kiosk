@@ -1,6 +1,7 @@
 import json
 import os
 import datetime
+import sys
 from pathlib import Path
 import dotenv
 from zoneinfo import ZoneInfo
@@ -24,9 +25,36 @@ ENV_FILE = PROJECT_ROOT / 'config' / '.env'
 # Load environment variables from the project-wide .env file
 dotenv.load_dotenv(ENV_FILE)
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+# Configure logging to write to both stderr and a file
+log_file = PROJECT_ROOT / 'logs' / 'google_calendar.log'
+log_file.parent.mkdir(exist_ok=True, parents=True)
+
+# Create a custom logger
+logger = logging.getLogger('google_calendar')
+logger.setLevel(logging.DEBUG)
+
+# Create console handler
+console_handler = logging.StreamHandler(sys.stderr)
+console_handler.setLevel(logging.DEBUG)
+
+# Create file handler
+file_handler = logging.FileHandler(log_file, mode='a')
+file_handler.setLevel(logging.DEBUG)
+
+# Create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+file_handler.setFormatter(formatter)
+
+# Add handlers to logger
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
+
+# Force a log message to verify logging is working
+logger.info("==========================================")
+logger.info("Google Calendar Plugin Loaded")
+logger.info(f"Log file location: {log_file}")
+logger.info("==========================================")
 
 # If modifying these scopes, delete the token.json file.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
@@ -348,6 +376,71 @@ def api_auth():
         return {"status": "success", "message": "Authentication successful"}
     else:
         return {"status": "error", "message": "Authentication failed"}
+
+def api_status():
+    """API endpoint to check the plugin's status and configuration"""
+    logger.debug("Calendar api_status called")
+    
+    # Check environment variables
+    calendar_id = os.getenv("GOOGLE_CALENDAR_ID", os.getenv("GOOGLE_CLIENT_ID", "primary"))
+    env_vars = {k: v for k, v in os.environ.items() if 'GOOGLE' in k or 'CALENDAR' in k}
+    
+    # Check files
+    client_secret_exists = (PROJECT_ROOT / "config" / "client_secret.json").exists()
+    token_exists = (PROJECT_ROOT / "config" / "token.json").exists()
+    env_file_exists = ENV_FILE.exists()
+    
+    # Check directories
+    project_root_exists = PROJECT_ROOT.exists()
+    config_dir_exists = (PROJECT_ROOT / "config").exists()
+    
+    # Build status response
+    status = {
+        "plugin": "Google Calendar",
+        "status": "checking",
+        "environment": {
+            "calendar_id": calendar_id,
+            "environment_variables": env_vars,
+            "current_directory": os.getcwd(),
+            "python_path": sys.path,
+        },
+        "files": {
+            "client_secret.json": client_secret_exists,
+            "token.json": token_exists,
+            ".env": env_file_exists,
+        },
+        "directories": {
+            "project_root_path": str(PROJECT_ROOT),
+            "project_root_exists": project_root_exists,
+            "config_dir_exists": config_dir_exists,
+        },
+        "logs": {
+            "log_file": str(log_file),
+        }
+    }
+    
+    # Try to load config
+    try:
+        config = load_config()
+        status["config"] = config
+    except Exception as e:
+        status["config_error"] = str(e)
+    
+    # Try to check credentials
+    try:
+        creds = get_credentials()
+        status["credentials"] = {
+            "available": creds is not None,
+            "valid": creds is not None and not getattr(creds, 'expired', True),
+            "refreshable": creds is not None and getattr(creds, 'refresh_token', None) is not None,
+        }
+    except Exception as e:
+        status["credentials_error"] = str(e)
+    
+    status["status"] = "ok" if client_secret_exists else "missing_client_secret"
+    
+    logger.debug(f"Status response: {status}")
+    return status
 
 def get_refresh_interval():
     """Get refresh interval from config"""
