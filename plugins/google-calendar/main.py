@@ -7,6 +7,7 @@ import dotenv
 from zoneinfo import ZoneInfo
 from collections import defaultdict
 import logging
+import traceback  # Added for detailed stack traces
 
 # Import local plugin helpers
 from .helpers import get_event_color, format_time
@@ -33,15 +34,15 @@ log_file.parent.mkdir(exist_ok=True, parents=True)
 
 # Create a custom logger
 logger = logging.getLogger('google_calendar')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)  # Changed to DEBUG level for more detailed logs
 
 # Create console handler
 console_handler = logging.StreamHandler(sys.stderr)
-console_handler.setLevel(logging.INFO)
+console_handler.setLevel(logging.DEBUG)  # Changed to DEBUG level
 
 # Create file handler
 file_handler = logging.FileHandler(log_file, mode='a')
-file_handler.setLevel(logging.INFO)
+file_handler.setLevel(logging.DEBUG)  # Changed to DEBUG level
 
 # Create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -68,12 +69,22 @@ def event_color_filter(event_summary):
 def load_config():
     """Load plugin configuration"""
     config_path = Path(__file__).parent / "config.json"
-    with open(config_path) as f:
-        return json.load(f)
+    logger.debug(f"Loading config from {config_path}")
+    try:
+        with open(config_path) as f:
+            config = json.load(f)
+            logger.debug(f"Config loaded: {json.dumps(config, indent=2)}")
+            return config
+    except Exception as e:
+        logger.error(f"Error loading config: {e}")
+        logger.debug(f"Traceback: {traceback.format_exc()}")
+        return {}
 
 def get_event_color(summary):
     """Template filter to get event color based on summary"""
+    logger.debug(f"Getting color for event summary: '{summary}'")
     if not summary:
+        logger.debug("Empty summary, returning default black")
         return "#000000"  # Default black
     prefix = summary[:2].upper()
     
@@ -87,7 +98,9 @@ def get_event_color(summary):
         "GI": "#660000"
     }
     
-    return EVENT_COLORS.get(prefix, "#000000")
+    color = EVENT_COLORS.get(prefix, "#000000")
+    logger.debug(f"Prefix: '{prefix}', Color: {color}")
+    return color
 
 def format_time(datetime_str):
     """Format time from ISO format to HH:MM format"""
@@ -96,14 +109,17 @@ def format_time(datetime_str):
 
 def load_stored_credentials():
     """Load credentials from token.json file if it exists"""
+    logger.debug(f"Checking for token file at {TOKEN_FILE}")
     if TOKEN_FILE.exists():
         try:
-            logger.info(f"Found token file at {TOKEN_FILE}, loading credentials")
+            logger.debug(f"Found token file at {TOKEN_FILE}, loading credentials")
             with open(TOKEN_FILE, 'r') as token_file:
                 token_data = json.load(token_file)
+                logger.debug(f"Token data loaded, keys: {list(token_data.keys())}")
                 return google.oauth2.credentials.Credentials(**token_data)
         except Exception as e:
             logger.error(f"Error loading token.json: {e}")
+            logger.debug(f"Traceback: {traceback.format_exc()}")
     logger.warning("No token.json found or failed to load")
     return None
 
@@ -120,6 +136,7 @@ def credentials_to_dict(credentials):
 
 def get_credentials():
     """Get credentials for Google Calendar API"""
+    logger.debug("Entering get_credentials()")
     # First try to load from token.json
     creds = load_stored_credentials()
     
@@ -135,11 +152,13 @@ def get_credentials():
             logger.info("Credentials refreshed and saved")
         except Exception as e:
             logger.error(f"Error refreshing credentials: {e}")
+            logger.debug(f"Traceback: {traceback.format_exc()}")
             creds = None
             
     # Return valid credentials if we have them
     if creds and not creds.expired:
         logger.info("Using valid credentials")
+        logger.debug(f"Credential details: token present: {'yes' if creds.token else 'no'}, refresh_token present: {'yes' if creds.refresh_token else 'no'}, expired: {creds.expired}")
         return creds
         
     logger.warning("No valid credentials available")
@@ -147,7 +166,9 @@ def get_credentials():
 
 def get_events(config=None):
     """Get events from Google Calendar"""
+    logger.debug("Entering get_events()")
     if config is None:
+        logger.debug("No config provided, loading from file")
         config = load_config()
     
     # Get calendar ID from environment variable or use default ("primary")
@@ -167,9 +188,11 @@ def get_events(config=None):
         
         # Set timezone
         vilnius_tz = ZoneInfo('Europe/Vilnius')
+        logger.debug(f"Using timezone: Europe/Vilnius")
         
         # Today's date in local timezone
         today = datetime.datetime.now(vilnius_tz).date()
+        logger.debug(f"Today's date: {today}")
         
         # Start of the week (Monday)
         start_of_week = today - datetime.timedelta(days=today.weekday())
@@ -183,6 +206,7 @@ def get_events(config=None):
         time_max = end_of_range.isoformat() + 'T23:59:59Z'
         
         logger.info(f"Fetching events from {time_min} to {time_max}")
+        logger.debug(f"Query parameters: calendarId={calendar_id}, timeMin={time_min}, timeMax={time_max}, timeZone=Europe/Vilnius")
         
         # Call the Calendar API
         events_result = service.events().list(
@@ -197,6 +221,8 @@ def get_events(config=None):
         events = events_result.get('items', [])
         
         logger.info(f"Retrieved {len(events)} events from calendar API")
+        if len(events) > 0:
+            logger.debug(f"First event: {json.dumps(events[0], indent=2, default=str)}")
         
         # Process events: add colors and format times
         for event in events:
@@ -247,12 +273,15 @@ def get_events(config=None):
         }
         
         logger.info(f"Calendar response created with {len(weeks)} weeks")
+        logger.debug(f"Response keys: {list(response.keys())}")
+        logger.debug(f"Today: {response['today']}")
+        logger.debug(f"Number of event days: {len(response['events_by_day'])}")
+        
         return response
         
     except Exception as e:
         logger.error(f"Error fetching calendar events: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
+        logger.debug(f"Traceback: {traceback.format_exc()}")
         return {'error': str(e)}
 
 def get_today_events(config=None):
@@ -329,7 +358,16 @@ def get_today_events(config=None):
 def api_data():
     """API endpoint for calendar data"""
     logger.info("Calendar api_data called")
-    return get_events()
+    try:
+        events_data = get_events()
+        logger.debug(f"api_data returning: keys={list(events_data.keys())}")
+        if 'error' in events_data:
+            logger.error(f"api_data error: {events_data['error']}")
+        return events_data
+    except Exception as e:
+        logger.error(f"Exception in api_data: {e}")
+        logger.debug(f"Traceback: {traceback.format_exc()}")
+        return {'error': f"Exception: {str(e)}"}
 
 def api_today():
     """API endpoint for today's events"""
@@ -402,6 +440,7 @@ def api_status():
         status["config"] = config
     except Exception as e:
         status["config_error"] = str(e)
+        logger.debug(f"Config error traceback: {traceback.format_exc()}")
     
     # Try to check credentials
     try:
@@ -413,10 +452,12 @@ def api_status():
         }
     except Exception as e:
         status["credentials_error"] = str(e)
+        logger.debug(f"Credentials error traceback: {traceback.format_exc()}")
     
     status["status"] = "ok" if client_secret_exists else "missing_client_secret"
     
-    logger.info(f"Status response prepared")
+    logger.info(f"Status response prepared: {status['status']}")
+    logger.debug(f"Full status: {json.dumps(status, indent=2, default=str)}")
     return status
 
 def get_refresh_interval():
@@ -428,6 +469,7 @@ def init(config):
     """Initialize the plugin"""
     # Log the plugin initialization
     logger.info("Initializing Google Calendar plugin")
+    logger.debug(f"Config: {json.dumps(config, indent=2, default=str)}")
     
     try:
         # Check if client_secret.json exists
@@ -442,14 +484,96 @@ def init(config):
         
         # Try to get the events
         data = get_events(config)
+        logger.debug(f"get_events returned data keys: {list(data.keys() if isinstance(data, dict) else [])}")
+        
         if 'error' in data:
             logger.error(f"Error getting events: {data['error']}")
             return {'data': data, 'error': data['error']}
+        
+        # Debug view template variables
+        try:
+            from jinja2 import Environment, FileSystemLoader
+            template_path = Path(__file__).parent / "view.html"
+            logger.debug(f"Template exists: {template_path.exists()}")
+            
+            if template_path.exists():
+                with open(template_path, 'r') as f:
+                    template_content = f.read()
+                logger.debug(f"Template first 100 chars: {template_content[:100]}")
+                
+                # Check template variables
+                import re
+                variables = re.findall(r'{{\s*([^}|]*)[}|]', template_content)
+                logger.debug(f"Template variables: {set(variables)}")
+        except Exception as e:
+            logger.debug(f"Error analyzing template: {e}")
             
         logger.info(f"Google Calendar plugin initialized successfully with {len(data.get('events_by_day', {}))} days of events")
-        return {'data': data}
+        init_result = {'data': data}
+        logger.debug(f"Returning init result with keys: {list(init_result.keys())}")
+        logger.debug(f"Data keys: {list(init_result['data'].keys())}")
+        return init_result
     except Exception as e:
         logger.error(f"Error initializing Google Calendar plugin: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        return {'data': {}, 'error': str(e)} 
+        logger.debug(f"Traceback: {traceback.format_exc()}")
+        return {'data': {}, 'error': str(e)}
+
+def api_debug():
+    """API endpoint for debugging template rendering issues"""
+    logger.info("Calendar api_debug called")
+    
+    try:
+        # Get basic events data
+        events_data = get_events()
+        
+        # Add debug info
+        debug_data = {
+            "plugin_data": events_data,
+            "env_vars": {k: v for k, v in os.environ.items() if 'GOOGLE' in k or 'CALENDAR' in k},
+            "files": {
+                "client_secret_exists": CLIENT_SECRET_FILE.exists(),
+                "token_exists": TOKEN_FILE.exists(),
+                "env_exists": ENV_FILE.exists(),
+                "client_secret_path": str(CLIENT_SECRET_FILE),
+                "token_path": str(TOKEN_FILE)
+            },
+            "current_directory": os.getcwd(),
+            "config": load_config()
+        }
+        
+        # Try to load and test the template
+        try:
+            from jinja2 import Environment, FileSystemLoader
+            template_dir = Path(__file__).parent
+            template_path = template_dir / "view.html"
+            
+            if template_path.exists():
+                env = Environment(loader=FileSystemLoader(template_dir))
+                template = env.get_template("view.html")
+                
+                # Create a mock plugin object similar to what the frontend would use
+                mock_plugin = {
+                    'data': events_data,
+                    'config': load_config()
+                }
+                
+                # Try to render the template
+                try:
+                    rendered = template.render(plugin=mock_plugin)
+                    debug_data["template_render"] = "success"
+                    debug_data["template_length"] = len(rendered)
+                    debug_data["template_sample"] = rendered[:500] + "..." if len(rendered) > 500 else rendered
+                except Exception as e:
+                    debug_data["template_render"] = "error"
+                    debug_data["template_error"] = str(e)
+                    debug_data["template_error_traceback"] = traceback.format_exc()
+            else:
+                debug_data["template_exists"] = False
+        except Exception as e:
+            debug_data["template_processing_error"] = str(e)
+        
+        return debug_data
+    except Exception as e:
+        logger.error(f"Exception in api_debug: {e}")
+        logger.debug(f"Traceback: {traceback.format_exc()}")
+        return {'error': f"Exception in debug endpoint: {str(e)}"} 
