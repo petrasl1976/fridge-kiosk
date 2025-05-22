@@ -9,7 +9,7 @@
     <p>{{ plugin['data'].error }}</p>
     <p>Make sure you have:<br>
     1. Placed client_secret.json in the config folder<br>
-    2. Forwarded port 8080 if accessing via SSH (e.g., ssh -L 8080:localhost:8080 user@host)<br>
+    2. Forwarded port if accessing via SSH (e.g., ssh -L 8090:localhost:8090 user@host)<br>
     3. Complete the authentication in a browser when prompted</p>
   </div>
   {% elif plugin['data'].weeks %}
@@ -92,8 +92,9 @@
     <p>If this message persists, there may be an issue with Google Calendar authentication.</p>
     <p>Make sure you have:<br>
     1. Placed client_secret.json in the config folder<br>
-    2. Forwarded port 8080 if accessing via SSH (e.g., ssh -L 8080:localhost:8080 user@host)<br>
-    3. Open browser window by visiting http://localhost:8080 in your browser</p>
+    2. Run the authentication server with:<br>
+       python3 -m backend.utils.auth.google_auth_server --service "Google Calendar"<br>
+    3. Visit the URL displayed by the server in your browser to authenticate</p>
   </div>
   {% endif %}
 {% else %}

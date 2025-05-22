@@ -24,7 +24,9 @@ fridge-kiosk/
 │   │   └── js/         # JavaScript files
 │   │       └── main.js # Main JavaScript
 │   └── utils/          # Utility functions
-│       └── config.py   # Configuration utilities
+│       ├── config.py   # Configuration utilities
+│       └── auth/       # Authentication utilities
+│           └── google_auth_server.py  # Centralized Google OAuth server
 ├── plugins/            # Plugin directories
 │   └── date-time/      # Date & time display plugin
 │       ├── view.html   # Plugin HTML template

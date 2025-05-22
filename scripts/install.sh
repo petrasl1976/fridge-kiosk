@@ -75,7 +75,8 @@ pip install \
     pytz \
     python-dotenv \
     schedule \
-    jinja2
+    jinja2 \
+    'backports.zoneinfo;python_version<"3.9"'
 
 print_header "INSTALLING PLUGIN DEPENDENCIES"
 CONFIG_FILE="$INSTALL_DIR/config/main.json"

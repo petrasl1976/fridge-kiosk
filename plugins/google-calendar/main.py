@@ -33,15 +33,15 @@ log_file.parent.mkdir(exist_ok=True, parents=True)
 
 # Create a custom logger
 logger = logging.getLogger('google_calendar')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # Create console handler
 console_handler = logging.StreamHandler(sys.stderr)
-console_handler.setLevel(logging.DEBUG)
+console_handler.setLevel(logging.INFO)
 
 # Create file handler
 file_handler = logging.FileHandler(log_file, mode='a')
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.INFO)
 
 # Create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -152,17 +152,17 @@ def get_events(config=None):
     
     # Get calendar ID from environment variable or use default ("primary")
     calendar_id = os.getenv("GOOGLE_CALENDAR_ID", os.getenv("GOOGLE_CLIENT_ID", "primary"))
-    logger.debug(f"Using calendar ID: {calendar_id}")
+    logger.info(f"Using calendar ID: {calendar_id}")
     
     # Get credentials
     creds = get_credentials()
     if not creds:
         logger.error("Error: No valid credentials found")
-        return {'error': 'No valid credentials found - run "python3 plugins/google-calendar/auth_server.py" and visit http://localhost:8090 to authenticate'}
+        return {'error': 'No valid credentials found - run "python3 -m backend.utils.auth.google_auth_server --service "Google Calendar"" and visit the displayed URL to authenticate'}
     
     # Build the service
     try:
-        logger.debug("Building Google Calendar service")
+        logger.info("Building Google Calendar service")
         service = googleapiclient.discovery.build('calendar', 'v3', credentials=creds)
         
         # Set timezone
@@ -182,7 +182,7 @@ def get_events(config=None):
         time_min = start_of_week.isoformat() + 'T00:00:00Z'
         time_max = end_of_range.isoformat() + 'T23:59:59Z'
         
-        logger.debug(f"Fetching events from {time_min} to {time_max}")
+        logger.info(f"Fetching events from {time_min} to {time_max}")
         
         # Call the Calendar API
         events_result = service.events().list(
@@ -196,7 +196,7 @@ def get_events(config=None):
         
         events = events_result.get('items', [])
         
-        logger.debug(f"Retrieved {len(events)} events from calendar API")
+        logger.info(f"Retrieved {len(events)} events from calendar API")
         
         # Process events: add colors and format times
         for event in events:
@@ -246,7 +246,7 @@ def get_events(config=None):
             'show_holidays': config.get('options', {}).get('show_holidays', True)
         }
         
-        logger.debug(f"Calendar response created with {len(weeks)} weeks")
+        logger.info(f"Calendar response created with {len(weeks)} weeks")
         return response
         
     except Exception as e:
@@ -262,13 +262,13 @@ def get_today_events(config=None):
     
     # Get calendar ID from environment variable or use default ("primary")
     calendar_id = os.getenv("GOOGLE_CALENDAR_ID", os.getenv("GOOGLE_CLIENT_ID", "primary"))
-    logger.debug(f"Using calendar ID for today's events: {calendar_id}")
+    logger.info(f"Using calendar ID for today's events: {calendar_id}")
     
     # Get credentials
     creds = get_credentials()
     if not creds:
         logger.error("Error: No valid credentials found")
-        return {'error': 'No valid credentials found - run "python3 plugins/google-calendar/auth_server.py" and visit http://localhost:8090 to authenticate'}
+        return {'error': 'No valid credentials found - run "python3 -m backend.utils.auth.google_auth_server --service "Google Calendar"" and visit the displayed URL to authenticate'}
     
     # Build the service
     try:
@@ -288,7 +288,7 @@ def get_today_events(config=None):
         time_min = local_midnight.isoformat()
         time_max = local_end.isoformat()
         
-        logger.debug(f"Fetching today's events from {time_min} to {time_max}")
+        logger.info(f"Fetching today's events from {time_min} to {time_max}")
         
         # Call the Calendar API
         events_result = service.events().list(
@@ -302,7 +302,7 @@ def get_today_events(config=None):
         
         events = events_result.get('items', [])
         
-        logger.debug(f"Retrieved {len(events)} events for today")
+        logger.info(f"Retrieved {len(events)} events for today")
         
         # Process events: add colors and format times
         for event in events:
@@ -328,20 +328,20 @@ def get_today_events(config=None):
 
 def api_data():
     """API endpoint for calendar data"""
-    logger.debug("Calendar api_data called")
+    logger.info("Calendar api_data called")
     return get_events()
 
 def api_today():
     """API endpoint for today's events"""
-    logger.debug("Calendar api_today called")
+    logger.info("Calendar api_today called")
     return get_today_events()
 
 def api_auth():
     """API endpoint to explicitly trigger authentication flow"""
-    logger.debug("Calendar api_auth called")
+    logger.info("Calendar api_auth called")
     # Force a new authentication flow
     if TOKEN_FILE.exists():
-        logger.debug(f"Removing existing token.json at {TOKEN_FILE}")
+        logger.info(f"Removing existing token.json at {TOKEN_FILE}")
         try:
             os.remove(TOKEN_FILE)
         except Exception as e:
@@ -356,7 +356,7 @@ def api_auth():
 
 def api_status():
     """API endpoint to check the plugin's status and configuration"""
-    logger.debug("Calendar api_status called")
+    logger.info("Calendar api_status called")
     
     # Check environment variables
     calendar_id = os.getenv("GOOGLE_CALENDAR_ID", os.getenv("GOOGLE_CLIENT_ID", "primary"))
@@ -416,7 +416,7 @@ def api_status():
     
     status["status"] = "ok" if client_secret_exists else "missing_client_secret"
     
-    logger.debug(f"Status response: {status}")
+    logger.info(f"Status response prepared")
     return status
 
 def get_refresh_interval():
@@ -435,26 +435,10 @@ def init(config):
             logger.error(f"client_secret.json not found at {CLIENT_SECRET_FILE}")
             return {'data': {}, 'error': 'Client secret file not found - please create it first'}
         
-        # Log environment variables for debugging
-        logger.debug(f"Project root: {PROJECT_ROOT}")
-        logger.debug(f"ENV_FILE path: {ENV_FILE}")
-        logger.debug(f"ENV_FILE exists: {ENV_FILE.exists()}")
-        
-        if ENV_FILE.exists():
-            with open(ENV_FILE, 'r') as f:
-                env_content = f.read()
-                logger.debug(f"ENV file content: {env_content}")
-        
-        env_vars = {k: v for k, v in os.environ.items() if 'GOOGLE' in k or 'CALENDAR' in k}
-        logger.debug(f"Relevant environment variables: {env_vars}")
-        
         # Check if we need to authenticate
         if not TOKEN_FILE.exists():
-            logger.debug("No token.json found, attempting to start authentication flow")
-            creds = get_credentials()
-            if not creds:
-                logger.error("Failed to get credentials during initialization")
-                return {'data': {}, 'error': 'Authentication required - run "python3 plugins/google-calendar/auth_server.py" and visit http://localhost:8090 to authenticate'}
+            logger.info("No token.json found, authentication required")
+            return {'data': {}, 'error': 'Authentication required - run "python3 -m backend.utils.auth.google_auth_server --service "Google Calendar"" and visit the displayed URL to authenticate'}
         
         # Try to get the events
         data = get_events(config)

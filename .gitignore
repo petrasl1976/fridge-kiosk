@@ -28,6 +28,9 @@ client_secret.json
 credentials.json
 token.json
 
+# Auth server templates (automatically generated)
+backend/utils/auth/templates/
+
 # Logs and data
 logs/
 *.log
