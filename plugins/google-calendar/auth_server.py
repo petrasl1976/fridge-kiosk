@@ -206,6 +206,12 @@ if __name__ == '__main__':
     template_dir = current_dir / "templates"
     template_dir.mkdir(exist_ok=True)
     
+    # Try different ports in case the default one is in use
+    auth_port = 8090
+    ports_to_try = [8090, 8095, 8100, 8105, 8110]
+    
+    print("\n=== GOOGLE CALENDAR AUTHENTICATION SERVER ===")
+    
     # If template files don't exist, create them
     auth_index_path = template_dir / "auth_index.html"
     if not auth_index_path.exists():
@@ -329,5 +335,21 @@ if __name__ == '__main__':
 </html>
             """)
     
-    port = int(os.environ.get('PORT', 8080))
+    # Try different ports
+    import socket
+    for port in ports_to_try:
+        try:
+            # Check if port is available
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.bind(('localhost', port))
+            sock.close()
+            auth_port = port
+            break
+        except OSError:
+            print(f"Port {port} is already in use, trying another port...")
+    
+    print(f"\nStarting authentication server on port {auth_port}")
+    print(f"Please open your browser to http://localhost:{auth_port}\n")
+    
+    port = int(os.environ.get('PORT', auth_port))
     app.run(host='0.0.0.0', port=port) 

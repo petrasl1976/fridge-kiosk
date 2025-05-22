@@ -158,7 +158,7 @@ def get_events(config=None):
     creds = get_credentials()
     if not creds:
         logger.error("Error: No valid credentials found")
-        return {'error': 'No valid credentials found - visit /auth route in the browser to authenticate'}
+        return {'error': 'No valid credentials found - run "python3 plugins/google-calendar/auth_server.py" and visit http://localhost:8090 to authenticate'}
     
     # Build the service
     try:
@@ -268,7 +268,7 @@ def get_today_events(config=None):
     creds = get_credentials()
     if not creds:
         logger.error("Error: No valid credentials found")
-        return {'error': 'No valid credentials found - visit /auth route in the browser to authenticate'}
+        return {'error': 'No valid credentials found - run "python3 plugins/google-calendar/auth_server.py" and visit http://localhost:8090 to authenticate'}
     
     # Build the service
     try:
@@ -454,7 +454,7 @@ def init(config):
             creds = get_credentials()
             if not creds:
                 logger.error("Failed to get credentials during initialization")
-                return {'data': {}, 'error': 'Authentication required - please visit /api/plugins/google-calendar/auth to authenticate'}
+                return {'data': {}, 'error': 'Authentication required - run "python3 plugins/google-calendar/auth_server.py" and visit http://localhost:8090 to authenticate'}
         
         # Try to get the events
         data = get_events(config)

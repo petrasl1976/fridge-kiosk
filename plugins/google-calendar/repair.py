@@ -11,6 +11,7 @@ import logging
 import subprocess
 import webbrowser
 from pathlib import Path
+import time
 
 # Configure logging
 logging.basicConfig(
@@ -120,21 +121,22 @@ def check_required_packages():
     """Check if all required packages are installed"""
     logger.info("Checking for required packages...")
     
-    packages = [
-        "google-auth",
-        "google-auth-oauthlib",
-        "google-api-python-client",
-        "flask"
-    ]
+    # Module name mappings (package name -> import name)
+    package_mappings = {
+        "google-auth": "google.auth",
+        "google-auth-oauthlib": "google_auth_oauthlib",
+        "google-api-python-client": "googleapiclient",
+        "flask": "flask"
+    }
     
     missing_packages = []
     
-    for package in packages:
+    for package, module in package_mappings.items():
         try:
-            __import__(package.replace('-', '_'))
+            __import__(module)
             logger.info(f"Package {package} is installed.")
-        except ImportError:
-            logger.error(f"Package {package} is missing.")
+        except ImportError as e:
+            logger.error(f"Package {package} is missing: {e}")
             missing_packages.append(package)
     
     if missing_packages:
@@ -161,11 +163,65 @@ def start_auth_server():
         # Make the script executable
         os.chmod(auth_server_path, 0o755)
         
-        # Start the auth server in a new process
-        server_process = subprocess.Popen([sys.executable, str(auth_server_path)])
+        # Start the auth server in a new process with output capture
+        import io
+        from queue import Queue, Empty
+        import threading
+        import re
         
-        # Open the browser to the auth server
-        server_url = "http://localhost:8080"
+        # Queue for output lines
+        output_queue = Queue()
+        
+        # Function to read output and put in queue
+        def read_output(pipe, queue):
+            for line in iter(pipe.readline, b''):
+                queue.put(line.decode('utf-8'))
+            pipe.close()
+        
+        # Start the server process
+        server_process = subprocess.Popen(
+            [sys.executable, str(auth_server_path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=1
+        )
+        
+        # Start threads to read stdout and stderr
+        stdout_thread = threading.Thread(target=read_output, args=(server_process.stdout, output_queue))
+        stderr_thread = threading.Thread(target=read_output, args=(server_process.stderr, output_queue))
+        stdout_thread.daemon = True
+        stderr_thread.daemon = True
+        stdout_thread.start()
+        stderr_thread.start()
+        
+        # Wait for server to start and extract port
+        port_pattern = re.compile(r"Starting authentication server on port (\d+)")
+        server_url = None
+        
+        # Try to get output with timeout
+        timeout = 10  # seconds
+        start_time = time.time()
+        
+        print("\nStarting authentication server, please wait...")
+        
+        while time.time() - start_time < timeout:
+            try:
+                line = output_queue.get(timeout=0.5)
+                print(line, end='')  # Print server output
+                
+                # Check if this line contains the port information
+                match = port_pattern.search(line)
+                if match:
+                    port = match.group(1)
+                    server_url = f"http://localhost:{port}"
+                    break
+            except Empty:
+                pass
+        
+        if not server_url:
+            logger.warning("Could not determine server port from output")
+            server_url = "http://localhost:8090"  # Default fallback
+        
         print(f"\nOpening authentication page in your browser: {server_url}")
         print("If the browser doesn't open automatically, please open it manually.")
         
@@ -180,7 +236,12 @@ def start_auth_server():
         
         # Wait for the user to press Ctrl+C
         try:
-            server_process.wait()
+            while server_process.poll() is None:
+                try:
+                    line = output_queue.get(timeout=0.5)
+                    print(line, end='')  # Print server output
+                except Empty:
+                    pass
         except KeyboardInterrupt:
             logger.info("Authentication process interrupted by user.")
             # Terminate the server process
@@ -197,7 +258,7 @@ def start_auth_server():
     except Exception as e:
         logger.error(f"Error starting authentication server: {e}")
         import traceback
-        logger.error(traceback.format_exc())
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return False
 
 def test_calendar_access():
