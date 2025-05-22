@@ -21,6 +21,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 # Get the project root directory (two levels up from this file)
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 ENV_FILE = PROJECT_ROOT / 'config' / '.env'
+CLIENT_SECRET_FILE = PROJECT_ROOT / "config" / "client_secret.json"
+TOKEN_FILE = PROJECT_ROOT / "config" / "token.json"
 
 # Load environment variables from the project-wide .env file
 dotenv.load_dotenv(ENV_FILE)
@@ -69,8 +71,44 @@ def load_config():
     with open(config_path) as f:
         return json.load(f)
 
+def get_event_color(summary):
+    """Template filter to get event color based on summary"""
+    if not summary:
+        return "#000000"  # Default black
+    prefix = summary[:2].upper()
+    
+    # Define color mapping - copied from old project's config.py
+    EVENT_COLORS = {
+        "PE": "#4d26f0",
+        "BU": "#4d26f0",
+        "LI": "#003300",
+        "LA": "#3e5393", 
+        "DA": "#a07ed3",
+        "GI": "#660000"
+    }
+    
+    return EVENT_COLORS.get(prefix, "#000000")
+
+def format_time(datetime_str):
+    """Format time from ISO format to HH:MM format"""
+    dt = datetime.datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+    return dt.strftime("%H:%M")
+
+def load_stored_credentials():
+    """Load credentials from token.json file if it exists"""
+    if TOKEN_FILE.exists():
+        try:
+            logger.info(f"Found token file at {TOKEN_FILE}, loading credentials")
+            with open(TOKEN_FILE, 'r') as token_file:
+                token_data = json.load(token_file)
+                return google.oauth2.credentials.Credentials(**token_data)
+        except Exception as e:
+            logger.error(f"Error loading token.json: {e}")
+    logger.warning("No token.json found or failed to load")
+    return None
+
 def credentials_to_dict(credentials):
-    """Convert credentials object to dictionary"""
+    """Convert Google Credentials object to a dictionary."""
     return {
         'token': credentials.token,
         'refresh_token': credentials.refresh_token,
@@ -82,86 +120,30 @@ def credentials_to_dict(credentials):
 
 def get_credentials():
     """Get credentials for Google Calendar API"""
-    # The file token.json stores the user's access and refresh tokens
-    token_path = PROJECT_ROOT / "config" / "token.json"
-    
-    logger.debug(f"Looking for token.json at: {token_path}")
-    logger.debug(f"Current working directory: {os.getcwd()}")
-    
-    force_new_auth = False  # Set to True to force a new authentication flow
-    
     # First try to load from token.json
-    if token_path.exists() and not force_new_auth:
+    creds = load_stored_credentials()
+    
+    # If we have creds but they're expired and we can refresh them
+    if creds and creds.expired and creds.refresh_token:
+        logger.info("Refreshing expired credentials")
         try:
-            logger.debug("Found token.json, attempting to load credentials")
-            with open(token_path, 'r') as token_file:
-                token_data = json.load(token_file)
-                creds = google.oauth2.credentials.Credentials(**token_data)
-                
-                # Check if the credentials are valid/refreshable
-                if creds and creds.expired and creds.refresh_token:
-                    logger.debug("Credentials expired, refreshing...")
-                    creds.refresh(Request())
-                    
-                    # Save refreshed credentials
-                    token_data = credentials_to_dict(creds)
-                    with open(token_path, 'w') as token:
-                        json.dump(token_data, token)
-                
-                if creds and not creds.expired:
-                    return creds
-                
-                logger.debug("Credentials invalid or not refreshable, starting new auth flow")
+            creds.refresh(Request())
+            # Save refreshed credentials
+            with open(TOKEN_FILE, 'w') as token:
+                token_data = credentials_to_dict(creds)
+                json.dump(token_data, token)
+            logger.info("Credentials refreshed and saved")
         except Exception as e:
-            logger.error(f"Error loading/refreshing credentials from token.json: {e}")
-    else:
-        if force_new_auth:
-            logger.debug("Forcing new authentication flow")
-        else:
-            logger.debug("token.json not found, starting auth flow")
-    
-    # If no token or failed to load, initialize the flow
-    client_secrets_file = PROJECT_ROOT / "config" / "client_secret.json"
-    logger.debug(f"Looking for client_secret.json at: {client_secrets_file}")
-    
-    if not client_secrets_file.exists():
-        logger.error(f"client_secret.json not found at {client_secrets_file}")
-        # Also check the current directory for client_secret.json
-        alternate_path = Path("client_secret.json")
-        if alternate_path.exists():
-            logger.debug(f"Found client_secret.json in current directory instead")
-            client_secrets_file = alternate_path
-        else:
-            return None
-    
-    try:
-        logger.debug(f"Found client_secret.json, initializing OAuth flow")
-        # Create the flow instance
-        flow = InstalledAppFlow.from_client_secrets_file(
-            client_secrets_file,
-            SCOPES
-        )
-        
-        # Run the OAuth flow
-        logger.debug("Starting OAuth flow with local server")
-        creds = flow.run_local_server(port=8080)
-        
-        # Save the credentials for the next run
-        token_data = credentials_to_dict(creds)
-        logger.debug(f"OAuth flow completed, saving credentials to {token_path}")
-        
-        # Create parent directories if they don't exist
-        token_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        with open(token_path, 'w') as token:
-            json.dump(token_data, token)
-        
+            logger.error(f"Error refreshing credentials: {e}")
+            creds = None
+            
+    # Return valid credentials if we have them
+    if creds and not creds.expired:
+        logger.info("Using valid credentials")
         return creds
-    except Exception as e:
-        logger.error(f"Error during authentication flow: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
-        return None
+        
+    logger.warning("No valid credentials available")
+    return None
 
 def get_events(config=None):
     """Get events from Google Calendar"""
@@ -172,15 +154,11 @@ def get_events(config=None):
     calendar_id = os.getenv("GOOGLE_CALENDAR_ID", os.getenv("GOOGLE_CLIENT_ID", "primary"))
     logger.debug(f"Using calendar ID: {calendar_id}")
     
-    # Check environment variables
-    env_vars = {k: v for k, v in os.environ.items() if 'GOOGLE' in k or 'CALENDAR' in k}
-    logger.debug(f"Relevant environment variables: {env_vars}")
-    
     # Get credentials
     creds = get_credentials()
     if not creds:
         logger.error("Error: No valid credentials found")
-        return {'error': 'No valid credentials found - you need to authenticate'}
+        return {'error': 'No valid credentials found - visit /auth route in the browser to authenticate'}
     
     # Build the service
     try:
@@ -290,7 +268,7 @@ def get_today_events(config=None):
     creds = get_credentials()
     if not creds:
         logger.error("Error: No valid credentials found")
-        return {'error': 'No valid credentials found - you need to authenticate'}
+        return {'error': 'No valid credentials found - visit /auth route in the browser to authenticate'}
     
     # Build the service
     try:
@@ -362,11 +340,10 @@ def api_auth():
     """API endpoint to explicitly trigger authentication flow"""
     logger.debug("Calendar api_auth called")
     # Force a new authentication flow
-    token_path = PROJECT_ROOT / "config" / "token.json"
-    if token_path.exists():
-        logger.debug(f"Removing existing token.json at {token_path}")
+    if TOKEN_FILE.exists():
+        logger.debug(f"Removing existing token.json at {TOKEN_FILE}")
         try:
-            os.remove(token_path)
+            os.remove(TOKEN_FILE)
         except Exception as e:
             logger.error(f"Error removing token.json: {e}")
     
@@ -386,8 +363,8 @@ def api_status():
     env_vars = {k: v for k, v in os.environ.items() if 'GOOGLE' in k or 'CALENDAR' in k}
     
     # Check files
-    client_secret_exists = (PROJECT_ROOT / "config" / "client_secret.json").exists()
-    token_exists = (PROJECT_ROOT / "config" / "token.json").exists()
+    client_secret_exists = CLIENT_SECRET_FILE.exists()
+    token_exists = TOKEN_FILE.exists()
     env_file_exists = ENV_FILE.exists()
     
     # Check directories
@@ -454,10 +431,9 @@ def init(config):
     
     try:
         # Check if client_secret.json exists
-        client_secrets_file = PROJECT_ROOT / "config" / "client_secret.json"
-        if not client_secrets_file.exists():
-            logger.error(f"client_secret.json not found at {client_secrets_file}")
-            return {'data': {}, 'error': 'Client secret file not found'}
+        if not CLIENT_SECRET_FILE.exists():
+            logger.error(f"client_secret.json not found at {CLIENT_SECRET_FILE}")
+            return {'data': {}, 'error': 'Client secret file not found - please create it first'}
         
         # Log environment variables for debugging
         logger.debug(f"Project root: {PROJECT_ROOT}")
@@ -473,8 +449,7 @@ def init(config):
         logger.debug(f"Relevant environment variables: {env_vars}")
         
         # Check if we need to authenticate
-        token_path = PROJECT_ROOT / "config" / "token.json"
-        if not token_path.exists():
+        if not TOKEN_FILE.exists():
             logger.debug("No token.json found, attempting to start authentication flow")
             creds = get_credentials()
             if not creds:

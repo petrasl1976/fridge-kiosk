@@ -8,6 +8,8 @@ import os
 import sys
 import json
 import logging
+import subprocess
+import webbrowser
 from pathlib import Path
 
 # Configure logging
@@ -20,7 +22,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger('google-calendar-repair')
 
-# Get the project root directory (three levels up from this file)
+# Get the project root directory
 current_dir = Path(__file__).resolve().parent
 PROJECT_ROOT = current_dir.parent.parent
 ENV_FILE = PROJECT_ROOT / 'config' / '.env'
@@ -100,7 +102,7 @@ def check_environment():
         print("1. Go to https://console.cloud.google.com/")
         print("2. Create a new project")
         print("3. Enable the Google Calendar API")
-        print("4. Create OAuth credentials (Desktop application)")
+        print("4. Create OAuth credentials (Web application)")
         print("5. Download the client_secret.json file")
         print(f"6. Save it to: {CLIENT_SECRET_FILE}")
         return False
@@ -114,157 +116,133 @@ def check_environment():
     
     return True
 
-def test_auth_flow():
-    """Test the authentication flow for Google Calendar API"""
+def check_required_packages():
+    """Check if all required packages are installed"""
+    logger.info("Checking for required packages...")
+    
+    packages = [
+        "google-auth",
+        "google-auth-oauthlib",
+        "google-api-python-client",
+        "flask"
+    ]
+    
+    missing_packages = []
+    
+    for package in packages:
+        try:
+            __import__(package.replace('-', '_'))
+            logger.info(f"Package {package} is installed.")
+        except ImportError:
+            logger.error(f"Package {package} is missing.")
+            missing_packages.append(package)
+    
+    if missing_packages:
+        logger.error("Some required packages are missing.")
+        print("\nPlease install the missing packages using pip:")
+        print(f"pip install {' '.join(missing_packages)}")
+        return False
+    
+    logger.info("All required packages are installed.")
+    return True
+
+def start_auth_server():
+    """Start the authentication server"""
+    logger.info("Starting authentication server...")
+    
+    # Path to the auth_server.py file
+    auth_server_path = current_dir / "auth_server.py"
+    
+    if not auth_server_path.exists():
+        logger.error(f"Auth server script not found at {auth_server_path}")
+        return False
+    
     try:
-        # First, check if we have the required packages
-        logger.info("Checking for required packages...")
+        # Make the script executable
+        os.chmod(auth_server_path, 0o755)
         
+        # Start the auth server in a new process
+        server_process = subprocess.Popen([sys.executable, str(auth_server_path)])
+        
+        # Open the browser to the auth server
+        server_url = "http://localhost:8080"
+        print(f"\nOpening authentication page in your browser: {server_url}")
+        print("If the browser doesn't open automatically, please open it manually.")
+        
+        # Try to open the browser
         try:
-            import google.oauth2.credentials
-            import google_auth_oauthlib.flow
-            import googleapiclient.discovery
-            logger.info("All required packages are installed.")
-        except ImportError as e:
-            logger.error(f"Missing required package: {e}")
-            logger.info("Please install the required packages:")
-            logger.info("pip install google-auth google-auth-oauthlib google-api-python-client")
-            return False
-        
-        # If token.json exists, try to load it
-        if TOKEN_FILE.exists():
-            logger.info("Testing existing token.json...")
-            
-            try:
-                with open(TOKEN_FILE, 'r') as f:
-                    token_data = json.load(f)
-                creds = google.oauth2.credentials.Credentials(**token_data)
-                
-                # Check if token is expired and can be refreshed
-                if creds.expired and hasattr(creds, 'refresh_token') and creds.refresh_token:
-                    from google.auth.transport.requests import Request
-                    logger.info("Token is expired, attempting to refresh...")
-                    creds.refresh(Request())
-                    
-                    # Save refreshed credentials
-                    with open(TOKEN_FILE, 'w') as f:
-                        json.dump({
-                            'token': creds.token,
-                            'refresh_token': creds.refresh_token,
-                            'token_uri': creds.token_uri,
-                            'client_id': creds.client_id,
-                            'client_secret': creds.client_secret,
-                            'scopes': creds.scopes
-                        }, f)
-                    
-                    logger.info("Token refreshed successfully.")
-                
-                # Try to use the credentials to access the Calendar API
-                logger.info("Testing access to Google Calendar API...")
-                
-                # Load environment variables
-                env_vars = {}
-                if ENV_FILE.exists():
-                    with open(ENV_FILE, 'r') as f:
-                        env_content = f.read()
-                        for line in env_content.splitlines():
-                            if '=' in line and not line.startswith('#'):
-                                key, value = line.split('=', 1)
-                                env_vars[key.strip()] = value.strip()
-                
-                calendar_id = env_vars.get('GOOGLE_CALENDAR_ID', os.environ.get('GOOGLE_CALENDAR_ID', 'primary'))
-                logger.info(f"Using calendar ID: {calendar_id}")
-                
-                service = googleapiclient.discovery.build('calendar', 'v3', credentials=creds)
-                
-                # Try to get a single event to verify access
-                events = service.events().list(
-                    calendarId=calendar_id,
-                    maxResults=1
-                ).execute()
-                
-                logger.info("Successfully accessed Google Calendar API.")
-                logger.info(f"Found {len(events.get('items', []))} events.")
-                
-                return True
-                
-            except Exception as e:
-                logger.error(f"Error testing existing token: {e}")
-                import traceback
-                logger.error(traceback.format_exc())
-                
-                # Token is invalid or cannot be refreshed, need to generate a new one
-                logger.info("Token is invalid or cannot be refreshed. Removing token.json...")
-                TOKEN_FILE.unlink(missing_ok=True)
-        
-        # If we get here, we need to run the OAuth flow
-        logger.info("Running OAuth flow to generate new token...")
-        
-        # If client_secret.json doesn't exist, we can't proceed
-        if not CLIENT_SECRET_FILE.exists():
-            logger.error(f"client_secret.json not found at {CLIENT_SECRET_FILE}")
-            return False
-        
-        # Run the OAuth flow
-        from google_auth_oauthlib.flow import InstalledAppFlow
-        
-        # If modifying these scopes, delete the token.json file.
-        SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-        
-        flow = InstalledAppFlow.from_client_secrets_file(
-            CLIENT_SECRET_FILE,
-            SCOPES
-        )
-        
-        # First, try console auth for headless environments
-        try:
-            logger.info("Trying console-based authentication first (for headless environments)...")
-            creds = flow.run_console()
-            logger.info("Console authentication successful!")
+            webbrowser.open(server_url)
         except Exception as e:
-            logger.warning(f"Console authentication failed: {e}")
+            logger.warning(f"Failed to open browser automatically: {e}")
+            print(f"Please open {server_url} in your browser to continue.")
+        
+        print("\nPress Ctrl+C when you have completed the authentication process.")
+        
+        # Wait for the user to press Ctrl+C
+        try:
+            server_process.wait()
+        except KeyboardInterrupt:
+            logger.info("Authentication process interrupted by user.")
+            # Terminate the server process
+            server_process.terminate()
+        
+        # Check if token.json was created
+        if TOKEN_FILE.exists():
+            logger.info("Authentication successful! Token file created.")
+            return True
+        else:
+            logger.error("Authentication failed. No token file was created.")
+            return False
+    
+    except Exception as e:
+        logger.error(f"Error starting authentication server: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return False
+
+def test_calendar_access():
+    """Test access to Google Calendar API"""
+    logger.info("Testing access to Google Calendar API...")
+    
+    if not TOKEN_FILE.exists():
+        logger.error("No token.json file found. Please run the authentication process first.")
+        return False
+    
+    try:
+        # Import required packages
+        import google.oauth2.credentials
+        import googleapiclient.discovery
+        from google.auth.transport.requests import Request
+        
+        # Load the token
+        with open(TOKEN_FILE, 'r') as f:
+            token_data = json.load(f)
+        
+        # Create credentials
+        creds = google.oauth2.credentials.Credentials(**token_data)
+        
+        # Check if token is expired and can be refreshed
+        if creds.expired and creds.refresh_token:
+            logger.info("Token is expired, attempting to refresh...")
+            creds.refresh(Request())
             
-            # Fall back to local server auth if console auth fails
-            logger.info("Falling back to browser-based authentication...")
-            try:
-                # Try different ports
-                for port in [8085, 8090, 8095, 8100, 8888]:
-                    try:
-                        logger.info(f"Trying port {port}...")
-                        creds = flow.run_local_server(port=port)
-                        break
-                    except OSError as e:
-                        if "Address already in use" in str(e):
-                            logger.warning(f"Port {port} is already in use, trying another...")
-                        else:
-                            raise
-                else:
-                    # If we've tried all ports and none worked
-                    logger.error("All ports are in use. Please stop other services or specify a different port.")
-                    return False
-            except Exception as e:
-                logger.error(f"Error during authentication: {e}")
-                return False
+            # Save refreshed credentials
+            with open(TOKEN_FILE, 'w') as f:
+                json.dump({
+                    'token': creds.token,
+                    'refresh_token': creds.refresh_token,
+                    'token_uri': creds.token_uri,
+                    'client_id': creds.client_id,
+                    'client_secret': creds.client_secret,
+                    'scopes': creds.scopes
+                }, f)
+            
+            logger.info("Token refreshed successfully.")
         
-        # Save the credentials
-        token_data = {
-            'token': creds.token,
-            'refresh_token': creds.refresh_token,
-            'token_uri': creds.token_uri,
-            'client_id': creds.client_id,
-            'client_secret': creds.client_secret,
-            'scopes': creds.scopes
-        }
+        # Build the calendar service
+        service = googleapiclient.discovery.build('calendar', 'v3', credentials=creds)
         
-        with open(TOKEN_FILE, 'w') as f:
-            json.dump(token_data, f)
-        
-        logger.info(f"Saved new token to {TOKEN_FILE}")
-        
-        # Test the new token
-        logger.info("Testing new token with Google Calendar API...")
-        
-        # Load environment variables
+        # Get calendar ID from environment
         env_vars = {}
         if ENV_FILE.exists():
             with open(ENV_FILE, 'r') as f:
@@ -276,8 +254,6 @@ def test_auth_flow():
         
         calendar_id = env_vars.get('GOOGLE_CALENDAR_ID', os.environ.get('GOOGLE_CALENDAR_ID', 'primary'))
         logger.info(f"Using calendar ID: {calendar_id}")
-        
-        service = googleapiclient.discovery.build('calendar', 'v3', credentials=creds)
         
         # Try to get a single event to verify access
         events = service.events().list(
@@ -291,7 +267,7 @@ def test_auth_flow():
         return True
         
     except Exception as e:
-        logger.error(f"Error in auth flow: {e}")
+        logger.error(f"Error testing calendar access: {e}")
         import traceback
         logger.error(traceback.format_exc())
         return False
@@ -304,12 +280,64 @@ def main():
         logger.error("Environment check failed.")
         return 1
     
-    if not test_auth_flow():
-        logger.error("Authentication flow failed.")
+    if not check_required_packages():
+        logger.error("Required packages check failed.")
         return 1
     
-    logger.info("Google Calendar plugin is now configured correctly!")
-    return 0
+    # If token.json exists, test the calendar access
+    if TOKEN_FILE.exists():
+        logger.info("Found existing token.json, testing calendar access...")
+        if test_calendar_access():
+            logger.info("Calendar access test successful!")
+            
+            # Ask if the user wants to force re-authentication
+            print("\nYour Google Calendar is already set up and working.")
+            print("Do you want to re-authenticate anyway? (y/N):")
+            force_auth = input().strip().lower() == 'y'
+            
+            if not force_auth:
+                logger.info("User chose not to re-authenticate.")
+                logger.info("Google Calendar plugin is now configured correctly!")
+                return 0
+            else:
+                logger.info("User chose to force re-authentication.")
+                # Delete the existing token to force re-authentication
+                try:
+                    os.remove(TOKEN_FILE)
+                    logger.info("Deleted existing token.json file.")
+                except Exception as e:
+                    logger.error(f"Failed to delete token.json: {e}")
+        else:
+            logger.warning("Calendar access test failed. Let's try to re-authenticate.")
+            # Delete the invalid token
+            try:
+                os.remove(TOKEN_FILE)
+                logger.info("Deleted invalid token.json file.")
+            except Exception as e:
+                logger.error(f"Failed to delete token.json: {e}")
+    
+    # Start authentication server
+    print("\nYou need to authenticate with Google to access your calendar.")
+    print("This will open a web page where you can sign in to your Google account.")
+    print("Do you want to start the authentication process now? (Y/n):")
+    
+    start_auth = input().strip().lower() != 'n'
+    
+    if start_auth:
+        if start_auth_server():
+            if test_calendar_access():
+                logger.info("Google Calendar plugin is now configured correctly!")
+                return 0
+            else:
+                logger.error("Authentication succeeded but calendar access test failed.")
+                return 1
+        else:
+            logger.error("Authentication process failed.")
+            return 1
+    else:
+        logger.info("Authentication skipped by user.")
+        print("\nYou can run this script again later to complete the authentication.")
+        return 0
 
 if __name__ == "__main__":
     sys.exit(main()) 
