@@ -216,9 +216,35 @@ def test_auth_flow():
             SCOPES
         )
         
-        # Run the OAuth flow with a local server
-        logger.info("Opening browser for authentication...")
-        creds = flow.run_local_server(port=8080)
+        # First, try console auth for headless environments
+        try:
+            logger.info("Trying console-based authentication first (for headless environments)...")
+            creds = flow.run_console()
+            logger.info("Console authentication successful!")
+        except Exception as e:
+            logger.warning(f"Console authentication failed: {e}")
+            
+            # Fall back to local server auth if console auth fails
+            logger.info("Falling back to browser-based authentication...")
+            try:
+                # Try different ports
+                for port in [8085, 8090, 8095, 8100, 8888]:
+                    try:
+                        logger.info(f"Trying port {port}...")
+                        creds = flow.run_local_server(port=port)
+                        break
+                    except OSError as e:
+                        if "Address already in use" in str(e):
+                            logger.warning(f"Port {port} is already in use, trying another...")
+                        else:
+                            raise
+                else:
+                    # If we've tried all ports and none worked
+                    logger.error("All ports are in use. Please stop other services or specify a different port.")
+                    return False
+            except Exception as e:
+                logger.error(f"Error during authentication: {e}")
+                return False
         
         # Save the credentials
         token_data = {
