@@ -25,6 +25,23 @@ print_info "Installation directory: $INSTALL_DIR"
 if [ ! -f "$INSTALL_DIR/config/.env" ]; then
     print_step "Creating .env file..."
     cp "$INSTALL_DIR/config/.env.example" "$INSTALL_DIR/config/.env" 2>/dev/null || touch "$INSTALL_DIR/config/.env"
+# Create .env.example if it doesn't exist
+if [ ! -f "$INSTALL_DIR/config/.env.example" ]; then
+    print_step "Creating .env.example template..."
+    cat > "$INSTALL_DIR/config/.env.example" << EOF
+# Google Services
+GOOGLE_CALENDAR_ID=primary
+# You may also need GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
+# if not using client_secret.json
+
+# Location for Weather
+LATITUDE=54.6872
+LONGITUDE=25.2797
+LOCATION_NAME=Vilnius, Lithuania
+
+# Other services
+EOF
+fi
     print_info "Use .env file to add your API keys and credentials if needed"
     print_info "vim $INSTALL_DIR/config/.env"
 else
