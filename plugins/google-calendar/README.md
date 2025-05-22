@@ -43,17 +43,6 @@ Restart the kiosk backend service to apply the changes:
 sudo systemctl restart fridge-kiosk-backend.service
 ```
 
-## Troubleshooting
-
-If the calendar is not displaying correctly, run the repair tool:
-
-```bash
-cd fridge-kiosk
-python3 plugins/google-calendar/repair.py
-```
-
-This will check for common issues and guide you through fixing them.
-
 ## Features
 
 - Displays a monthly calendar view with events
