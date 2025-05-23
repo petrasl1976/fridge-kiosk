@@ -285,7 +285,7 @@ def get_events(config=None):
     import datetime
     today = datetime.date.today()
     start_of_week = today - datetime.timedelta(days=today.weekday())
-    weeks_to_show = 4
+    weeks_to_show = config.get('options', {}).get('weeks_to_show', 6)
     weeks = []
     cur_day = start_of_week
     for _ in range(weeks_to_show):
