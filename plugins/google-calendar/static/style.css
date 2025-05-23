@@ -30,6 +30,7 @@
     vertical-align: top;
     padding: 6px;
     box-sizing: border-box;
+    min-height: 48px;
 }
 
 .day-header {
