@@ -9,26 +9,25 @@ from collections import defaultdict
 import logging
 import traceback  # Added for detailed stack traces
 
+# Load userColors from main.json
+MAIN_CONFIG_FILE = PROJECT_ROOT / 'config' / 'main.json'
+try:
+    with open(MAIN_CONFIG_FILE) as f:
+        MAIN_CONFIG = json.load(f)
+        USER_COLORS = MAIN_CONFIG.get('userColors', {})
+except Exception as e:
+    USER_COLORS = {}
+    logger.error(f"Could not load userColors from main.json: {e}")
+
 # Define helper functions directly to avoid import issues
 def get_event_color(summary):
-    """Get event color based on summary"""
+    """Get event color based on summary using userColors from main.json"""
     logger.debug(f"Getting color for event summary: '{summary}'")
     if not summary:
         logger.debug("Empty summary, returning default black")
         return "#000000"  # Default black
     prefix = summary[:2].upper()
-    
-    # Define color mapping
-    EVENT_COLORS = {
-        "PE": "#4d26f0",
-        "BU": "#4d26f0",
-        "LI": "#003300",
-        "LA": "#3e5393", 
-        "DA": "#a07ed3",
-        "GI": "#660000"
-    }
-    
-    color = EVENT_COLORS.get(prefix, "#000000")
+    color = USER_COLORS.get(prefix, "#000000")
     logger.debug(f"Prefix: '{prefix}', Color: {color}")
     return color
 

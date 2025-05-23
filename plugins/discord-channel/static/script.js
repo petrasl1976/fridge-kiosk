@@ -32,8 +32,9 @@ function discordChannelInit(container) {
               const hh = String(msgTime.getHours()).padStart(2, '0');
               const mm = String(msgTime.getMinutes()).padStart(2, '0');
 
-              const shortUsername = msg.author.username.substring(0, 2);
-              const usernameColor = usernameColors[msg.author.username] || msg.color || '#888';
+              // Use first two letters (uppercased) for color key, like calendar
+              const shortUsername = msg.author.username.substring(0, 2).toUpperCase();
+              const usernameColor = usernameColors[shortUsername] || msg.color || '#888';
 
               html += `
                 <div class="discord-message">
