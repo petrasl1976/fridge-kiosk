@@ -9,8 +9,33 @@ from collections import defaultdict
 import logging
 import traceback  # Added for detailed stack traces
 
-# Import local plugin helpers
-from .helpers import get_event_color, format_time
+# Define helper functions directly to avoid import issues
+def get_event_color(summary):
+    """Get event color based on summary"""
+    logger.debug(f"Getting color for event summary: '{summary}'")
+    if not summary:
+        logger.debug("Empty summary, returning default black")
+        return "#000000"  # Default black
+    prefix = summary[:2].upper()
+    
+    # Define color mapping
+    EVENT_COLORS = {
+        "PE": "#4d26f0",
+        "BU": "#4d26f0",
+        "LI": "#003300",
+        "LA": "#3e5393", 
+        "DA": "#a07ed3",
+        "GI": "#660000"
+    }
+    
+    color = EVENT_COLORS.get(prefix, "#000000")
+    logger.debug(f"Prefix: '{prefix}', Color: {color}")
+    return color
+
+def format_time(datetime_str):
+    """Format time from ISO format to HH:MM format"""
+    dt = datetime.datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+    return dt.strftime("%H:%M")
 
 # Google Calendar API
 import google.oauth2.credentials
@@ -79,33 +104,6 @@ def load_config():
         logger.error(f"Error loading config: {e}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
         return {}
-
-def get_event_color(summary):
-    """Template filter to get event color based on summary"""
-    logger.debug(f"Getting color for event summary: '{summary}'")
-    if not summary:
-        logger.debug("Empty summary, returning default black")
-        return "#000000"  # Default black
-    prefix = summary[:2].upper()
-    
-    # Define color mapping - copied from old project's config.py
-    EVENT_COLORS = {
-        "PE": "#4d26f0",
-        "BU": "#4d26f0",
-        "LI": "#003300",
-        "LA": "#3e5393", 
-        "DA": "#a07ed3",
-        "GI": "#660000"
-    }
-    
-    color = EVENT_COLORS.get(prefix, "#000000")
-    logger.debug(f"Prefix: '{prefix}', Color: {color}")
-    return color
-
-def format_time(datetime_str):
-    """Format time from ISO format to HH:MM format"""
-    dt = datetime.datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
-    return dt.strftime("%H:%M")
 
 def load_stored_credentials():
     """Load credentials from token.json file if it exists"""
