@@ -9,6 +9,40 @@ from collections import defaultdict
 import logging
 import traceback  # Added for detailed stack traces
 
+# Get the project root directory (two levels up from this file)
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+
+# Configure logging to write to both stderr and a file
+log_file = PROJECT_ROOT / 'logs' / 'google_calendar.log'
+log_file.parent.mkdir(exist_ok=True, parents=True)
+
+# Create a custom logger
+logger = logging.getLogger('google_calendar')
+logger.setLevel(logging.DEBUG)  # Changed to DEBUG level for more detailed logs
+
+# Create console handler
+console_handler = logging.StreamHandler(sys.stderr)
+console_handler.setLevel(logging.DEBUG)  # Changed to DEBUG level
+
+# Create file handler
+file_handler = logging.FileHandler(log_file, mode='a')
+file_handler.setLevel(logging.DEBUG)  # Changed to DEBUG level
+
+# Create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+file_handler.setFormatter(formatter)
+
+# Add handlers to logger
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
+
+# Force a log message to verify logging is working
+logger.info("==========================================")
+logger.info("Google Calendar Plugin Loaded")
+logger.info(f"Log file location: {log_file}")
+logger.info("==========================================")
+
 # Load userColors from main.json
 MAIN_CONFIG_FILE = PROJECT_ROOT / 'config' / 'main.json'
 try:
@@ -43,45 +77,12 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-# Get the project root directory (two levels up from this file)
-PROJECT_ROOT = Path(__file__).parent.parent.parent
 ENV_FILE = PROJECT_ROOT / 'config' / '.env'
 CLIENT_SECRET_FILE = PROJECT_ROOT / "config" / "client_secret.json"
 TOKEN_FILE = PROJECT_ROOT / "config" / "token.json"
 
 # Load environment variables from the project-wide .env file
 dotenv.load_dotenv(ENV_FILE)
-
-# Configure logging to write to both stderr and a file
-log_file = PROJECT_ROOT / 'logs' / 'google_calendar.log'
-log_file.parent.mkdir(exist_ok=True, parents=True)
-
-# Create a custom logger
-logger = logging.getLogger('google_calendar')
-logger.setLevel(logging.DEBUG)  # Changed to DEBUG level for more detailed logs
-
-# Create console handler
-console_handler = logging.StreamHandler(sys.stderr)
-console_handler.setLevel(logging.DEBUG)  # Changed to DEBUG level
-
-# Create file handler
-file_handler = logging.FileHandler(log_file, mode='a')
-file_handler.setLevel(logging.DEBUG)  # Changed to DEBUG level
-
-# Create formatter
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(formatter)
-file_handler.setFormatter(formatter)
-
-# Add handlers to logger
-logger.addHandler(console_handler)
-logger.addHandler(file_handler)
-
-# Force a log message to verify logging is working
-logger.info("==========================================")
-logger.info("Google Calendar Plugin Loaded")
-logger.info(f"Log file location: {log_file}")
-logger.info("==========================================")
 
 # If modifying these scopes, delete the token.json file.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
