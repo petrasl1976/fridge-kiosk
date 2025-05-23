@@ -282,7 +282,6 @@ def get_events(config=None):
         logger.debug(f"Traceback: {traceback.format_exc()}")
     # If we get here, return a minimal fake calendar grid for debug
     logger.warning("Returning minimal fake calendar grid for debug!")
-    import datetime
     today = datetime.date.today()
     start_of_week = today - datetime.timedelta(days=today.weekday())
     weeks_to_show = config.get('options', {}).get('weeks_to_show', 6)

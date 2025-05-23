@@ -1,15 +1,5 @@
 {% if plugin['data'] %}
-  <div class="debug-section" style="display: block; background: #000; color: #0f0; font-family: monospace; font-size: 12px; padding: 10px; margin: 5px; overflow: auto; max-height: 300px; white-space: pre-wrap;">
-    <h4>DEBUG INFO</h4>
-    <p>plugin['data'] exists: {% if plugin['data'] %}Yes{% else %}No{% endif %}</p>
-    <p>plugin['data'] keys: {{ plugin['data'].keys()|list }}</p>
-    <p>plugin['config']: {{ plugin['config'] }}</p>
-    <p>Error: {{ plugin['data'].error if plugin['data'].error else 'None' }}</p>
-    <p>Weeks: {{ 'Present' if plugin['data'].weeks else 'Missing' }}</p>
-    <p>Number of weeks: {{ plugin['data'].weeks|length if plugin['data'].weeks else 0 }}</p>
-    <p>Number of days with events: {{ plugin['data'].events_by_day|length if plugin['data'].events_by_day else 0 }}</p>
-    <p>Today's date: {{ plugin['data'].today if plugin['data'].today else 'Not set' }}</p>
-  </div>
+  {# Debug info removed #}
 
   {% if plugin['data'].error %}
   <div class="calendar-widget" style="
