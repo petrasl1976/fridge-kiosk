@@ -250,7 +250,7 @@ def get_events(config=None):
                 day_str = cur_day.strftime("%Y-%m-%d")
                 # Add day of month as a separate field
                 day_info = {
-                    "date": cur_day,
+                    "date": cur_day.strftime("%Y-%m-%d"),  # Convert date to string
                     "day": cur_day.day,
                     "weekday": cur_day.weekday(),
                     "is_today": (cur_day == today),
@@ -293,7 +293,7 @@ def get_events(config=None):
         for __ in range(7):
             day_str = cur_day.strftime("%Y-%m-%d")
             day_info = {
-                "date": cur_day,
+                "date": cur_day.strftime("%Y-%m-%d"),  # Convert date to string
                 "day": cur_day.day,
                 "weekday": cur_day.weekday(),
                 "is_today": (cur_day == today),
