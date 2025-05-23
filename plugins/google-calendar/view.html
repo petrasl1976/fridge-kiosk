@@ -40,6 +40,7 @@
       </thead>
       <tbody>
         {% set today = plugin['data'].today %}
+        {% set holidays = plugin['config'].holidays %}
         {% for week in plugin['data'].weeks %}
           <tr>
             {% for day in week %}
@@ -49,6 +50,9 @@
                 <td style="background: #4CAF50; color: #fff; text-align: center; font-weight: bold; vertical-align: top;">
                   <div class="cell-inner">
                     <div>{{ day.day }}</div>
+                    {% if holidays and holidays[day_str] is defined %}
+                      <div class="holiday">{{ holidays[day_str] }}</div>
+                    {% endif %}
                     <div class="events">
                       {% if events %}
                         <ul>
@@ -66,6 +70,9 @@
                 <td style="background: #222; color: #eee; text-align: center; vertical-align: top;">
                   <div class="cell-inner">
                     <div>{{ day.day }}</div>
+                    {% if holidays and holidays[day_str] is defined %}
+                      <div class="holiday">{{ holidays[day_str] }}</div>
+                    {% endif %}
                     <div class="events">
                       {% if events %}
                         <ul>
