@@ -41,8 +41,8 @@
               {% set cell_bg = '#222' %}
               {% set cell_color = '#eee' %}
               {% if is_weekend or is_holiday %}
-                {% set cell_bg = '#f5f5f5' %}
-                {% set cell_color = '#222' %}
+                {% set cell_bg = '#444' %}
+                {% set cell_color = '#fff' %}
               {% endif %}
               {% if day_str == today %}
                 <td style="background: #4CAF50; color: #fff; text-align: center; font-weight: bold; vertical-align: top;">
@@ -67,7 +67,7 @@
               {% else %}
                 <td style="background: {{ cell_bg }}; color: {{ cell_color }}; text-align: center; vertical-align: top; box-shadow: 0 1px 4px #0002;">
                   <div class="cell-inner">
-                    <div style="text-shadow: 0 1px 4px #fff, 0 0 2px #000;">{{ day.day }}</div>
+                    <div style="font-weight: bold; text-shadow: 0 2px 6px #000, 0 0 2px #000;">{{ day.day }}</div>
                     {% if is_holiday %}
                       <div class="holiday">{{ holidays[day_str] }}</div>
                     {% endif %}
