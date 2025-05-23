@@ -58,10 +58,10 @@ def get_event_color(summary):
     """Get event color based on summary using userColors from main.json"""
     logger.debug(f"Getting color for event summary: '{summary}'")
     if not summary:
-        logger.debug("Empty summary, returning default color")
-        return "#673AB7"  # Default purple
+        logger.debug("Empty summary, returning black color")
+        return "#000000"  # Black for empty summaries
     prefix = summary[:2].upper()
-    color = USER_COLORS.get(prefix, "#673AB7")  # Use purple as default if no color found
+    color = USER_COLORS.get(prefix, "#000000")  # Use black as default if no color found
     logger.debug(f"Prefix: '{prefix}', Color: {color}")
     return color
 
