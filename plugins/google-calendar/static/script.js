@@ -47,14 +47,18 @@ function calendarInit(container) {
 
 // Helper function to convert event summary to a color
 function getEventColor(summary) {
-    if (!summary) return "#673AB7"; // Default color for empty summaries
+    if (!summary) return "#673AB7"; // Default purple for empty summaries
     
     // Get the event colors from the kiosk config
     const userColors = window.KIOSK_CONFIG?.userColors || {};
+    console.debug("Available userColors:", userColors);
     
     // Use the first 2 characters as the key (similar to how discord username colors work)
-    const key = summary.substring(0, 2).toUpperCase(); 
+    const key = summary.substring(0, 2).toUpperCase();
+    console.debug(`Getting color for key: ${key}`);
     
     // Use the color from userColors if it exists, otherwise use default
-    return userColors[key] || "#673AB7"; // Deep Purple default
+    const color = userColors[key] || "#673AB7"; // Deep Purple default
+    console.debug(`Using color: ${color} for summary: ${summary}`);
+    return color;
 } 

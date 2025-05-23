@@ -10,6 +10,7 @@ function discordChannelInit(container) {
   const pluginConfig = plugin.config || {};
   const maxMessages = pluginConfig.format?.max_messages || 10;
   const usernameColors = window.KIOSK_CONFIG?.userColors || {};
+  console.debug("Available usernameColors:", usernameColors);
 
   function fetchMessages() {
     fetch('/api/plugins/discord-channel/data')
@@ -34,12 +35,13 @@ function discordChannelInit(container) {
 
               // Use first two letters (uppercased) for color key, like calendar
               const shortUsername = msg.author.username.substring(0, 2).toUpperCase();
-              const usernameColor = usernameColors[shortUsername] || msg.color || '#888';
+              const usernameColor = usernameColors[shortUsername] || "#673AB7"; // Use purple as default
+              console.debug(`Username: ${msg.author.username}, Short: ${shortUsername}, Color: ${usernameColor}`);
 
               html += `
                 <div class="discord-message">
                   ${hh}:${mm}
-                  <span class="discord-username" style="background-color: ${usernameColor};">${shortUsername}:</span>
+                  <span class="discord-username" style="background-color: ${usernameColor}; color: white;">${shortUsername}:</span>
                   ${msg.content}
                 </div>
               `;
@@ -52,7 +54,8 @@ function discordChannelInit(container) {
         }
         container.innerHTML = html;
       })
-      .catch(() => {
+      .catch(error => {
+        console.error("Error fetching messages:", error);
         container.innerHTML = "Error loading messages.";
       });
   }
