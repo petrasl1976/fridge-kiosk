@@ -40,15 +40,41 @@
       </thead>
       <tbody>
         {% set today = plugin['data'].today %}
-        {% set row_count = plugin['data'].weeks|length %}
         {% for week in plugin['data'].weeks %}
-          <tr style="height: calc(100% / {{ row_count }});">
+          <tr>
             {% for day in week %}
               {% set day_str = day.date_str %}
+              {% set events = plugin['data'].events_by_day.get(day_str, []) %}
               {% if day_str == today %}
-                <td style="background: #4CAF50; color: #fff; text-align: center; font-weight: bold;">{{ day.day }}</td>
+                <td style="background: #4CAF50; color: #fff; text-align: center; font-weight: bold; vertical-align: top;">
+                  <div>{{ day.day }}</div>
+                  <div class="events">
+                    {% if events %}
+                      <ul>
+                        {% for event in events %}
+                          <li style="background: {{ event.color }}; color: #fff; margin: 2px 0; padding: 2px 4px; border-radius: 3px; font-size: 0.9em;">
+                            {{ event.formatted_time if event.formatted_time }} {{ event.summary }}
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </div>
+                </td>
               {% else %}
-                <td style="background: #222; color: #eee; text-align: center;">{{ day.day }}</td>
+                <td style="background: #222; color: #eee; text-align: center; vertical-align: top;">
+                  <div>{{ day.day }}</div>
+                  <div class="events">
+                    {% if events %}
+                      <ul>
+                        {% for event in events %}
+                          <li style="background: {{ event.color }}; color: #fff; margin: 2px 0; padding: 2px 4px; border-radius: 3px; font-size: 0.9em;">
+                            {{ event.formatted_time if event.formatted_time }} {{ event.summary }}
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </div>
+                </td>
               {% endif %}
             {% endfor %}
           </tr>

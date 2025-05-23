@@ -20,7 +20,7 @@
         "padding": "10px"
     },
     "options": {
-        "weeks_to_show": 4,
+        "weeks_to_show": 6,
         "show_holidays": true,
         "event_summary_max_length": 28
     },
