@@ -345,6 +345,9 @@ def main():
         log_level = getattr(logging, config['system']['logLevel'].upper(), logging.INFO)
         logger.setLevel(log_level)
     
+    # Disable Flask's default logging
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    
     # Load plugins
     plugins = load_plugins(config)
     
