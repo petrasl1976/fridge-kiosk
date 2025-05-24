@@ -7,6 +7,7 @@ This server handles the OAuth flow and stores the credentials.
 import os
 import json
 import logging
+import traceback
 from pathlib import Path
 import requests
 from flask import Flask, render_template, redirect, url_for, session, request
@@ -15,16 +16,15 @@ import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
 
-# Get the project root directory
-current_dir = Path(__file__).resolve().parent
-PROJECT_ROOT = current_dir.parent.parent
+# Get the project root directory (two levels up from this file)
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 # Configure logging to use the common log file
 log_file = PROJECT_ROOT / 'logs' / 'fridge-kiosk.log'
 log_file.parent.mkdir(exist_ok=True, parents=True)
 
 # Create a custom logger
-logger = logging.getLogger('google-calendar-auth')
+logger = logging.getLogger('google_calendar_auth')
 logger.setLevel(logging.INFO)
 
 # Create file handler
