@@ -192,9 +192,8 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
     
     def log_message(self, format, *args):
         """Log messages to our logger instead of stderr"""
-        logger.info("%s - %s",
-                    self.address_string(),
-                    format % args)
+        # Skip duplicate logging since Flask already logs requests
+        pass
 
 
 def load_plugins(config):
