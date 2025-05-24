@@ -96,7 +96,7 @@ def load_config():
     config_path = Path(__file__).parent / "config.json"
     logger.debug(f"Loading config from {config_path}")
     try:
-        with open(config_path) as f:
+    with open(config_path) as f:
             config = json.load(f)
             logger.debug(f"Config loaded: {json.dumps(config, indent=2)}")
             return config
@@ -160,7 +160,7 @@ def get_credentials():
         return creds
         
     logger.warning("No valid credentials available")
-    return None
+        return None
 
 def get_events(config=None):
     """Get events from Google Calendar"""
@@ -276,7 +276,7 @@ def get_events(config=None):
         logger.debug(f"Number of event days: {len(response['events_by_day'])}")
         # If weeks is empty, fall through to fake data below
         if weeks:
-            return response
+        return response
     except Exception as e:
         logger.error(f"Error fetching calendar events: {e}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
@@ -542,7 +542,7 @@ def init(config):
     except Exception as e:
         logger.error(f"Error initializing Google Calendar plugin: {e}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
-        return {'data': {}, 'error': str(e)}
+        return {'data': {}, 'error': str(e)} 
 
 def api_debug():
     """API endpoint for debugging template rendering issues"""

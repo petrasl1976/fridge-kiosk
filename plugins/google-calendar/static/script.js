@@ -54,7 +54,7 @@ function getEventColor(summary) {
     console.debug("Available userColors:", userColors);
     
     // Use the first 2 characters as the key (similar to how discord username colors work)
-    const key = summary.substring(0, 2).toUpperCase();
+    const key = summary.substring(0, 2).toUpperCase(); 
     console.debug(`Getting color for key: ${key}`);
     
     // Use the color from userColors if it exists, otherwise use black
