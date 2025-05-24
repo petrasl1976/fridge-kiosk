@@ -19,19 +19,14 @@
     <table class="calendar-table" style="width: 100%; border-collapse: collapse;">
       <thead>
         <tr>
-          <th>Pir</th>
-          <th>Ant</th>
-          <th>Tre</th>
-          <th>Ket</th>
-          <th>Pen</th>
-          <th>Šeš</th>
-          <th>Sek</th>
+          {% for wd in plugin['config'].weekday_names %}
+            <th>{{ wd }}</th>
+          {% endfor %}
         </tr>
       </thead>
       <tbody>
         {% set today = plugin['data'].today %}
         {% set holidays = plugin['config'].holidays %}
-        {% set menesiai = ['Sausis', 'Vasaris', 'Kovas', 'Balandis', 'Gegužė', 'Birželis', 'Liepa', 'Rugpjūtis', 'Rugsėjis', 'Spalis', 'Lapkritis', 'Gruodis'] %}
         {% for week in plugin['data'].weeks %}
           <tr>
             {% for day in week %}
@@ -50,7 +45,7 @@
                   <div class="cell-inner" style="display: flex; flex-direction: row; align-items: center; gap: 6px;">
                     <div style="font-size: 1.1em; min-width: 2em;">
                       {% if day.day == 1 %}
-                        {{ menesiai[day.date[5:7]|int - 1] }}
+                        {{ plugin['config'].month_names[day.date[5:7]|int - 1] }}
                       {% else %}
                         {{ day.day }}
                       {% endif %}
@@ -76,7 +71,7 @@
                   <div class="cell-inner" style="display: flex; flex-direction: row; align-items: center; gap: 6px;">
                     <div style="font-weight: bold; text-shadow: 0 2px 6px #000, 0 0 2px #000; font-size: 1.1em; min-width: 2em;">
                       {% if day.day == 1 %}
-                        {{ menesiai[day.date[5:7]|int - 1] }}
+                        {{ plugin['config'].month_names[day.date[5:7]|int - 1] }}
                       {% else %}
                         {{ day.day }}
                       {% endif %}

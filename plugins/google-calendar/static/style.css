@@ -4,19 +4,17 @@
 
 .calendar-widget {
     width: 100%;
+    min-height: 300px;
     display: flex;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 1);
     background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%);
     overflow: hidden;
-    margin: 0;
-    padding: 0;
 }
 
 .calendar-table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed; /* equal width columns */
-    margin: 0;
 }
 
 .calendar-table thead th {
@@ -25,7 +23,6 @@
     text-align: center;
     padding: 5px;
     border: 1px solid #444;
-    margin: 0;
 }
 
 .calendar-table td {
@@ -34,7 +31,6 @@
     padding: 6px;
     box-sizing: border-box;
     min-height: 48px;
-    margin: 0;
 }
 
 .day-header {
@@ -67,13 +63,14 @@
 }
 
 .cell-inner {
+    min-height: 80px;
     flex-direction: column;
     padding: 0;
     margin: 0;
 }
 
 .today {
-    background: #555 !important;
-    color: #fff !important;
+    background: #181a1b !important;
+    color: #808080 !important;
     box-shadow: 0 2px 12px #0008;
-}
+} 
