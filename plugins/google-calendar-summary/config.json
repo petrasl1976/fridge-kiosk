@@ -15,11 +15,8 @@
     },
     "updateInterval": 900,
     "format": {
-        "font_size": "1.0em",
+        "font_size": "2.0em",
         "color": "#fff",
         "padding": "10px"
-    },
-    "options": {
-        "event_summary_max_length": 28
     }
 } 

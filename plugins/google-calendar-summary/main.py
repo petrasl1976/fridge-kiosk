@@ -266,7 +266,6 @@ def get_events(config=None):
             'events_by_day': dict(events_by_day),
             'today': today.strftime("%Y-%m-%d"),
             'holidays': config.get('holidays', {}),
-            'summary_max_length': config.get('options', {}).get('event_summary_max_length', 28),
             'show_holidays': config.get('options', {}).get('show_holidays', True)
         }
         
@@ -306,7 +305,6 @@ def get_events(config=None):
         'events_by_day': {},
         'today': today.strftime("%Y-%m-%d"),
         'holidays': {},
-        'summary_max_length': 28,
         'show_holidays': True
     }
 
@@ -372,7 +370,6 @@ def get_today_events(config=None):
         
         return {
             'events': events,
-            'summary_max_length': config.get('options', {}).get('event_summary_max_length', 28)
         }
         
     except Exception as e:
