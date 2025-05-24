@@ -38,11 +38,48 @@ function discordChannelInit(container) {
               const usernameColor = usernameColors[shortUsername] || "#673AB7"; // Use purple as default
               console.debug(`Username: ${msg.author.username}, Short: ${shortUsername}, Color: ${usernameColor}`);
 
+              // Handle attachments
+              let attachmentsHtml = '';
+              if (msg.attachments && msg.attachments.length > 0) {
+                msg.attachments.forEach(attachment => {
+                  if (attachment.content_type && attachment.content_type.startsWith('image/')) {
+                    attachmentsHtml += `
+                      <div class="discord-image-container">
+                        <img src="${attachment.url}" alt="Discord attachment" />
+                      </div>
+                    `;
+                  }
+                });
+              }
+
+              // Handle embeds
+              let embedsHtml = '';
+              if (msg.embeds && msg.embeds.length > 0) {
+                msg.embeds.forEach(embed => {
+                  if (embed.image && embed.image.url) {
+                    embedsHtml += `
+                      <div class="discord-image-container">
+                        <img src="${embed.image.url}" alt="Discord embed image" />
+                      </div>
+                    `;
+                  }
+                  if (embed.thumbnail && embed.thumbnail.url) {
+                    embedsHtml += `
+                      <div class="discord-image-container">
+                        <img src="${embed.thumbnail.url}" alt="Discord embed thumbnail" />
+                      </div>
+                    `;
+                  }
+                });
+              }
+
               html += `
                 <div class="discord-message">
                   ${hh}:${mm}
                   <span class="discord-username" style="background-color: ${usernameColor}; color: white;">${shortUsername}:</span>
                   ${msg.content}
+                  ${attachmentsHtml}
+                  ${embedsHtml}
                 </div>
               `;
             });
