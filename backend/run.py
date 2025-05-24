@@ -30,6 +30,11 @@ config = load_config()
 logger = setup_logging(config)
 logger.info("Starting Fridge Kiosk server")
 
+# Disable Flask's default logging
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+# Disable duplicate logging
+logging.getLogger('werkzeug').propagate = False
+
 # Initialize Jinja2 template environment
 template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(parent_dir, "backend/templates"))
 template_env = jinja2.Environment(loader=template_loader)
@@ -344,9 +349,6 @@ def main():
     if 'logLevel' in config.get('system', {}):
         log_level = getattr(logging, config['system']['logLevel'].upper(), logging.INFO)
         logger.setLevel(log_level)
-    
-    # Disable Flask's default logging
-    logging.getLogger('werkzeug').setLevel(logging.ERROR)
     
     # Load plugins
     plugins = load_plugins(config)
