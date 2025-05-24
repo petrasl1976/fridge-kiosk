@@ -183,6 +183,10 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 plugin_path = get_plugin_path(plugin_name)
                 return plugin_path / resource
         
+        # For static files (including favicon)
+        if path.startswith('static/'):
+            return Path(self.root_dir) / 'backend' / path
+        
         # For everything else, map to the templates directory
         return Path(self.root_dir) / 'backend' / 'templates' / path
     
