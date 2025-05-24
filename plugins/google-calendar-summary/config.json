@@ -21,25 +21,5 @@
     },
     "options": {
         "event_summary_max_length": 28
-    },
-    "holidays": {
-        "2025-01-01": "Naujieji metai",
-        "2025-02-16": "Nepriklausomybės diena",
-        "2025-03-11": "Kovo 11-oji",
-        "2025-04-20": "Velykos",
-        "2025-05-01": "Darbo diena",
-        "2025-06-24": "Joninės",
-        "2025-07-06": "Valstybės diena",
-        "2025-08-15": "Žolinė",
-        "2025-11-01": "Visų šventųjų diena",
-        "2025-12-24": "Kūčios",
-        "2025-12-25": "Kalėdos",
-        "2025-12-26": "Kalėdos (2-a diena)"
-    },
-    "month_names": [
-        "Sausis", "Vasaris", "Kovas", "Balandis", "Gegužė", "Birželis", "Liepa", "Rugpjūtis", "Rugsėjis", "Spalis", "Lapkritis", "Gruodis"
-    ],
-    "weekday_names": [
-        "Pir", "Ant", "Tre", "Ket", "Pen", "Šeš", "Sek"
-    ]
+    }
 } 
