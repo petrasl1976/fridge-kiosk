@@ -1,0 +1,46 @@
+{
+    "name": "Google Photos",
+    "description": "Displays photos and videos from Google Photos albums",
+    "version": "1.0.0",
+    "settings": {
+        "MEDIA_TYPES": {
+            "type": "select",
+            "label": "Media Types",
+            "default": "all",
+            "options": [
+                {"value": "all", "label": "All (Photos & Videos)"},
+                {"value": "photo", "label": "Photos Only"},
+                {"value": "video", "label": "Videos Only"}
+            ]
+        },
+        "PHOTO_DURATION": {
+            "type": "number",
+            "label": "Photo Display Duration (seconds)",
+            "default": 10,
+            "min": 1,
+            "max": 60
+        },
+        "VIDEO_DURATION": {
+            "type": "number",
+            "label": "Video Display Duration (seconds)",
+            "default": 30,
+            "min": 1,
+            "max": 300
+        },
+        "VIDEO_SOUND": {
+            "type": "boolean",
+            "label": "Play Video Sound",
+            "default": true
+        },
+        "PHOTO_CONTAINER": {
+            "type": "boolean",
+            "label": "Show Photo Container",
+            "default": true
+        },
+        "PHOTO_INFO_OVERLAY": {
+            "type": "boolean",
+            "label": "Show Photo Info Overlay",
+            "default": true
+        }
+    }
+} 

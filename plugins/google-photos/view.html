@@ -1,0 +1,109 @@
+<div class="photo-container" id="photo-container">
+    <div class="photo-info-overlay" id="photo-info-overlay">
+        <div class="album-title" id="album-title"></div>
+        <div class="photo-filename" id="photo-filename"></div>
+    </div>
+    <img id="photo" class="photo" style="display: none;">
+    <video id="video" class="video" style="display: none;" controls></video>
+</div>
+
+<script>
+let currentIndex = 0;
+let photoBatch = [];
+let albumTitle = "";
+
+function updateDisplay() {
+    const photo = document.getElementById('photo');
+    const video = document.getElementById('video');
+    const albumTitleEl = document.getElementById('album-title');
+    const photoFilenameEl = document.getElementById('photo-filename');
+    
+    if (!photoBatch || photoBatch.length === 0) {
+        loadNewPhotos();
+        return;
+    }
+    
+    const item = photoBatch[currentIndex];
+    
+    if (item.mediaType === 'photo') {
+        photo.src = item.baseUrl;
+        photo.style.display = 'block';
+        video.style.display = 'none';
+        video.pause();
+    } else if (item.mediaType === 'video') {
+        video.src = item.baseUrl;
+        video.style.display = 'block';
+        photo.style.display = 'none';
+        video.play();
+    }
+    
+    albumTitleEl.textContent = albumTitle;
+    photoFilenameEl.textContent = item.filename;
+    
+    currentIndex = (currentIndex + 1) % photoBatch.length;
+    
+    const duration = item.mediaType === 'photo' ? 
+        config.PHOTO_DURATION * 1000 : 
+        config.VIDEO_DURATION * 1000;
+    
+    setTimeout(updateDisplay, duration);
+}
+
+function loadNewPhotos() {
+    fetch('/newphoto')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error loading photos:', data.error);
+                return;
+            }
+            
+            photoBatch = data.photos;
+            albumTitle = data.album_title;
+            currentIndex = 0;
+            updateDisplay();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+// Start the slideshow
+loadNewPhotos();
+</script>
+
+<style>
+.photo-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.photo-info-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 10px;
+    display: block;
+}
+
+.photo, .video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.album-title {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.photo-filename {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+</style> 
