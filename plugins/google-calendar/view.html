@@ -31,6 +31,7 @@
       <tbody>
         {% set today = plugin['data'].today %}
         {% set holidays = plugin['config'].holidays %}
+        {% set menesiai = ['Sausis', 'Vasaris', 'Kovas', 'Balandis', 'Gegužė', 'Birželis', 'Liepa', 'Rugpjūtis', 'Rugsėjis', 'Spalis', 'Lapkritis', 'Gruodis'] %}
         {% for week in plugin['data'].weeks %}
           <tr>
             {% for day in week %}
@@ -47,7 +48,13 @@
               {% if day_str == today %}
                 <td class="today" style="text-align: left; font-weight: bold; vertical-align: top; box-shadow: 0 2px 8px #0001;">
                   <div class="cell-inner" style="display: flex; flex-direction: row; align-items: center; gap: 6px;">
-                    <div style="font-size: 1.1em; min-width: 2em;">{{ day.day }}</div>
+                    <div style="font-size: 1.1em; min-width: 2em;">
+                      {% if day.day == 1 %}
+                        {{ menesiai[day.date[5:7]|int - 1] }}
+                      {% else %}
+                        {{ day.day }}
+                      {% endif %}
+                    </div>
                     {% if is_holiday %}
                       <div class="holiday" style="background: #000; color: #fff; font-weight: bold; border-radius: 4px; padding: 2px 8px; margin: 0; display: inline-block;">{{ holidays[day_str] }}</div>
                     {% endif %}
@@ -67,7 +74,13 @@
               {% else %}
                 <td style="background: {{ cell_bg }}; color: {{ cell_color }}; text-align: left; vertical-align: top; box-shadow: 0 1px 4px #0002;">
                   <div class="cell-inner" style="display: flex; flex-direction: row; align-items: center; gap: 6px;">
-                    <div style="font-weight: bold; text-shadow: 0 2px 6px #000, 0 0 2px #000; font-size: 1.1em; min-width: 2em;">{{ day.day }}</div>
+                    <div style="font-weight: bold; text-shadow: 0 2px 6px #000, 0 0 2px #000; font-size: 1.1em; min-width: 2em;">
+                      {% if day.day == 1 %}
+                        {{ menesiai[day.date[5:7]|int - 1] }}
+                      {% else %}
+                        {{ day.day }}
+                      {% endif %}
+                    </div>
                     {% if is_holiday %}
                       <div class="holiday" style="background: #000; color: #fff; font-weight: bold; border-radius: 4px; padding: 2px 8px; margin: 0; display: inline-block;">{{ holidays[day_str] }}</div>
                     {% endif %}
