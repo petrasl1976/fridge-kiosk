@@ -47,7 +47,7 @@ function discordChannelInit(container) {
               `;
             });
           } else {
-            html = "<div>No new messages in channel</div>";
+            html = "<div>...</div>";
           }
         } else {
           html = "<div>No messages available</div>";
