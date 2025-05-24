@@ -15,12 +15,31 @@ import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
 
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Get the project root directory
+current_dir = Path(__file__).resolve().parent
+PROJECT_ROOT = current_dir.parent.parent
+
+# Configure logging to use the common log file
+log_file = PROJECT_ROOT / 'logs' / 'fridge-kiosk.log'
+log_file.parent.mkdir(exist_ok=True, parents=True)
+
+# Create a custom logger
 logger = logging.getLogger('google-calendar-auth')
+logger.setLevel(logging.INFO)
+
+# Create file handler
+file_handler = logging.FileHandler(log_file, mode='a')
+file_handler.setLevel(logging.INFO)
+
+# Create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Add handler to logger
+logger.addHandler(file_handler)
+
+# Force a log message to verify logging is working
+logger.info("Google Calendar Auth Server Loaded")
 
 # Get the project root directory
 current_dir = Path(__file__).resolve().parent

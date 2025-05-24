@@ -21,17 +21,14 @@ import datetime
 # Add parent directory to sys.path to make imports work after moving to backend/
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
-from backend.utils.config import load_config, get_plugin_path, get_env
+from backend.utils.config import load_config, get_plugin_path, get_env, setup_logging
+
+# Load configuration
+config = load_config()
 
 # Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(os.path.join(parent_dir, 'logs/backend.log'))
-    ]
-)
-logger = logging.getLogger('fridge-kiosk')
+logger = setup_logging(config)
+logger.info("Starting Fridge Kiosk server")
 
 # Initialize Jinja2 template environment
 template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(parent_dir, "backend/templates"))
@@ -78,6 +75,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                     plugins=self.plugins
                 )
                 self.wfile.write(html.encode('utf-8'))
+                logger.info("Main page rendered successfully")
             except Exception as e:
                 logger.error(f"Error rendering template: {e}")
                 self.wfile.write(f"Error: {str(e)}".encode('utf-8'))
@@ -90,6 +88,8 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             if len(parts) >= 3 and parts[0] == 'api' and parts[1] == 'plugins':
                 plugin_name = parts[2]
                 endpoint = parts[3] if len(parts) > 3 else 'data'
+                
+                logger.info(f"API request: {plugin_name}/{endpoint}")
                 
                 # Look for the plugin module
                 try:
@@ -112,9 +112,11 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                             self.send_header('Content-type', 'application/json')
                             self.end_headers()
                             self.wfile.write(json.dumps(result).encode('utf-8'))
+                            logger.info(f"API response sent for {plugin_name}/{endpoint}")
                             return
                     
                     # If we get here, the handler wasn't found
+                    logger.warning(f"Plugin API endpoint not found: {path}")
                     self.send_response(404)
                     self.send_header('Content-type', 'application/json')
                     self.end_headers()
@@ -139,6 +141,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             file_path = self.map_path_to_file(path)
             
             if not file_path.exists() or not file_path.is_file():
+                logger.warning(f"File not found: {path}")
                 self.send_response(404)
                 self.send_header('Content-type', 'text/plain')
                 self.end_headers()
@@ -157,6 +160,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             
             with open(file_path, 'rb') as f:
                 self.wfile.write(f.read())
+            logger.debug(f"Static file served: {path}")
                 
         except Exception as e:
             logger.error(f"Error serving file: {e}")
@@ -201,7 +205,7 @@ def load_plugins(config):
     logger.info(f"Loading {len(enabled_plugins)} enabled plugins")
     
     # Loop through all enabled plugins
-    for plugin_index, plugin_name in enumerate(enabled_plugins):
+    for plugin_name in enabled_plugins:
         logger.info(f"Loading plugin: {plugin_name}")
         plugin_path = get_plugin_path(plugin_name)
         
@@ -217,11 +221,9 @@ def load_plugins(config):
             try:
                 with open(plugin_config_path, 'r') as f:
                     plugin_config = json.load(f)
-                logger.info(f"Loaded configuration for plugin {plugin_name}: {plugin_config_path}")
+                logger.info(f"Loaded configuration for plugin {plugin_name}")
             except Exception as e:
                 logger.error(f"Error loading plugin config: {e}")
-        else:
-            logger.warning(f"Plugin config not found: {plugin_config_path}")
         
         # Ensure plugin has its own data directory
         plugin_data_dir = os.path.join(plugin_path, 'data')
@@ -260,7 +262,7 @@ def load_plugins(config):
             logger.warning(f"No position config found for plugin {plugin_name}, using defaults: {position}")
         
         # Set z_index based on plugin's position in the enabledPlugins array (starting from 1)
-        position['z_index'] = plugin_index + 1
+        position['z_index'] = enabled_plugins.index(plugin_name) + 1
         logger.info(f"Set z_index={position['z_index']} for plugin {plugin_name} based on its position in enabledPlugins")
         
         # Try to call init(config) if it exists
@@ -304,7 +306,7 @@ def load_plugins(config):
                         plugin=plugin_info
                     )
             except Exception as e:
-                logger.error(f"Error reading or rendering plugin view for '{plugin_name}': {e}\n{traceback.format_exc()}")
+                logger.error(f"Error reading or rendering plugin view for '{plugin_name}': {e}")
                 plugin_info['view_content'] = f"<div style='color:red;'>Error rendering {plugin_name} view: {e}</div>"
         
         if os.path.exists(script_path):
@@ -314,6 +316,7 @@ def load_plugins(config):
             plugin_info['style'] = 'static/style.css'
         
         plugins[plugin_name] = plugin_info
+        logger.info(f"Plugin {plugin_name} loaded successfully")
     
     return plugins
 
@@ -355,13 +358,13 @@ def main():
     server_address = ('', args.port)
     httpd = HTTPServer(server_address, handler)
     
-    logger.info(f"Starting server on port {args.port}")
+    logger.info(f"Server started on port {args.port}")
     logger.info(f"Open http://localhost:{args.port} in your browser")
     
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        logger.info("Keyboard interrupt received, shutting down the server")
+        logger.info("Server stopped by user")
         httpd.server_close()
         sys.exit(0)
 

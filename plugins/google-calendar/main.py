@@ -12,36 +12,27 @@ import traceback  # Added for detailed stack traces
 # Get the project root directory (two levels up from this file)
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 
-# Configure logging to write to both stderr and a file
-log_file = PROJECT_ROOT / 'logs' / 'google_calendar.log'
+# Configure logging to use the common log file
+log_file = PROJECT_ROOT / 'logs' / 'fridge-kiosk.log'
 log_file.parent.mkdir(exist_ok=True, parents=True)
 
 # Create a custom logger
 logger = logging.getLogger('google_calendar')
-logger.setLevel(logging.DEBUG)  # Changed to DEBUG level for more detailed logs
-
-# Create console handler
-console_handler = logging.StreamHandler(sys.stderr)
-console_handler.setLevel(logging.DEBUG)  # Changed to DEBUG level
+logger.setLevel(logging.INFO)
 
 # Create file handler
 file_handler = logging.FileHandler(log_file, mode='a')
-file_handler.setLevel(logging.DEBUG)  # Changed to DEBUG level
+file_handler.setLevel(logging.INFO)
 
 # Create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(formatter)
 file_handler.setFormatter(formatter)
 
-# Add handlers to logger
-logger.addHandler(console_handler)
+# Add handler to logger
 logger.addHandler(file_handler)
 
 # Force a log message to verify logging is working
-logger.info("==========================================")
 logger.info("Google Calendar Plugin Loaded")
-logger.info(f"Log file location: {log_file}")
-logger.info("==========================================")
 
 # Load userColors from main.json
 MAIN_CONFIG_FILE = PROJECT_ROOT / 'config' / 'main.json'
@@ -382,18 +373,9 @@ def get_today_events(config=None):
         return {'error': str(e)}
 
 def api_data():
-    """API endpoint for calendar data"""
-    logger.info("Calendar api_data called")
-    try:
-        events_data = get_events()
-        logger.debug(f"api_data returning: keys={list(events_data.keys())}")
-        if 'error' in events_data:
-            logger.error(f"api_data error: {events_data['error']}")
-        return events_data
-    except Exception as e:
-        logger.error(f"Exception in api_data: {e}")
-        logger.debug(f"Traceback: {traceback.format_exc()}")
-        return {'error': f"Exception: {str(e)}"}
+    """API endpoint for getting calendar data"""
+    logger.info("Calendar API called")
+    return get_events()
 
 def api_today():
     """API endpoint for today's events"""
@@ -603,3 +585,8 @@ def api_debug():
         logger.error(f"Exception in api_debug: {e}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
         return {'error': f"Exception in debug endpoint: {str(e)}"} 
+
+if __name__ == '__main__':
+    # Test the calendar functionality
+    events = get_events()
+    print(json.dumps(events, indent=2)) 

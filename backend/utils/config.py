@@ -101,4 +101,41 @@ def get_plugin_config(plugin_name):
         dict: The plugin configuration, or empty dict if not found.
     """
     config = load_config()
-    return config.get('plugins', {}).get(plugin_name, {}) 
+    return config.get('plugins', {}).get(plugin_name, {})
+
+def setup_logging(config=None):
+    """Set up logging configuration for the entire application"""
+    # Create logs directory if it doesn't exist
+    logs_dir = Path(__file__).parent.parent.parent / 'logs'
+    logs_dir.mkdir(exist_ok=True)
+    
+    # Get log level from config or default to INFO
+    log_level = getattr(logging, config.get('system', {}).get('logLevel', 'INFO').upper(), logging.INFO)
+    
+    # Configure root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(log_level)
+    
+    # Remove existing handlers
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+    
+    # Create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    # Add file handler
+    file_handler = logging.FileHandler(logs_dir / 'fridge-kiosk.log')
+    file_handler.setFormatter(formatter)
+    root_logger.addHandler(file_handler)
+    
+    # Add console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    root_logger.addHandler(console_handler)
+    
+    # Set specific loggers to appropriate levels
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)
+    logging.getLogger('googleapiclient').setLevel(logging.WARNING)
+    logging.getLogger('urllib3').setLevel(logging.WARNING)
+    
+    return root_logger 
