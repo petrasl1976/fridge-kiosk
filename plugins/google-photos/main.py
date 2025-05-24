@@ -172,7 +172,7 @@ class GooglePhotosPlugin:
 def init_plugin(app, config):
     plugin = GooglePhotosPlugin(config)
     
-    @app.route('/newphoto')
+    @app.route('/api/plugins/google-photos/data')
     def new_photo():
         """Returns a new batch of photos in JSON format"""
         try:
