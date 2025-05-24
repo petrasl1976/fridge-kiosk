@@ -56,20 +56,16 @@ for directory in logs config; do
     mkdir -p "$INSTALL_DIR/$directory"
 done
 
-for file in backend-run.log backend.log backend-error.log; do
-    print_info "Creating file: $INSTALL_DIR/logs/$file"
-    touch "$INSTALL_DIR/logs/$file"
-done
+print_info "Creating log file: $INSTALL_DIR/logs/fridge-kiosk.log"
+touch "$INSTALL_DIR/logs/fridge-kiosk.log"
 
 if [ -n "$SUDO_USER" ]; then
     chown -R "$SUDO_USER:$SUDO_USER" "$INSTALL_DIR"
 fi
 
-print_info "Setting write permissions for log files"
+print_info "Setting write permissions for log file"
 chmod -R 755 "$INSTALL_DIR/logs"
-for file in backend-run.log backend.log backend-error.log; do
-    chmod 666 "$INSTALL_DIR/logs/$file"
-done
+chmod 666 "$INSTALL_DIR/logs/fridge-kiosk.log"
 
 print_step "Fixing shebang in run.py..."
 sed -i "1c #!$INSTALL_DIR/venv/bin/python3" "$INSTALL_DIR/backend/run.py"
@@ -140,8 +136,8 @@ WorkingDirectory=$INSTALL_DIR
 ExecStart=$INSTALL_DIR/venv/bin/python $INSTALL_DIR/backend/run.py
 Restart=always
 RestartSec=5
-StandardOutput=append:$INSTALL_DIR/logs/backend.log
-StandardError=append:$INSTALL_DIR/logs/backend-error.log
+StandardOutput=append:$INSTALL_DIR/logs/fridge-kiosk.log
+StandardError=append:$INSTALL_DIR/logs/fridge-kiosk.log
 Environment="PYTHONUNBUFFERED=1"
 # Permissions to read temperature data
 ReadWritePaths=/sys/class/thermal/thermal_zone0
