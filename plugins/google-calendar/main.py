@@ -160,7 +160,7 @@ def get_credentials():
         return creds
         
     logger.warning("No valid credentials available")
-        return None
+    return None
 
 def get_events(config=None):
     """Get events from Google Calendar"""
@@ -276,7 +276,7 @@ def get_events(config=None):
         logger.debug(f"Number of event days: {len(response['events_by_day'])}")
         # If weeks is empty, fall through to fake data below
         if weeks:
-        return response
+            return response
     except Exception as e:
         logger.error(f"Error fetching calendar events: {e}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
