@@ -50,7 +50,7 @@ function updateDisplay() {
 }
 
 function loadNewPhotos() {
-    fetch('/newphoto')
+    fetch('/api/plugins/google-photos/data')
         .then(response => response.json())
         .then(data => {
             if (data.error) {

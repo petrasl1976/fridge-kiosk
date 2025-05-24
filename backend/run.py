@@ -34,6 +34,8 @@ logger.info("Starting Fridge Kiosk server")
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
 # Disable duplicate logging
 logging.getLogger('werkzeug').propagate = False
+# Disable duplicate logging for our logger
+logger.propagate = False
 
 # Initialize Jinja2 template environment
 template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(parent_dir, "backend/templates"))
