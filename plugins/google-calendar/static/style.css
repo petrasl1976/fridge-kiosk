@@ -67,4 +67,10 @@
     flex-direction: column;
     padding: 0;
     margin: 0;
+}
+
+.today {
+    background: #181a1b !important; /* much darker background for today */
+    color: #fff !important;
+    box-shadow: 0 2px 12px #0008;
 } 

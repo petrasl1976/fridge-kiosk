@@ -45,7 +45,7 @@
                 {% set cell_color = '#fff' %}
               {% endif %}
               {% if day_str == today %}
-                <td style="background: #f5f5f5; color: #222; text-align: left; font-weight: bold; vertical-align: top; box-shadow: 0 2px 8px #0001;">
+                <td class="today" style="text-align: left; font-weight: bold; vertical-align: top; box-shadow: 0 2px 8px #0001;">
                   <div class="cell-inner" style="display: flex; align-items: flex-start; gap: 6px;">
                     <div style="font-size: 1.1em; min-width: 2em;">{{ day.day }}</div>
                     {% if is_holiday %}
