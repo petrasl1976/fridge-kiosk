@@ -7,23 +7,29 @@
   {% else %}
     <div class="calendar-widget summary-list" style="font-size: {{ plugin['config'].format.font_size }}; color: {{ plugin['config'].format.color }}; padding: {{ plugin['config'].format.padding }}; text-align: right;">
       {% if plugin['data'].today_events %}
-        <div class="summary-section"><div class="summary-header">Šiandien</div>
-          {% for event in plugin['data'].today_events %}
-            <div class="summary-event" style="color: #fff;">
-              <span class="summary-title" style="background: {{ event.color }}; padding: 2px 8px; border-radius: 4px; margin-right: 8px;">{{ event.summary }}</span>
-              <span class="summary-time" style="float: right; min-width: 3em;">{{ event.formatted_time }}</span>
-            </div>
-          {% endfor %}
+        <div class="summary-section">
+          <div class="summary-header">Šiandien</div>
+          <div class="summary-events-col">
+            {% for event in plugin['data'].today_events %}
+              <div class="summary-event" style="color: #fff; display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px;">
+                <span class="summary-title" style="background: {{ event.color }}; padding: 2px 8px; border-radius: 4px; margin-right: 8px;">{{ event.summary }}</span>
+                <span class="summary-time" style="min-width: 3em;">{{ event.formatted_time }}</span>
+              </div>
+            {% endfor %}
+          </div>
         </div>
       {% endif %}
       {% if plugin['data'].tomorrow_events %}
-        <div class="summary-section"><div class="summary-header">Rytoj</div>
-          {% for event in plugin['data'].tomorrow_events %}
-            <div class="summary-event" style="color: #fff;">
-              <span class="summary-title" style="background: {{ event.color }}; padding: 2px 8px; border-radius: 4px; margin-right: 8px;">{{ event.summary }}</span>
-              <span class="summary-time" style="float: right; min-width: 3em;">{{ event.formatted_time }}</span>
-            </div>
-          {% endfor %}
+        <div class="summary-section">
+          <div class="summary-header">Rytoj</div>
+          <div class="summary-events-col">
+            {% for event in plugin['data'].tomorrow_events %}
+              <div class="summary-event" style="color: #fff; display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px;">
+                <span class="summary-title" style="background: {{ event.color }}; padding: 2px 8px; border-radius: 4px; margin-right: 8px;">{{ event.summary }}</span>
+                <span class="summary-time" style="min-width: 3em;">{{ event.formatted_time }}</span>
+              </div>
+            {% endfor %}
+          </div>
         </div>
       {% endif %}
       {% if not plugin['data'].today_events and not plugin['data'].tomorrow_events %}
