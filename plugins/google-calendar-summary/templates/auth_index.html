@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Calendar Authentication</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: #f5f5f5; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .button { display: inline-block; background: #4285f4; color: white; padding: 10px 20px; 
+                 text-decoration: none; border-radius: 4px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Google Calendar Authentication</h1>
+        
+        <div class="card">
+            <h2>Configuration Status</h2>
+            <p><strong>client_secret.json:</strong> {% if client_secret_exists %}✅ Found{% else %}❌ Missing{% endif %}</p>
+            <p><strong>token.json:</strong> {% if token_exists %}✅ Found{% else %}❌ Missing{% endif %}</p>
+            <p><strong>Calendar ID:</strong> {{ calendar_id }}</p>
+            
+            {% if authenticated %}
+                <p class="success">✅ Successfully authenticated with Google Calendar</p>
+                {% if token_refreshed %}
+                    <p class="success">✅ Token was expired and has been refreshed</p>
+                {% endif %}
+                <p>Found {{ calendar_count }} calendars</p>
+            {% elif token_exists %}
+                <p class="error">❌ Authentication failed or token is invalid</p>
+                {% if error %}
+                    <p class="error">Error: {{ error }}</p>
+                {% endif %}
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h2>Actions</h2>
+            {% if not client_secret_exists %}
+                <p class="error">You must create a client_secret.json file before authenticating.</p>
+                <p>Follow these steps:</p>
+                <ol>
+                    <li>Go to the <a href="https://console.cloud.google.com/">Google Cloud Console</a></li>
+                    <li>Create a new project or select an existing one</li>
+                    <li>Enable the Google Calendar API</li>
+                    <li>Create OAuth credentials (Web application type)</li>
+                    <li>Add authorized redirect URI: {{ url_for('oauth2callback', _external=True) }}</li>
+                    <li>Download the credentials as client_secret.json</li>
+                    <li>Save the file in the config directory</li>
+                </ol>
+            {% elif not token_exists or not authenticated %}
+                <p>Click the button below to authorize this application to access your Google Calendar:</p>
+                <p><a href="{{ url_for('authorize') }}" class="button">Authorize with Google</a></p>
+            {% else %}
+                <p class="success">✅ All set! Your Google Calendar is connected.</p>
+                <p>If you need to reconnect with a different account:</p>
+                <p><a href="{{ url_for('revoke') }}" class="button" style="background: #db4437;">Revoke Access</a></p>
+            {% endif %}
+        </div>
+        
+        {% if authenticated and calendars %}
+            <div class="card">
+                <h2>Your Calendars</h2>
+                <p>Current Calendar ID: <strong>{{ calendar_id }}</strong></p>
+                <p>Available calendars:</p>
+                <ul>
+                    {% for calendar in calendars %}
+                    <li>
+                        <strong>{{ calendar.summary }}</strong><br>
+                        ID: {{ calendar.id }}<br>
+                        {% if calendar.id == calendar_id %}
+                            <span class="success">✅ This is your current calendar</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                <p>To change the calendar, set the GOOGLE_CALENDAR_ID in your .env file.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html> 
