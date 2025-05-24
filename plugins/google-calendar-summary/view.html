@@ -11,8 +11,8 @@
           <div class="summary-events-col" style="display: flex; flex-direction: column; align-items: flex-end;">
             {% for event in plugin['data'].today_events %}
               <div class="summary-event" style="color: #fff; display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px;">
-                <span class="summary-title" style="background: {{ event.color }}; padding: 2px 8px; border-radius: 4px; margin-right: 8px;">{{ event.summary }}</span>
-                <span class="summary-time" style="min-width: 3em;">{{ event.formatted_time }}</span>
+                <span class="summary-title" style="margin-right: 8px;">{{ event.summary }}</span>
+                <span class="summary-time" style="background: {{ event.color }}; color: #fff; padding: 2px 8px; border-radius: 4px; min-width: 3em;">{{ event.formatted_time }}</span>
               </div>
             {% endfor %}
           </div>
@@ -20,12 +20,12 @@
       {% endif %}
       {% if plugin['data'].tomorrow_events %}
         <div class="summary-section" style="width: 100%; margin-top: 18px;">
-          <div class="summary-header" style="text-align: right; margin-bottom: 4px;"><hr>></div>
+          <div class="summary-header" style="text-align: right; margin-bottom: 4px;"><hr></div>
           <div class="summary-events-col" style="display: flex; flex-direction: column; align-items: flex-end;">
             {% for event in plugin['data'].tomorrow_events %}
               <div class="summary-event" style="color: #fff; display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px;">
-                <span class="summary-title" style="background: {{ event.color }}; padding: 2px 8px; border-radius: 4px; margin-right: 8px;">{{ event.summary }}</span>
-                <span class="summary-time" style="min-width: 3em;">{{ event.formatted_time }}</span>
+                <span class="summary-title" style="margin-right: 8px;">{{ event.summary }}</span>
+                <span class="summary-time" style="background: {{ event.color }}; color: #fff; padding: 2px 8px; border-radius: 4px; min-width: 3em;">{{ event.formatted_time }}</span>
               </div>
             {% endfor %}
           </div>
