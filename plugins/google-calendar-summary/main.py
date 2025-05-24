@@ -404,18 +404,28 @@ def get_summary_events(config=None):
                 event["color"] = get_event_color(event["summary"])
             else:
                 event["color"] = get_event_color("")
-            if "start" in event and "dateTime" in event["start"]:
-                event["formatted_time"] = format_time(event["start"]["dateTime"])
-                event_date = event["start"]["dateTime"][:10]
+            
+            # Handle both dateTime and date (all day) events
+            if "start" in event:
+                if "dateTime" in event["start"]:
+                    event["formatted_time"] = format_time(event["start"]["dateTime"])
+                    event_date = event["start"]["dateTime"][:10]
+                else:  # All day event
+                    event["formatted_time"] = "All day"
+                    event_date = event["start"]["date"]
+                
                 if event_date == today_str:
                     today_events.append(event)
                 elif event_date == tomorrow_str:
                     tomorrow_events.append(event)
+        
         return {
             'today_events': today_events,
             'tomorrow_events': tomorrow_events
         }
     except Exception as e:
+        logger.error(f"Error fetching summary events: {e}")
+        logger.debug(f"Traceback: {traceback.format_exc()}")
         return {'error': str(e)}
 
 def api_data():
