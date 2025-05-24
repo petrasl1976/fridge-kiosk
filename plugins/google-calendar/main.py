@@ -96,7 +96,7 @@ def load_config():
     config_path = Path(__file__).parent / "config.json"
     logger.debug(f"Loading config from {config_path}")
     try:
-    with open(config_path) as f:
+        with open(config_path) as f:
             config = json.load(f)
             logger.debug(f"Config loaded: {json.dumps(config, indent=2)}")
             return config
