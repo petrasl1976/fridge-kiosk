@@ -38,6 +38,25 @@ function discordChannelInit(container) {
               const usernameColor = usernameColors[shortUsername] || "#673AB7"; // Use purple as default
               console.debug(`Username: ${msg.author.username}, Short: ${shortUsername}, Color: ${usernameColor}`);
 
+              // Handle message content as image if it's a direct image/gif link or Tenor/Giphy
+              let contentHtml = msg.content;
+              const imageUrlRegex = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp))/i;
+              const tenorGiphyRegex = /(https?:\/\/(?:media\\.)?(?:tenor|giphy)\\.com\/[^\s]+)/i;
+
+              if (imageUrlRegex.test(msg.content.trim())) {
+                contentHtml = `
+                  <div class="discord-image-container">
+                    <img src="${msg.content.trim()}" alt="Discord image link" />
+                  </div>
+                `;
+              } else if (tenorGiphyRegex.test(msg.content.trim())) {
+                contentHtml = `
+                  <div class="discord-image-container">
+                    <img src="${msg.content.trim()}" alt="Discord gif link" />
+                  </div>
+                `;
+              }
+
               // Handle attachments
               let attachmentsHtml = '';
               if (msg.attachments && msg.attachments.length > 0) {
@@ -77,7 +96,7 @@ function discordChannelInit(container) {
                 <div class="discord-message">
                   ${hh}:${mm}
                   <span class="discord-username" style="background-color: ${usernameColor}; color: white;">${shortUsername}:</span>
-                  ${msg.content}
+                  ${contentHtml}
                   ${attachmentsHtml}
                   ${embedsHtml}
                 </div>
