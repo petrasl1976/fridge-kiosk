@@ -43,7 +43,20 @@ function discordChannelInit(container) {
               const imageUrlRegex = /(https?:\/\/.*\.(?:png|jpg|jpeg|gif|webp))/i;
               const tenorGiphyRegex = /(https?:\/\/(?:media\\.)?(?:tenor|giphy)\\.com\/[^\s]+)/i;
 
-              if (imageUrlRegex.test(msg.content.trim())) {
+              // Tikrinti ar embed yra paveikslėlis ar thumbnail
+              let hasEmbedImage = false;
+              if (msg.embeds && msg.embeds.length > 0) {
+                msg.embeds.forEach(embed => {
+                  if ((embed.image && embed.image.url) || (embed.thumbnail && embed.thumbnail.url)) {
+                    hasEmbedImage = true;
+                  }
+                });
+              }
+
+              if (hasEmbedImage) {
+                // Jei jau yra embed paveikslėlis, nerodyti nuorodos
+                contentHtml = '';
+              } else if (imageUrlRegex.test(msg.content.trim())) {
                 contentHtml = `
                   <div class="discord-image-container">
                     <img src="${msg.content.trim()}" alt="Discord image link" />
