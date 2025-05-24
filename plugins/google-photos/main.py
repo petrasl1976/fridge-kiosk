@@ -192,4 +192,28 @@ def init_plugin(app, config):
             return jsonify(result)
             
         except Exception as e:
-            return jsonify({"error": str(e), "photos": [{"error": str(e), "mediaType": "error"}], "album_title": "Error"}) 
+            return jsonify({"error": str(e), "photos": [{"error": str(e), "mediaType": "error"}], "album_title": "Error"})
+
+def api_data():
+    """API endpoint for getting photos data"""
+    try:
+        if 'credentials' not in session:
+            return {"error": "Not authenticated", "mediaItems": []}
+            
+        # Load credentials from the session
+        creds = google.oauth2.credentials.Credentials(**session['credentials'])
+        
+        # Get photos using the plugin
+        result = GooglePhotosPlugin(config).get_photos(creds)
+        
+        # Format the response
+        if 'error' in result:
+            return {"error": result['error'], "mediaItems": []}
+            
+        return {
+            "mediaItems": result['photos'],
+            "albumTitle": result['album_title']
+        }
+        
+    except Exception as e:
+        return {"error": str(e), "mediaItems": []} 
