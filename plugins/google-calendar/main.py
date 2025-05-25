@@ -141,14 +141,14 @@ def get_credentials():
 
 def get_events(config=None):
     """Get events from Google Calendar"""
-    logger.debug("Entering get_events()")
+    logger.debug("google-calendar - Entering get_events()")
     if config is None:
-        logger.debug("No config provided, loading from file")
+        logger.debug("google-calendar - No config provided, loading from file")
         config = load_config()
     
     # Get calendar ID from environment variable or use default ("primary")
     calendar_id = os.getenv("GOOGLE_CALENDAR_ID", os.getenv("GOOGLE_CLIENT_ID", "primary"))
-    logger.info(f"Using calendar ID: {calendar_id}")
+    logger.info(f"google-calendar - Using calendar ID: {calendar_id}")
     
     # Get credentials
     creds = get_credentials()
