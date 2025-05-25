@@ -6,6 +6,9 @@ Provides current date and time data
 import os
 import json
 import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Plugin information
 PLUGIN_NAME = "date-time"

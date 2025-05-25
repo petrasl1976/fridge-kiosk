@@ -8,6 +8,9 @@ import json
 import time
 import subprocess
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Plugin info
 PLUGIN_NAME = "sensors"
@@ -56,7 +59,7 @@ def get_sensor_data(config=None):
         if result["temperature"] is None or result["humidity"] is None:
             raise Exception("No data from broadlink")
     except Exception as e:
-        print(f"Error reading broadlink sensor: {e}")
+        logger.error(f"Error reading broadlink sensor: {e}")
         result["temperature"] = "err"
         result["humidity"] = "err"
     
@@ -65,7 +68,7 @@ def get_sensor_data(config=None):
         cpu_temp = get_cpu_temperature()
         result["cpu_temp"] = cpu_temp
     except Exception as e:
-        print(f"Error reading CPU temperature: {e}")
+        logger.error(f"Error reading CPU temperature: {e}")
     
     return result
 
@@ -90,7 +93,7 @@ def get_cpu_temperature():
             return 45.6
         return None
     except Exception as e:
-        print(f"Error getting CPU temperature: {e}")
+        logger.error(f"Error getting CPU temperature: {e}")
         return None
 
 def init(config):

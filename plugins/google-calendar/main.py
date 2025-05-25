@@ -132,42 +132,42 @@ def get_credentials():
             
     # Return valid credentials if we have them
     if creds and not creds.expired:
-        logger.info("google-calendar - Using valid credentials")
+        logger.info("Using valid credentials")
         logger.debug(f"Credential details: token present: {'yes' if creds.token else 'no'}, refresh_token present: {'yes' if creds.refresh_token else 'no'}, expired: {creds.expired}")
         return creds
         
-    logger.warning("google-calendar - No valid credentials available")
+    logger.warning("No valid credentials available")
     return None
 
 def get_events(config=None):
     """Get events from Google Calendar"""
-    logger.debug("google-calendar - Entering get_events()")
+    logger.debug("Entering get_events()")
     if config is None:
-        logger.debug("google-calendar - No config provided, loading from file")
+        logger.debug("No config provided, loading from file")
         config = load_config()
     
     # Get calendar ID from environment variable or use default ("primary")
     calendar_id = os.getenv("GOOGLE_CALENDAR_ID", os.getenv("GOOGLE_CLIENT_ID", "primary"))
-    logger.info(f"google-calendar - Using calendar ID: {calendar_id}")
+    logger.info(f"Using calendar ID: {calendar_id}")
     
     # Get credentials
     creds = get_credentials()
     if not creds:
-        logger.error("google-calendar - Error: No valid credentials found")
+        logger.error("Error: No valid credentials found")
         return {'error': 'No valid credentials found - run "python3 -m backend.utils.auth.google_auth_server --service "Google Calendar"" and visit the displayed URL to authenticate'}
     
     # Build the service
     try:
-        logger.info("google-calendar - Building Google Calendar service")
+        logger.info("Building Google Calendar service")
         service = googleapiclient.discovery.build('calendar', 'v3', credentials=creds)
         
         # Set timezone
         vilnius_tz = ZoneInfo('Europe/Vilnius')
-        logger.debug(f"google-calendar - Using timezone: Europe/Vilnius")
+        logger.debug(f"Using timezone: Europe/Vilnius")
         
         # Today's date in local timezone
         today = datetime.datetime.now(vilnius_tz).date()
-        logger.debug(f"google-calendar - Today's date: {today}")
+        logger.debug(f"Today's date: {today}")
         
         # Start of the week (Monday)
         start_of_week = today - datetime.timedelta(days=today.weekday())
@@ -180,7 +180,7 @@ def get_events(config=None):
         time_min = start_of_week.isoformat() + 'T00:00:00Z'
         time_max = end_of_range.isoformat() + 'T23:59:59Z'
         
-        logger.info(f"google-calendar - Fetching events from {time_min} to {time_max}")
+        logger.info(f"Fetching events from {time_min} to {time_max}")
         logger.debug(f"Query parameters: calendarId={calendar_id}, timeMin={time_min}, timeMax={time_max}, timeZone=Europe/Vilnius")
         
         # Call the Calendar API
@@ -195,7 +195,7 @@ def get_events(config=None):
         
         events = events_result.get('items', [])
         
-        logger.info(f"google-calendar - Retrieved {len(events)} events from calendar API")
+        logger.info(f"Retrieved {len(events)} events from calendar API")
         if len(events) > 0:
             logger.debug(f"First event: {json.dumps(events[0], indent=2, default=str)}")
         
@@ -247,7 +247,7 @@ def get_events(config=None):
             'show_holidays': config.get('options', {}).get('show_holidays', True)
         }
         
-        logger.info(f"google-calendar - Calendar response created with {len(weeks)} weeks")
+        logger.info(f"Calendar response created with {len(weeks)} weeks")
         logger.debug(f"Response keys: {list(response.keys())}")
         logger.debug(f"Today: {response['today']}")
         logger.debug(f"Number of event days: {len(response['events_by_day'])}")
@@ -255,10 +255,10 @@ def get_events(config=None):
         if weeks:
             return response
     except Exception as e:
-        logger.error(f"google-calendar - Error fetching calendar events: {e}")
+        logger.error(f"Error fetching calendar events: {e}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
     # If we get here, return a minimal fake calendar grid for debug
-    logger.warning("google-calendar - Returning minimal fake calendar grid for debug!")
+    logger.warning("Returning minimal fake calendar grid for debug!")
     today = datetime.date.today()
     start_of_week = today - datetime.timedelta(days=today.weekday())
     weeks_to_show = config.get('options', {}).get('weeks_to_show', 6)
@@ -299,7 +299,7 @@ def get_today_events(config=None):
     # Get credentials
     creds = get_credentials()
     if not creds:
-        logger.error("google-calendar - Error: No valid credentials found")
+        logger.error("Error: No valid credentials found")
         return {'error': 'No valid credentials found - run "python3 -m backend.utils.auth.google_auth_server --service "Google Calendar"" and visit the displayed URL to authenticate'}
     
     # Build the service
@@ -320,7 +320,7 @@ def get_today_events(config=None):
         time_min = local_midnight.isoformat()
         time_max = local_end.isoformat()
         
-        logger.info(f"google-calendar - Fetching today's events from {time_min} to {time_max}")
+        logger.info(f"Fetching today's events from {time_min} to {time_max}")
         
         # Call the Calendar API
         events_result = service.events().list(
@@ -334,7 +334,7 @@ def get_today_events(config=None):
         
         events = events_result.get('items', [])
         
-        logger.info(f"google-calendar - Retrieved {len(events)} events for today")
+        logger.info(f"Retrieved {len(events)} events for today")
         
         # Process events: add colors and format times
         for event in events:
@@ -353,19 +353,19 @@ def get_today_events(config=None):
         }
         
     except Exception as e:
-        logger.error(f"google-calendar - Error fetching today's events: {e}")
+        logger.error(f"Error fetching today's events: {e}")
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
         return {'error': str(e)}
 
 def api_data():
     """API endpoint for getting calendar data"""
-    logger.info("google-calendar - Calendar API called")
+    logger.info("Calendar API called")
     return get_events()
 
 def api_today():
     """API endpoint for today's events"""
-    logger.info("google-calendar - Calendar api_today called")
+    logger.info("Calendar api_today called")
     return get_today_events()
 
 def api_auth():
@@ -462,26 +462,26 @@ def get_refresh_interval():
 def init(config):
     """Initialize the plugin"""
     # Log the plugin initialization
-    logger.info("google-calendar - Initializing")
+    logger.info("Initializing")
     logger.debug(f"Config: {json.dumps(config, indent=2, default=str)}")
     
     try:
         # Check if client_secret.json exists
         if not CLIENT_SECRET_FILE.exists():
-            logger.error(f"google-calendar - client_secret.json not found at {CLIENT_SECRET_FILE}")
+            logger.error(f"client_secret.json not found at {CLIENT_SECRET_FILE}")
             return {'data': {}, 'error': 'Client secret file not found - please create it first'}
         
         # Check if we need to authenticate
         if not TOKEN_FILE.exists():
-            logger.info("google-calendar - No token.json found, authentication required")
+            logger.info("No token.json found, authentication required")
             return {'data': {}, 'error': 'Authentication required - run "python3 -m backend.utils.auth.google_auth_server --service "Google Calendar"" and visit the displayed URL to authenticate'}
         
         # Try to get the events
         data = get_events(config)
-        logger.debug(f"google-calendar - get_events returned data keys: {list(data.keys() if isinstance(data, dict) else [])}")
+        logger.debug(f"get_events returned data keys: {list(data.keys() if isinstance(data, dict) else [])}")
         
         if 'error' in data:
-            logger.error(f"google-calendar - Error getting events: {data['error']}")
+            logger.error(f"Error getting events: {data['error']}")
             return {'data': data, 'error': data['error']}
         
         # Debug view template variables
@@ -502,19 +502,19 @@ def init(config):
         except Exception as e:
             logger.debug(f"Error analyzing template: {e}")
             
-        logger.info(f"google-calendar - Google Calendar plugin initialized successfully with {len(data.get('events_by_day', {}))} days of events")
+        logger.info(f"Google Calendar plugin initialized successfully with {len(data.get('events_by_day', {}))} days of events")
         init_result = {'data': data}
         logger.debug(f"Returning init result with keys: {list(init_result.keys())}")
         logger.debug(f"Data keys: {list(init_result['data'].keys())}")
         return init_result
     except Exception as e:
-        logger.error(f"google-calendar - Error initializing: {e}")
+        logger.error(f"Error initializing: {e}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
         return {'data': {}, 'error': str(e)} 
 
 def api_debug():
     """API endpoint for debugging template rendering issues"""
-    logger.info("google-calendar - Calendar api_debug called")
+    logger.info("Calendar api_debug called")
     
     try:
         # Get basic events data
@@ -568,7 +568,7 @@ def api_debug():
         
         return debug_data
     except Exception as e:
-        logger.error(f"google-calendar - Exception in api_debug: {e}")
+        logger.error(f"Exception in api_debug: {e}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
         return {'error': f"Exception in debug endpoint: {str(e)}"} 
 
@@ -577,4 +577,4 @@ if __name__ == '__main__':
     events = get_events()
     print(json.dumps(events, indent=2)) 
 
-logger.info("google-calendar - Loaded") 
+logger.info("Loaded") 

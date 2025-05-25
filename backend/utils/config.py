@@ -10,6 +10,26 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+class PluginFormatter(logging.Formatter):
+    def format(self, record):
+        # Gauk loggerio vardą
+        logger_name = record.name
+        # Jei tai pluginas: plugins.google-calendar.main arba plugins.discord-channel.main ir pan.
+        if 'plugins.' in logger_name:
+            parts = logger_name.split('.')
+            try:
+                plugin_idx = parts.index('plugins') + 1
+                plugin_name = parts[plugin_idx]
+                prefix = f"[{plugin_name}] "
+            except Exception:
+                prefix = "[plugin] "
+        elif 'run' in logger_name or record.pathname.endswith('run.py'):
+            prefix = "[run.py] "
+        else:
+            prefix = ""
+        record.msg = prefix + str(record.msg)
+        return super().format(record)
+
 def load_config():
     """
     Load the main configuration file.
@@ -120,8 +140,8 @@ def setup_logging(config=None):
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
     
-    # Create formatter be loggerio vardo
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    # Naudok custom formatterį
+    formatter = PluginFormatter('%(asctime)s - %(levelname)s - %(message)s')
     
     # Add file handler ONLY
     file_handler = logging.FileHandler(logs_dir / 'fridge-kiosk.log')
