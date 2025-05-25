@@ -20,9 +20,10 @@ pytz>=2021.1
 backports.zoneinfo>=0.2.1;python_version<"3.9"
 
 # Google API libraries
-google-api-python-client>=2.0.0
-google-auth-httplib2>=0.1.0
-google-auth-oauthlib>=0.4.0
+google-api-python-client>=2.126.0
+google-auth>=2.29.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.2.0
 
 # Logging
 logging==0.4.9.6 
