@@ -37,7 +37,10 @@ app = Flask(__name__, template_folder=str(current_dir / "templates"))
 app.secret_key = os.urandom(24)
 
 # Default OAuth scopes (can be customized when running the server)
-DEFAULT_SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+SCOPES = [
+    'https://www.googleapis.com/auth/photoslibrary.readonly',
+    'https://www.googleapis.com/auth/calendar.readonly'
+]
 
 def credentials_to_dict(credentials):
     """Convert Google Credentials object to a dictionary."""
@@ -99,83 +102,42 @@ def index():
 @app.route('/authorize')
 def authorize():
     """Start OAuth flow"""
-    service = request.args.get('service', 'calendar')
-    
     if not CLIENT_SECRET_FILE.exists():
         return "Error: client_secret.json not found in config directory"
     
-    # Determine scopes based on the service
-    scopes = []
-    if service == 'calendar':
-        scopes = ['https://www.googleapis.com/auth/calendar.readonly']
-    elif service == 'photos':
-        scopes = ['https://www.googleapis.com/auth/photoslibrary.readonly']
-    else:
-        scopes = DEFAULT_SCOPES
-    
-    # Create OAuth flow
+    # Naudok abu scope
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         CLIENT_SECRET_FILE, 
-        scopes=scopes
+        scopes=SCOPES
     )
-    
-    # Set redirect URI
     flow.redirect_uri = url_for('oauth2callback', _external=True)
-    
-    # Generate URL for user consent
     authorization_url, state = flow.authorization_url(
         access_type='offline',
         prompt='consent',
         include_granted_scopes='true'
     )
-    
-    # Save state for later verification
     session['state'] = state
-    session['service'] = service
-    
-    # Redirect user to Google's OAuth consent page
     return redirect(authorization_url)
 
 @app.route('/oauth2callback')
 def oauth2callback():
     """Handle OAuth callback from Google"""
-    # Get state we passed earlier
     state = session['state']
-    service = session.get('service', 'calendar')
-    
-    # Create flow with the client secret and state
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         CLIENT_SECRET_FILE, 
-        scopes=DEFAULT_SCOPES,
+        scopes=SCOPES,
         state=state
     )
-    
-    # Set redirect URI to match the one we used when requesting authorization
     flow.redirect_uri = url_for('oauth2callback', _external=True)
-    
-    # Use authorization response from Google
-    authorization_response = request.url
-    flow.fetch_token(authorization_response=authorization_response)
-    
-    # Get credentials from flow
+    flow.fetch_token(authorization_response=request.url)
     credentials = flow.credentials
-    
-    # Ensure we have a refresh token
     if not credentials.refresh_token:
         return "Error: No refresh token received. Please revoke access and try again."
-    
-    # Save credentials to token.json
     token_data = credentials_to_dict(credentials)
-    
-    # Create parent directories if needed
     TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
-    
     with open(TOKEN_FILE, 'w') as f:
         json.dump(token_data, f)
-    
-    # Save to session too
     session['credentials'] = token_data
-    
     return redirect(url_for('success'))
 
 @app.route('/success')
@@ -273,7 +235,7 @@ def create_template_files():
                 </ol>
             {% elif not token_exists or not authenticated %}
                 <p>Click the button below to authorize this application to access {{ service_name }}:</p>
-                <p><a href="{{ url_for('authorize', service=service_name.split()[0].lower()) }}" class="button">Authorize with Google</a></p>
+                <p><a href="{{ url_for('authorize') }}" class="button">Authorize with Google</a></p>
             {% else %}
                 <p class="success">✅ All set! Your {{ service_name }} is connected.</p>
                 <p>If you need to reconnect with a different account:</p>
