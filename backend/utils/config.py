@@ -133,9 +133,12 @@ def setup_logging(config=None):
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
     
-    # Set specific loggers to appropriate levels
-    logging.getLogger('werkzeug').setLevel(logging.WARNING)
-    logging.getLogger('googleapiclient').setLevel(logging.WARNING)
-    logging.getLogger('urllib3').setLevel(logging.WARNING)
+    # Set specific loggers to WARNING and remove their handlers
+    for logger_name in ['werkzeug', 'googleapiclient', 'urllib3', 'discord', 'google_calendar', 'google_calendar_summary']:
+        lgr = logging.getLogger(logger_name)
+        lgr.setLevel(logging.WARNING)
+        for handler in lgr.handlers[:]:
+            lgr.removeHandler(handler)
+        lgr.propagate = True
     
     return root_logger 
