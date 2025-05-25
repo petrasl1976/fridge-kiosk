@@ -18,7 +18,7 @@ log_file.parent.mkdir(exist_ok=True, parents=True)
 
 # Create a custom logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # Load userColors from main.json
 MAIN_CONFIG_FILE = PROJECT_ROOT / 'config' / 'main.json'

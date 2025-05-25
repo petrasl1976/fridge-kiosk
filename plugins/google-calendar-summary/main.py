@@ -18,7 +18,7 @@ log_file.parent.mkdir(exist_ok=True, parents=True)
 
 # Create a custom logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # Force a log message to verify logging is working
 logger.info("Google Calendar Summary Plugin Loaded")
