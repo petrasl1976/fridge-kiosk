@@ -137,7 +137,10 @@ def setup_logging(config=None):
     root_logger.addHandler(file_handler)
     
     # Set specific loggers to WARNING and remove their handlers
-    for logger_name in ['werkzeug', 'googleapiclient', 'urllib3', 'discord', 'google_calendar', 'google_calendar_summary']:
+    for logger_name in [
+        'werkzeug', 'googleapiclient', 'urllib3', 'discord', 'google_calendar', 'google_calendar_summary',
+        'google_auth_httplib2', 'google.auth.transport.requests', 'requests'
+    ]:
         lgr = logging.getLogger(logger_name)
         lgr.setLevel(logging.WARNING)
         for handler in lgr.handlers[:]:
