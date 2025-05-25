@@ -462,7 +462,7 @@ def get_refresh_interval():
 def init(config):
     """Initialize the plugin"""
     # Log the plugin initialization
-    logger.info("google-calendar - Initializing Google Calendar plugin")
+    logger.info("google-calendar - Initializing")
     logger.debug(f"Config: {json.dumps(config, indent=2, default=str)}")
     
     try:
@@ -508,7 +508,7 @@ def init(config):
         logger.debug(f"Data keys: {list(init_result['data'].keys())}")
         return init_result
     except Exception as e:
-        logger.error(f"google-calendar - Error initializing Google Calendar plugin: {e}")
+        logger.error(f"google-calendar - Error initializing: {e}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
         return {'data': {}, 'error': str(e)} 
 
