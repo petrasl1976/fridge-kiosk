@@ -206,7 +206,7 @@ def load_plugins(config):
     orientation = config.get('system', {}).get('orientation', 'landscape')
     logger.info(f"System orientation: {orientation}")
     
-    logger.info(f"Loading {len(enabled_plugins)} enabled plugins")
+    logger.info(f"Loading {len(enabled_plugins)} enabled plugins: {enabled_plugins}")
     
     # Loop through all enabled plugins
     for plugin_name in enabled_plugins:
@@ -225,7 +225,6 @@ def load_plugins(config):
             try:
                 with open(plugin_config_path, 'r') as f:
                     plugin_config = json.load(f)
-                logger.info(f"Loaded configuration for plugin {plugin_name}")
             except Exception as e:
                 logger.error(f"Error loading plugin config: {e}")
         
@@ -241,15 +240,14 @@ def load_plugins(config):
         # Get the position configuration based on orientation
         position = {}
         if 'position' in plugin_config:
-            logger.debug(f"Found position config for {plugin_name}: {plugin_config['position']}")
             # If plugin has orientation-specific positions
             if orientation in plugin_config['position']:
                 position = plugin_config['position'][orientation]
-                logger.info(f"Using {orientation} position for plugin {plugin_name}: {position}")
+                logger.info(f"{plugin_name} - Position: {position}")
             # If it has a general position setting
             elif isinstance(plugin_config['position'], dict) and not ('landscape' in plugin_config['position'] or 'portrait' in plugin_config['position']):
                 position = plugin_config['position']
-                logger.info(f"Using default position for plugin {plugin_name}: {position}")
+                logger.info(f"{plugin_name} - Position: {position}")
             else:
                 logger.warning(f"Position config for {plugin_name} does not match expected format: {plugin_config['position']}")
         else:
@@ -267,7 +265,7 @@ def load_plugins(config):
         
         # Set z_index based on plugin's position in the enabledPlugins array (starting from 1)
         position['z_index'] = enabled_plugins.index(plugin_name) + 1
-        logger.info(f"Set z_index={position['z_index']} for plugin {plugin_name} based on its position in enabledPlugins")
+        logger.info(f"{plugin_name} - z_index: {position['z_index']}")
         
         # Try to call init(config) if it exists
         plugin_data = {}
