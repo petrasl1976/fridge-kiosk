@@ -44,17 +44,23 @@
                 <ol>
                     <li>Go to the <a href="https://console.cloud.google.com/">Google Cloud Console</a></li>
                     <li>Create a new project or select an existing one</li>
-                    <li>Enable the Google Calendar API</li>
+                    <li>Enable the required Google API</li>
                     <li>Create OAuth credentials (Web application type)</li>
                     <li>Add authorized redirect URI: {{ url_for('oauth2callback', _external=True) }}</li>
                     <li>Download the credentials as client_secret.json</li>
                     <li>Save the file in the config directory</li>
                 </ol>
             {% elif not token_exists or not authenticated %}
-                <p>Click the button below to authorize this application to access your Google Calendar:</p>
+                <p>Click the button below to authorize this application to access:
+                  <ul>
+                    {% for service in services %}
+                      <li>{{ service }}</li>
+                    {% endfor %}
+                  </ul>
+                </p>
                 <p><a href="{{ url_for('authorize') }}" class="button">Authorize with Google</a></p>
             {% else %}
-                <p class="success">✅ All set! Your Google Calendar is connected.</p>
+                <p class="success">✅ All set! Your {{ service_name }} is connected.</p>
                 <p>If you need to reconnect with a different account:</p>
                 <p><a href="{{ url_for('revoke') }}" class="button" style="background: #db4437;">Revoke Access</a></p>
             {% endif %}

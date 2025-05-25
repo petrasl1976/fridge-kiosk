@@ -38,8 +38,8 @@ app.secret_key = os.urandom(24)
 
 # Default OAuth scopes (can be customized when running the server)
 SCOPES = [
-    'https://www.googleapis.com/auth/photoslibrary.readonly',
-    'https://www.googleapis.com/auth/calendar.readonly'
+    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/photoslibrary.readonly'
 ]
 
 def credentials_to_dict(credentials):
@@ -52,6 +52,18 @@ def credentials_to_dict(credentials):
         'client_secret': credentials.client_secret,
         'scopes': credentials.scopes
     }
+
+def scopes_to_services(scopes):
+    mapping = {
+        'photoslibrary': 'Google Photos',
+        'calendar': 'Google Calendar'
+    }
+    services = []
+    for s in scopes:
+        for key, name in mapping.items():
+            if key in s and name not in services:
+                services.append(name)
+    return services
 
 @app.route('/')
 def index():
@@ -67,7 +79,8 @@ def index():
         'token_exists': token_exists,
         'client_secret_exists': client_secret_exists,
         'service_name': service_name,
-        'resource_id': os.getenv("GOOGLE_RESOURCE_ID", "primary")
+        'resource_id': os.getenv("GOOGLE_RESOURCE_ID", "primary"),
+        'services': scopes_to_services(SCOPES)
     }
     
     # If we have token.json, try to verify it works
