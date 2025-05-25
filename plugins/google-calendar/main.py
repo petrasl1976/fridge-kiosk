@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 from collections import defaultdict
 import logging
 import traceback  # Added for detailed stack traces
+import dateutil.parser
 
 # Get the project root directory (two levels up from this file)
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -93,6 +94,12 @@ def load_stored_credentials():
             logger.debug(f"Found token file at {TOKEN_FILE}, loading credentials")
             with open(TOKEN_FILE, 'r') as token_file:
                 token_data = json.load(token_file)
+                # Fix expiry if it's a string
+                if 'expiry' in token_data and isinstance(token_data['expiry'], str):
+                    try:
+                        token_data['expiry'] = dateutil.parser.isoparse(token_data['expiry'])
+                    except Exception as e:
+                        logger.error(f"Could not parse expiry: {token_data['expiry']}: {e}")
                 logger.debug(f"Token data loaded, keys: {list(token_data.keys())}")
                 return google.oauth2.credentials.Credentials(**token_data)
         except Exception as e:

@@ -26,4 +26,7 @@ google-auth-oauthlib>=1.2.0
 google-auth-httplib2>=0.2.0
 
 # Logging
-logging==0.4.9.6 
+logging==0.4.9.6
+
+# Added from the code block
+python-dateutil>=2.8.2 
