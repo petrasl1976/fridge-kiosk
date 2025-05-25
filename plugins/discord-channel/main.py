@@ -41,7 +41,7 @@ def api_data():
     params = {"limit": MESSAGE_COUNT}
 
     try:
-        logger.info(f"Fetching Discord messages from channel {CHANNEL_ID}")
+        # logger.info(f"Fetching Discord messages from channel {CHANNEL_ID}")  # Pašalinta
         r = requests.get(url, headers=headers, params=params, timeout=5)
         
         if r.status_code == 200:
@@ -66,7 +66,7 @@ def api_data():
                         if 'thumbnail' in embed and 'proxy_url' in embed['thumbnail'] and not 'url' in embed['thumbnail']:
                             embed['thumbnail']['url'] = embed['thumbnail']['proxy_url']
             
-            logger.info(f"Successfully fetched {len(messages)} Discord messages")
+            # logger.info(f"Successfully fetched {len(messages)} Discord messages")  # Pašalinta
             return messages
             
         logger.error(f"Failed to fetch Discord messages: {r.status_code}")
