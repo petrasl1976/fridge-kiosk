@@ -576,3 +576,5 @@ if __name__ == '__main__':
     # Test the calendar functionality
     events = get_events()
     print(json.dumps(events, indent=2)) 
+
+logger.info("google-calendar - Loaded") 

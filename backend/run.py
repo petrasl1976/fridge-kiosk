@@ -206,11 +206,11 @@ def load_plugins(config):
     orientation = config.get('system', {}).get('orientation', 'landscape')
     logger.info(f"System orientation: {orientation}")
     
-    logger.info(f"Loading {len(enabled_plugins)} enabled plugins: {enabled_plugins}")
+    logger.info(f"Enabled plugins: {enabled_plugins}")
     
     # Loop through all enabled plugins
     for plugin_name in enabled_plugins:
-        logger.info(f"Loading plugin: {plugin_name}")
+        logger.info(f"Loading: {plugin_name}")
         plugin_path = get_plugin_path(plugin_name)
         
         if not os.path.exists(plugin_path):
