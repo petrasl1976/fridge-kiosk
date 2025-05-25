@@ -121,8 +121,8 @@ def setup_logging(config=None):
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
     
-    # Create formatter
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # Create formatter be loggerio vardo
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     
     # Add file handler ONLY
     file_handler = logging.FileHandler(logs_dir / 'fridge-kiosk.log')
