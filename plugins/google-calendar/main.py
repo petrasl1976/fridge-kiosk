@@ -502,7 +502,7 @@ def init(config):
         except Exception as e:
             logger.debug(f"Error analyzing template: {e}")
             
-        logger.info(f"Google Calendar plugin initialized successfully with {len(data.get('events_by_day', {}))} days of events")
+        logger.info(f"Calendar initialized with {len(data.get('events_by_day', {}))} days of events")
         init_result = {'data': data}
         logger.debug(f"Returning init result with keys: {list(init_result.keys())}")
         logger.debug(f"Data keys: {list(init_result['data'].keys())}")
