@@ -160,7 +160,6 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             
             with open(file_path, 'rb') as f:
                 self.wfile.write(f.read())
-            logger.debug(f"Static file served: {path}")
                 
         except Exception as e:
             logger.error(f"Error serving file: {e}")
