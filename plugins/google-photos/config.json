@@ -1,0 +1,25 @@
+{
+    "name": "Google Photos",
+    "version": "1.0.0",
+    "description": "Displays photos and videos from Google Photos albums",
+    "author": "Petras Liumparas",
+    "settings": {
+        "photo_duration": 30,
+        "video_duration": 60,
+        "media_types": "all",
+        "video_sound": false,
+        "batch_size": 5,
+        "cache_expiration": 2592000
+    },
+    "position": {
+        "top": "0%",
+        "left": "0%",
+        "width": "100%",
+        "height": "100%"
+    },
+    "dependencies": {
+        "google-api-python-client": ">=2.0.0",
+        "google-auth-httplib2": ">=0.1.0",
+        "google-auth-oauthlib": ">=0.4.0"
+    }
+} 

@@ -109,7 +109,7 @@ def get_plugin_config(plugin_name):
         dict: The plugin configuration, or empty dict if not found.
     """
     config = load_config()
-    return config.get('plugins', {}).get(plugin_name, {})
+    return config.get('plugins', {}).get(plugin_name, {}) 
 
 def setup_logging(config=None):
     """Set up logging configuration for the entire application"""
