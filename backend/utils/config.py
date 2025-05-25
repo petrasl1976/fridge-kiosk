@@ -104,6 +104,7 @@ def get_plugin_config(plugin_name):
     return config.get('plugins', {}).get(plugin_name, {})
 
 def setup_logging(config=None):
+    print('DEBUG: setup_logging called')
     """Set up logging configuration for the entire application"""
     # Create logs directory if it doesn't exist
     logs_dir = Path(__file__).parent.parent.parent / 'logs'
