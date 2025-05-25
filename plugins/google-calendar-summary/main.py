@@ -170,12 +170,15 @@ def get_events(config=None):
         
         # Today's date in local timezone
         today = datetime.datetime.now(vilnius_tz).date()
+        logger.debug(f"[DEBUG] today initial value: {today} (type: {type(today)})")
         if isinstance(today, str):
+            logger.error(f"[BUG] today is str, value: {today}. Converting to datetime.date. Stack:")
+            import traceback
+            logger.error(traceback.format_stack())
             today = datetime.date.fromisoformat(today)
-        logger.debug(f"Today's date: {today}")
-        
-        # Start of the week (Monday)
+        logger.debug(f"[DEBUG] today after type check: {today} (type: {type(today)})")
         start_of_week = today - datetime.timedelta(days=today.weekday())
+        logger.debug(f"[DEBUG] start_of_week: {start_of_week} (type: {type(start_of_week)})")
         
         # End date based on weeks_to_show
         weeks_to_show = config.get('options', {}).get('weeks_to_show', 4)
