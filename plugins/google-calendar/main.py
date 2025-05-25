@@ -20,9 +20,6 @@ log_file.parent.mkdir(exist_ok=True, parents=True)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# Force a log message to verify logging is working
-logger.info("Google Calendar Plugin Loaded")
-
 # Load userColors from main.json
 MAIN_CONFIG_FILE = PROJECT_ROOT / 'config' / 'main.json'
 try:
