@@ -210,7 +210,7 @@ def load_plugins(config):
     
     # Loop through all enabled plugins
     for plugin_name in enabled_plugins:
-        logger.info(f"Loading: {plugin_name}")
+        logger.info(f"Configuring: {plugin_name}")
         plugin_path = get_plugin_path(plugin_name)
         
         if not os.path.exists(plugin_path):
