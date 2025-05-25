@@ -89,8 +89,6 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 plugin_name = parts[2]
                 endpoint = parts[3] if len(parts) > 3 else 'data'
                 
-                logger.info(f"API request: {plugin_name}/{endpoint}")
-                
                 # Look for the plugin module
                 try:
                     plugin_path = get_plugin_path(plugin_name)
@@ -112,7 +110,6 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                             self.send_header('Content-type', 'application/json')
                             self.end_headers()
                             self.wfile.write(json.dumps(result).encode('utf-8'))
-                            logger.info(f"API response sent for {plugin_name}/{endpoint}")
                             return
                     
                     # If we get here, the handler wasn't found
