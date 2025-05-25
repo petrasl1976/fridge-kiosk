@@ -12,7 +12,7 @@ ENV_FILE = PROJECT_ROOT / 'config' / '.env'
 load_dotenv(ENV_FILE)
 
 # Configure logging
-logger = logging.getLogger('fridge-kiosk')
+logger = logging.getLogger(__name__)
 
 BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 CHANNEL_ID = os.getenv("DISCORD_TEXT_CHANNEL_ID")
