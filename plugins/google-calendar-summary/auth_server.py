@@ -16,11 +16,7 @@ import google_auth_oauthlib.flow
 import googleapiclient.discovery
 
 # Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger('google-calendar-auth')
+logger = logging.getLogger(__name__)
 
 # Get the project root directory
 current_dir = Path(__file__).resolve().parent
