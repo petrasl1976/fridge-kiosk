@@ -318,7 +318,7 @@ def load_plugins(config):
             plugin_info['style'] = 'static/style.css'
         
         plugins[plugin_name] = plugin_info
-        logger.info(f"Plugin {plugin_name} loaded successfully")
+        logger.info(f"{plugin_name} - Loaded successfully")
     
     return plugins
 
