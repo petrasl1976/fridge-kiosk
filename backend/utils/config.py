@@ -124,15 +124,10 @@ def setup_logging(config=None):
     # Create formatter
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     
-    # Add file handler
+    # Add file handler ONLY
     file_handler = logging.FileHandler(logs_dir / 'fridge-kiosk.log')
     file_handler.setFormatter(formatter)
     root_logger.addHandler(file_handler)
-    
-    # Add console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    root_logger.addHandler(console_handler)
     
     # Set specific loggers to WARNING and remove their handlers
     for logger_name in ['werkzeug', 'googleapiclient', 'urllib3', 'discord', 'google_calendar', 'google_calendar_summary']:
