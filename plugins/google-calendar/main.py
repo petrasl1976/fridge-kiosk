@@ -170,6 +170,8 @@ def get_events(config=None):
         
         # Today's date in local timezone
         today = datetime.datetime.now(vilnius_tz).date()
+        if isinstance(today, str):
+            today = datetime.date.fromisoformat(today)
         logger.debug(f"Today's date: {today}")
         
         # Start of the week (Monday)

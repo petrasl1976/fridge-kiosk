@@ -170,6 +170,8 @@ def get_events(config=None):
         
         # Today's date in local timezone
         today = datetime.datetime.now(vilnius_tz).date()
+        if isinstance(today, str):
+            today = datetime.date.fromisoformat(today)
         logger.debug(f"Today's date: {today}")
         
         # Start of the week (Monday)
@@ -262,6 +264,8 @@ def get_events(config=None):
     # If we get here, return a minimal fake calendar grid for debug
     logger.warning("Returning minimal fake calendar grid for debug!")
     today = datetime.date.today()
+    if isinstance(today, str):
+        today = datetime.date.fromisoformat(today)
     start_of_week = today - datetime.timedelta(days=today.weekday())
     weeks_to_show = config.get('options', {}).get('weeks_to_show', 6)
     weeks = []
