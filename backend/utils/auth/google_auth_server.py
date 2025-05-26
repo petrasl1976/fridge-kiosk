@@ -294,32 +294,10 @@ def create_template_files():
 def run_auth_server(port=8090, service="Google Calendar"):
     """Run the authentication server with the given port and service name"""
     create_template_files()
-    
     print(f"\n=== GOOGLE {service.upper()} AUTHENTICATION SERVER ===")
-    
-    # Try different ports in case the default one is in use
-    ports_to_try = [port, 8095, 8100, 8105, 8110]
-    
-    # If template files don't exist, create them
-    auth_index_path = current_dir / "templates" / "auth_index.html"
-    if not auth_index_path.exists():
-        create_template_files()
-    
-    import socket
-    for port in ports_to_try:
-        try:
-            # Check if port is available
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.bind(('localhost', port))
-            sock.close()
-            
-            print(f"\nStarting authentication server on port {port}")
-            print(f"Please open your browser to http://localhost:{port}?service={service.replace(' ', '%20')}\n")
-            
-            app.run(host='0.0.0.0', port=port)
-            break
-        except OSError:
-            print(f"Port {port} is already in use, trying another port...")
+    print(f"\nStarting authentication server on port {port}")
+    print(f"Please open your browser to http://localhost:{port}?service={service.replace(' ', '%20')}\n")
+    app.run(host='0.0.0.0', port=port)
 
 if __name__ == '__main__':
     import argparse
