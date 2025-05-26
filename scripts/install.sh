@@ -65,18 +65,26 @@ print_step "Installing base Python packages..."
 pip install --upgrade pip
 
 print_info "Installing core Python packages (this may take a while)..."
-pip install \
-    flask \
-    requests \
-    google-auth \
-    google-auth-oauthlib \
-    google-auth-httplib2 \
-    google-api-python-client \
-    pytz \
-    python-dotenv \
-    schedule \
-    jinja2 \
-    'backports.zoneinfo;python_version<"3.9"'
+# Define required package versions
+declare -A PACKAGE_VERSIONS=(
+    ["flask"]="3.1.1"
+    ["requests"]="2.32.3"
+    ["google-auth"]="2.40.1"
+    ["google-auth-oauthlib"]="1.2.2"
+    ["google-auth-httplib2"]="0.2.0"
+    ["google-api-python-client"]="2.169.0"
+    ["pytz"]="2025.2"
+    ["python-dotenv"]="1.1.0"
+    ["schedule"]="1.2.2"
+    ["jinja2"]="3.1.6"
+)
+
+# Install packages with specific versions
+for package in "${!PACKAGE_VERSIONS[@]}"; do
+    version="${PACKAGE_VERSIONS[$package]}"
+    print_info "Installing $package==$version..."
+    pip install "$package==$version"
+done
 
 print_header "INSTALLING PLUGIN DEPENDENCIES"
 CONFIG_FILE="$INSTALL_DIR/config/main.json"
@@ -105,7 +113,19 @@ if [ ! -z "$ENABLED_PLUGINS" ]; then
             
             if [ -f "$REQUIREMENTS_FILE" ]; then
                 print_info "Installing requirements from: $REQUIREMENTS_FILE"
-                pip install -r "$REQUIREMENTS_FILE"
+                # Read requirements and install with specific versions
+                while IFS= read -r line || [ -n "$line" ]; do
+                    # Skip empty lines and comments
+                    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+                    
+                    # Extract package name and version
+                    if [[ "$line" =~ ([^=<>]+)([=<>].*)? ]]; then
+                        package="${BASH_REMATCH[1]}"
+                        version="${BASH_REMATCH[2]}"
+                        print_info "Installing $package$version..."
+                        pip install "$package$version"
+                    fi
+                done < "$REQUIREMENTS_FILE"
             else
                 print_info "No requirements.txt found for plugin: $plugin"
             fi
