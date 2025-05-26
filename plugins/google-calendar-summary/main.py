@@ -97,7 +97,11 @@ def load_stored_credentials():
                 # Fix expiry if it's a string
                 if 'expiry' in token_data and isinstance(token_data['expiry'], str):
                     try:
-                        token_data['expiry'] = dateutil.parser.isoparse(token_data['expiry'])
+                        dt = dateutil.parser.isoparse(token_data['expiry'])
+                        # Padaryk offset-naive (be laiko zonos)
+                        if dt.tzinfo is not None:
+                            dt = dt.replace(tzinfo=None)
+                        token_data['expiry'] = dt
                     except Exception as e:
                         logger.error(f"Could not parse expiry: {token_data['expiry']}: {e}")
                 logger.debug(f"Token data loaded, keys: {list(token_data.keys())}")
