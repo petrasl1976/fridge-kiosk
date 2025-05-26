@@ -183,10 +183,18 @@ def api_data():
     """API handler for /api/plugins/google-photos/data"""
     creds = get_credentials()
     if not creds:
+        logger.error("No credentials returned from get_credentials()")
         return {"error": "Not authenticated"}
 
+    # Debug: Log credentials info
+    logger.debug(f"Credentials: {creds}")
+    logger.debug(f"Credentials scopes: {getattr(creds, 'scopes', None)}")
+    logger.debug(f"Token valid: {creds.valid}, expired: {creds.expired}, refresh_token: {getattr(creds, 'refresh_token', None)}")
+
     try:
+        logger.info("Attempting to build Google Photos service...")
         photos_service = build('photoslibrary', 'v1', credentials=creds)
+        logger.info("Google Photos service built successfully.")
         photo_batch, album_title = get_random_photo_batch(photos_service)
         
         if not photo_batch:
@@ -198,7 +206,9 @@ def api_data():
         return {"photos": photo_batch, "album_title": album_title}
         
     except Exception as e:
+        import traceback
         logger.error(f"Error in api_data: {e}")
+        logger.error(traceback.format_exc())
         return {"error": str(e), "photos": [{"error": str(e), "mediaType": "error"}], "album_title": "Error"}
 
 def init(config):
