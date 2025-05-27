@@ -19,6 +19,7 @@ import traceback
 import datetime
 import google.oauth2.credentials
 import google_auth_oauthlib.flow
+import urllib.parse
 
 # Add parent directory to sys.path to make imports work after moving to backend/
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -101,110 +102,115 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             elif path == '/oauth2callback':
                 self.handle_oauth2callback()
                 return
-        
-        # Route for the main page
-        if path == '/' or path == '/index.html':
-            self.send_response(200)
-            self.send_header('Content-type', 'text/html')
-            self.end_headers()
-            
-            # Render the template
-            try:
-                template = template_env.get_template('index.html')
-                html = template.render(
-                    config=self.config,
-                    plugins=self.plugins
-                )
-                self.wfile.write(html.encode('utf-8'))
-                    logger.info("Main page rendered successfully")
-            except Exception as e:
-                logger.error(f"Error rendering template: {e}")
-                self.wfile.write(f"Error: {str(e)}".encode('utf-8'))
-            
-            return
-        
-        # Route for API endpoints
-        if path.startswith('/api/'):
-            parts = path.strip('/').split('/')
-            if len(parts) >= 3 and parts[0] == 'api' and parts[1] == 'plugins':
-                plugin_name = parts[2]
-                endpoint = parts[3] if len(parts) > 3 else 'data'
-                
-                # Look for the plugin module
-                try:
-                    plugin_path = get_plugin_path(plugin_name)
-                    main_py = plugin_path / 'main.py'
-                    
-                    if main_py.exists():
-                        # Import the plugin module
-                        spec = importlib.util.spec_from_file_location(f"plugin_{plugin_name}", main_py)
-                        plugin_module = importlib.util.module_from_spec(spec)
-                        spec.loader.exec_module(plugin_module)
-                        
-                        # Find the API handler function
-                        handler_name = f"api_{endpoint}"
-                        if hasattr(plugin_module, handler_name):
-                            handler = getattr(plugin_module, handler_name)
-                            result = handler()
-                            
-                            self.send_response(200)
-                            self.send_header('Content-type', 'application/json')
-                            self.end_headers()
-                            self.wfile.write(json.dumps(result).encode('utf-8'))
-                            return
-                    
-                    # If we get here, the handler wasn't found
-                        logger.warning(f"Plugin API endpoint not found: {path}")
-                    self.send_response(404)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({
-                        'error': f"Plugin API endpoint not found: {path}"
-                    }).encode('utf-8'))
-                    return
-                
-                except Exception as e:
-                    logger.error(f"Error handling plugin API request: {e}")
-                    self.send_response(500)
-                    self.send_header('Content-type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(json.dumps({
-                        'error': str(e)
-                    }).encode('utf-8'))
-                    return
-        
-        # For other static files
-        try:
-            # Map URL path to file system path
-            file_path = self.map_path_to_file(path)
-            
-            if not file_path.exists() or not file_path.is_file():
-                    logger.warning(f"File not found: {path}")
-                self.send_response(404)
-                self.send_header('Content-type', 'text/plain')
+
+            # Route for the main page
+            if path == '/' or path == '/index.html':
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html')
                 self.end_headers()
-                self.wfile.write(b'File not found')
-                return
-            
-            # Get the file's MIME type
-            mimetype, _ = mimetypes.guess_type(str(file_path))
-            if mimetype is None:
-                mimetype = 'application/octet-stream'
-            
-            # Send the file
-            self.send_response(200)
-            self.send_header('Content-type', mimetype)
-            self.end_headers()
-            
-            with open(file_path, 'rb') as f:
-                self.wfile.write(f.read())
                 
-        except Exception as e:
-            logger.error(f"Error serving file: {e}")
+                # Check if token exists
+                token_path = os.path.join(parent_dir, 'config', 'token.json')
+                self.config['token_exists'] = os.path.exists(token_path)
+                
+                # Render the template
+                try:
+                    template = template_env.get_template('index.html')
+                    html = template.render(
+                        config=self.config,
+                        plugins=self.plugins
+                    )
+                    self.wfile.write(html.encode('utf-8'))
+                    logger.info("Main page rendered successfully")
+                except Exception as e:
+                    logger.error(f"Error rendering template: {e}")
+                    self.wfile.write(f"Error: {str(e)}".encode('utf-8'))
+                
+                return
+
+            # Route for API endpoints
+            if path.startswith('/api/'):
+                parts = path.strip('/').split('/')
+                if len(parts) >= 3 and parts[0] == 'api' and parts[1] == 'plugins':
+                    plugin_name = parts[2]
+                    endpoint = parts[3] if len(parts) > 3 else 'data'
+                    
+                    # Look for the plugin module
+                    try:
+                        plugin_path = get_plugin_path(plugin_name)
+                        main_py = plugin_path / 'main.py'
+                        
+                        if main_py.exists():
+                            # Import the plugin module
+                            spec = importlib.util.spec_from_file_location(f"plugin_{plugin_name}", main_py)
+                            plugin_module = importlib.util.module_from_spec(spec)
+                            spec.loader.exec_module(plugin_module)
+                            
+                            # Find the API handler function
+                            handler_name = f"api_{endpoint}"
+                            if hasattr(plugin_module, handler_name):
+                                handler = getattr(plugin_module, handler_name)
+                                result = handler()
+                                
+                                self.send_response(200)
+                                self.send_header('Content-type', 'application/json')
+                                self.end_headers()
+                                self.wfile.write(json.dumps(result).encode('utf-8'))
+                                return
+                        
+                        # If we get here, the handler wasn't found
+                        logger.warning(f"Plugin API endpoint not found: {path}")
+                        self.send_response(404)
+                        self.send_header('Content-type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({
+                            'error': f"Plugin API endpoint not found: {path}"
+                        }).encode('utf-8'))
+                        return
+                    
+                    except Exception as e:
+                        logger.error(f"Error handling plugin API request: {e}")
+                        self.send_response(500)
+                        self.send_header('Content-type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({
+                            'error': str(e)
+                        }).encode('utf-8'))
+                        return
+
+            # For other static files
+            try:
+                # Map URL path to file system path
+                file_path = self.map_path_to_file(path)
+                
+                if not file_path.exists() or not file_path.is_file():
+                    logger.warning(f"File not found: {path}")
+                    self.send_response(404)
+                    self.send_header('Content-type', 'text/plain')
+                    self.end_headers()
+                    self.wfile.write(b'File not found')
+                    return
+                
+                # Get the file's MIME type
+                mimetype, _ = mimetypes.guess_type(str(file_path))
+                if mimetype is None:
+                    mimetype = 'application/octet-stream'
+                
+                # Send the file
+                self.send_response(200)
+                self.send_header('Content-type', mimetype)
+                self.end_headers()
+                
+                with open(file_path, 'rb') as f:
+                    self.wfile.write(f.read())
+                    
+            except Exception as e:
+                logger.error(f"Error serving file: {e}")
                 self.send_response(500)
                 self.send_header('Content-type', 'text/plain')
                 self.end_headers()
                 self.wfile.write(f"Internal server error: {str(e)}".encode('utf-8'))
+
         except Exception as e:
             logger.error(f"Error handling GET request: {e}")
             self.send_response(500)

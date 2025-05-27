@@ -37,9 +37,55 @@
             z-index: {{ plugin.position.z_index|default(1) }};
         }
         {% endfor %}
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        .plugin-container {
+            position: absolute;
+            overflow: hidden;
+        }
+        .auth-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 9999;
+        }
+        .auth-button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .auth-button:hover {
+            background: #357abd;
+        }
+        .auth-text {
+            color: white;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body class="theme-{{ config.system.theme|default('dark') }} orientation-{{ config.system.orientation|default('landscape') }}">
+    {% if not config.token_exists %}
+    <div class="auth-container">
+        <div class="auth-text">Google autentifikacija reikalinga</div>
+        <button class="auth-button" onclick="window.location.href='/authorize'">Prisijungti prie Google</button>
+    </div>
+    {% endif %}
+
     <div id="kiosk-container">
         <!-- Plugins -->
         {% for plugin_name, plugin in plugins.items() %}
