@@ -30,12 +30,16 @@ function startProgressBar() {
 
 function showMedia(mediaItem) {
     const container = document.getElementById('photo-container');
-    if (!container) return;
+    if (!container) {
+        console.error('[Google Photos] photo-container not found in DOM');
+        return;
+    }
 
     // Clear previous content
     container.innerHTML = '';
 
     if (mediaItem.error) {
+        console.error('[Google Photos] Media item error:', mediaItem.error);
         container.innerHTML = `<div class="error-message">${mediaItem.error}</div>`;
         return;
     }
@@ -55,13 +59,16 @@ function showMedia(mediaItem) {
         mediaElement.muted = true;
         mediaElement.controls = false;
         mediaElement.src = mediaItem.baseUrl + '=dv';
+        console.log('[Google Photos] Displaying video:', mediaItem.filename, mediaElement.src);
     } else {
         mediaElement = document.createElement('img');
         mediaElement.src = mediaItem.baseUrl + '=w800-h600';
         mediaElement.alt = mediaItem.filename || '';
+        console.log('[Google Photos] Displaying image:', mediaItem.filename, mediaElement.src);
     }
 
     mediaElement.onload = () => {
+        console.log('[Google Photos] Media loaded:', mediaItem.filename);
         container.appendChild(mediaElement);
         startProgressBar();
     };
@@ -80,33 +87,55 @@ function showMedia(mediaItem) {
 
 function nextMedia() {
     if (currentBatch.length === 0) {
+        console.warn('[Google Photos] No current batch, fetching new batch...');
         updatePhotoBatch();
         return;
     }
 
     currentIndex = (currentIndex + 1) % currentBatch.length;
+    console.log(`[Google Photos] Showing next media: index ${currentIndex} of ${currentBatch.length}`);
     showMedia(currentBatch[currentIndex]);
 }
 
 function updatePhotoBatch() {
+    console.log('[Google Photos] Fetching new photo batch from API...');
     fetch('/api/plugins/google-photos/data')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                console.error('[Google Photos] API response not OK:', response.status, response.statusText);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.error) {
-                console.error("Error:", data.error);
+                console.error('[Google Photos] API error:', data.error);
                 return;
             }
             currentBatch = data.media;
             currentAlbum = currentBatch.length > 0 ? currentBatch[0].albumTitle : '';
             currentIndex = 0;
+            console.log(`[Google Photos] Received batch with ${currentBatch.length} items. Album: ${currentAlbum}`);
             if (currentBatch.length > 0) {
                 showMedia(currentBatch[0]);
+            } else {
+                console.warn('[Google Photos] Batch is empty!');
+                const container = document.getElementById('photo-container');
+                if (container) {
+                    container.innerHTML = '<div class="error-message">No photos found in this album.</div>';
+                }
             }
         })
-        .catch(error => console.error('Error fetching new photo batch:', error));
+        .catch(error => {
+            console.error('[Google Photos] Error fetching new photo batch:', error);
+            const container = document.getElementById('photo-container');
+            if (container) {
+                container.innerHTML = `<div class="error-message">Error fetching photos: ${error}</div>`;
+            }
+        });
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('[Google Photos] DOMContentLoaded, initializing photo batch...');
     updatePhotoBatch();
 }); 
