@@ -3,11 +3,48 @@ import json
 import logging
 import random
 import requests
+import time
 from google.oauth2.credentials import Credentials
 
 # Use a named logger for this plugin
 logger = logging.getLogger("google_photos_plugin")
 logger.setLevel(logging.DEBUG)
+
+# Cache configuration
+CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
+CACHE_FILE = os.path.join(CACHE_DIR, 'photos_cache.json')
+CACHE_EXPIRY = 90 * 24 * 3600  # 90 days cache expiry
+
+def ensure_cache_dir():
+    if not os.path.exists(CACHE_DIR):
+        os.makedirs(CACHE_DIR)
+        logger.info(f"Created cache directory: {CACHE_DIR}")
+
+def load_cache():
+    ensure_cache_dir()
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, 'r') as f:
+                cache = json.load(f)
+                # Check if cache is expired
+                if time.time() - cache.get('timestamp', 0) < CACHE_EXPIRY:
+                    logger.info("Using cached data")
+                    return cache
+                else:
+                    logger.info("Cache expired")
+        except Exception as e:
+            logger.error(f"Error loading cache: {e}")
+    return None
+
+def save_cache(cache_data):
+    ensure_cache_dir()
+    try:
+        cache_data['timestamp'] = time.time()
+        with open(CACHE_FILE, 'w') as f:
+            json.dump(cache_data, f, indent=2)
+        logger.info("Cache saved successfully")
+    except Exception as e:
+        logger.error(f"Error saving cache: {e}")
 
 def get_credentials():
     token_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'config', 'token.json')
@@ -41,10 +78,8 @@ def list_albums(creds, page_size=50):
     try:
         response = session.get(url)
         logger.debug(f"Albums API response status: {response.status_code}")
-        logger.debug(f"Albums API response headers: {dict(response.headers)}")
         if response.status_code == 200:
             data = response.json()
-            logger.debug(f"Albums API response data: {json.dumps(data, indent=2)}")
             albums = data.get('albums', [])
             logger.info(f"Found {len(albums)} albums.")
             return albums
@@ -55,74 +90,125 @@ def list_albums(creds, page_size=50):
         logger.error(f"Exception in list_albums: {e}")
         return []
 
-def list_media_items_in_album(creds, album_id, page_size=100):
-    logger.info(f"Listing media items for album: {album_id}")
+def get_all_media_items(creds, album_id):
+    logger.info(f"Getting all media items for album: {album_id}")
     session = get_photos_session(creds)
     url = 'https://photoslibrary.googleapis.com/v1/mediaItems:search'
-    body = {
-        "albumId": album_id,
-        "pageSize": page_size
-    }
-    try:
-        response = session.post(url, json=body)
-        logger.debug(f"MediaItems API response status: {response.status_code}")
-        logger.debug(f"MediaItems API response headers: {dict(response.headers)}")
-        if response.status_code == 200:
-            data = response.json()
-            logger.debug(f"MediaItems API response data: {json.dumps(data, indent=2)}")
-            items = data.get('mediaItems', [])
-            logger.info(f"Found {len(items)} media items in album {album_id}.")
-            return items
-        else:
-            logger.error(f"Error listing media items: {response.text}")
-            return []
-    except Exception as e:
-        logger.error(f"Exception in list_media_items_in_album: {e}")
-        return []
+    items = []
+    next_page_token = None
+    
+    while True:
+        body = {
+            "albumId": album_id,
+            "pageSize": 100,
+            "pageToken": next_page_token
+        }
+        try:
+            response = session.post(url, json=body)
+            if response.status_code == 200:
+                data = response.json()
+                found_items = data.get('mediaItems', [])
+                items.extend(found_items)
+                next_page_token = data.get('nextPageToken')
+                if not next_page_token:
+                    break
+            else:
+                logger.error(f"Error getting media items: {response.text}")
+                break
+        except Exception as e:
+            logger.error(f"Exception getting media items: {e}")
+            break
+    
+    logger.info(f"Found {len(items)} total media items in album {album_id}")
+    return items
 
 def get_random_photo_batch(creds, batch_size=5):
     logger.info(f"Selecting random photo batch (batch_size={batch_size})...")
-    albums = list_albums(creds)
+    
+    # Try to load from cache first
+    cache = load_cache()
+    if cache and 'albums' in cache:
+        albums = cache['albums']
+    else:
+        # If no cache or expired, fetch from API
+        albums = list_albums(creds)
+        if albums:
+            # Save album list to cache
+            save_cache({'albums': albums})
+    
     if not albums:
         logger.error("No albums found")
         return []
     
-    # Filter out empty albums
-    non_empty_albums = []
-    for album in albums:
-        media_items = list_media_items_in_album(creds, album['id'])
-        if media_items:
-            non_empty_albums.append(album)
+    # Shuffle albums in random order
+    random.shuffle(albums)
     
-    if not non_empty_albums:
-        logger.error("No non-empty albums found")
-        return []
+    # Try all albums until we find a suitable one
+    for album_attempt in range(len(albums)):
+        album = albums[album_attempt]
+        album_title = album.get('title', 'Unknown Album')
+        logger.info(f"Trying album: {album_title} (attempt {album_attempt+1}/{len(albums)})")
+        
+        try:
+            items = get_all_media_items(creds, album['id'])
+            if not items:
+                logger.info(f"Album {album_title} has no items, skipping")
+                continue
+
+            # Filter only those that have creationTime
+            items = [i for i in items if i.get('mediaMetadata', {}).get('creationTime')]
+            if not items:
+                logger.info(f"Album {album_title} has no items with creationTime, skipping")
+                continue
+
+            # Process items and add metadata
+            processed_items = []
+            for item in items:
+                meta = item.get('mediaMetadata', {})
+                media_type = "photo"
+                video_metadata = {}
+                
+                if 'video' in meta:
+                    media_type = "video"
+                    video_metadata = meta.get('video', {})
+                
+                processed_items.append({
+                    'baseUrl': item.get('baseUrl', ''),
+                    'photo_time': meta.get('creationTime', ''),
+                    'filename': item.get('filename', 'Unknown'),
+                    'mediaType': media_type,
+                    'videoMetadata': video_metadata,
+                    'mimeType': item.get('mimeType', ''),
+                    'albumTitle': album_title
+                })
+            
+            if processed_items:
+                logger.info(f"Album {album_title} has {len(processed_items)} items")
+                
+                # Sort by creationTime
+                processed_items.sort(key=lambda x: x['photo_time'])
+                total = len(processed_items)
+                start_index = random.randint(0, total - 1)
+                batch = []
+                
+                # Collect batch
+                count = min(batch_size, total)
+                for i in range(count):
+                    idx = (start_index + i) % total
+                    batch.append(processed_items[idx])
+                
+                return batch
+            else:
+                logger.info(f"Album {album_title} has no suitable items, skipping")
+                
+        except Exception as e:
+            logger.error(f"Error processing album {album_title}: {e}")
+            if hasattr(e, 'resp') and e.resp.status == 429:
+                logger.warning("Google Photos API quota exceeded")
+                return [{"error": "Google Photos API quota exceeded", "mediaType": "error"}]
     
-    album = random.choice(non_empty_albums)
-    album_id = album['id']
-    album_title = album.get('title', 'Unknown Album')
-    logger.info(f"Selected album: {album_title} (ID: {album_id})")
-    
-    media_items = list_media_items_in_album(creds, album_id)
-    if not media_items:
-        logger.error(f"No media items found in album {album_title}")
-        return []
-    
-    logger.info(f"Total media items in album: {len(media_items)}")
-    if len(media_items) <= batch_size:
-        start_idx = 0
-    else:
-        start_idx = random.randint(0, len(media_items) - batch_size)
-    
-    batch = media_items[start_idx:start_idx + batch_size]
-    logger.info(f"Selected batch from index {start_idx}, batch size: {len(batch)}")
-    
-    # Add album info to each item for frontend
-    for item in batch:
-        item['albumTitle'] = album_title
-        logger.debug(f"Media item: {json.dumps(item, indent=2)}")
-    
-    return batch
+    logger.error("No suitable media found in any album")
+    return [{"error": "No suitable media found", "mediaType": "error"}]
 
 def api_data():
     logger.info("api_data called for Google Photos plugin")
@@ -138,4 +224,5 @@ def api_data():
 def init(config):
     logger.info("Initializing Google Photos plugin")
     logger.debug(f"Config: {json.dumps(config, indent=2)}")
+    ensure_cache_dir()
     return {"data": {}} 
