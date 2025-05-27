@@ -176,9 +176,8 @@ def get_random_photo_batch(creds, batch_size=5):
                     'baseUrl': item.get('baseUrl', ''),
                     'photo_time': meta.get('creationTime', ''),
                     'filename': item.get('filename', 'Unknown'),
-                    'mediaType': media_type,
-                    'videoMetadata': video_metadata,
                     'mimeType': item.get('mimeType', ''),
+                    'videoMetadata': video_metadata,
                     'albumTitle': album_title
                 })
             
@@ -197,6 +196,7 @@ def get_random_photo_batch(creds, batch_size=5):
                     idx = (start_index + i) % total
                     batch.append(processed_items[idx])
                 
+                logger.info(f"Returning batch with {len(batch)} items.")
                 return batch
             else:
                 logger.info(f"Album {album_title} has no suitable items, skipping")
@@ -205,10 +205,10 @@ def get_random_photo_batch(creds, batch_size=5):
             logger.error(f"Error processing album {album_title}: {e}")
             if hasattr(e, 'resp') and e.resp.status == 429:
                 logger.warning("Google Photos API quota exceeded")
-                return [{"error": "Google Photos API quota exceeded", "mediaType": "error"}]
+                return [{"error": "Google Photos API quota exceeded", "mimeType": "error"}]
     
     logger.error("No suitable media found in any album")
-    return [{"error": "No suitable media found", "mediaType": "error"}]
+    return [{"error": "No suitable media found", "mimeType": "error"}]
 
 def api_data():
     logger.info("api_data called for Google Photos plugin")

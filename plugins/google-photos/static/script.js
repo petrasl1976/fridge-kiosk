@@ -2,6 +2,8 @@ let currentBatch = [];
 let currentIndex = 0;
 let currentAlbum = "";
 let progressIntervalId = null;
+let retryCount = 0;
+const MAX_RETRIES = 3;
 
 function startProgressBar() {
     if (progressIntervalId) {
@@ -29,6 +31,7 @@ function startProgressBar() {
 }
 
 function showMedia(mediaItem) {
+    console.log('[Google Photos] Starting showMedia function');
     const container = document.getElementById('photo-container');
     if (!container) {
         console.error('[Google Photos] photo-container not found in DOM');
@@ -47,7 +50,8 @@ function showMedia(mediaItem) {
     console.log('[Google Photos] Processing media item:', {
         filename: mediaItem.filename,
         mimeType: mediaItem.mimeType,
-        baseUrl: mediaItem.baseUrl
+        baseUrl: mediaItem.baseUrl,
+        albumTitle: mediaItem.albumTitle
     });
 
     // Create progress bar
@@ -73,22 +77,47 @@ function showMedia(mediaItem) {
         mediaElement.src = imageUrl;
         mediaElement.alt = mediaItem.filename || '';
         console.log('[Google Photos] Image URL:', imageUrl);
+        
+        // Add loading state
+        mediaElement.style.opacity = '0';
+        mediaElement.style.transition = 'opacity 0.5s ease-in-out';
     }
+
+    // Add loading indicator
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-indicator';
+    loadingDiv.textContent = 'Loading...';
+    container.appendChild(loadingDiv);
 
     mediaElement.onerror = (error) => {
         console.error('[Google Photos] Error loading media:', error);
-        container.innerHTML = `<div class="error-message">Error loading media: ${error.message}</div>`;
+        loadingDiv.remove();
+        if (retryCount < MAX_RETRIES) {
+            retryCount++;
+            console.log(`[Google Photos] Retrying media load (attempt ${retryCount}/${MAX_RETRIES})...`);
+            setTimeout(() => showMedia(mediaItem), 1000);
+        } else {
+            retryCount = 0;
+            container.innerHTML = `<div class="error-message">Error loading media: ${error.message}</div>`;
+            setTimeout(nextMedia, 5000); // Try next media after 5 seconds
+        }
     };
 
     mediaElement.onload = () => {
         console.log('[Google Photos] Media loaded successfully:', mediaItem.filename);
+        retryCount = 0; // Reset retry count on successful load
+        loadingDiv.remove();
+        mediaElement.style.opacity = '1';
+        mediaElement.classList.add('loaded');
         container.appendChild(mediaElement);
         startProgressBar();
     };
 
     // For video, append immediately (onload doesn't fire for video)
     if (mediaItem.mimeType && mediaItem.mimeType.startsWith('video/')) {
+        loadingDiv.remove();
         container.appendChild(mediaElement);
+        mediaElement.classList.add('loaded');
         startProgressBar();
     }
 
@@ -150,6 +179,8 @@ function updatePhotoBatch() {
             const container = document.getElementById('photo-container');
             if (container) {
                 container.innerHTML = `<div class="error-message">Error fetching photos: ${error.message}</div>`;
+                // Retry after 5 seconds
+                setTimeout(updatePhotoBatch, 5000);
             }
         });
 }
@@ -157,5 +188,15 @@ function updatePhotoBatch() {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[Google Photos] DOMContentLoaded, initializing photo batch...');
+    // Add container check
+    const container = document.getElementById('photo-container');
+    if (!container) {
+        console.error('[Google Photos] photo-container not found in DOM');
+        return;
+    }
+    console.log('[Google Photos] Container found, dimensions:', {
+        width: container.offsetWidth,
+        height: container.offsetHeight
+    });
     updatePhotoBatch();
 }); 
