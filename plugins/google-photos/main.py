@@ -193,7 +193,7 @@ def api_data():
             return {'error': 'No photos available'}
         
         logger.info(f"Returning {len(photos)} photos")
-        return {'photos': photos}
+        return {'media': photos}
     except Exception as e:
         logger.error(f"Error in api_data: {e}")
         logger.debug(f"API error traceback: {traceback.format_exc()}")
