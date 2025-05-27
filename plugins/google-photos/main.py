@@ -12,7 +12,6 @@ from googleapiclient.errors import HttpError
 
 # Get plugin-specific logger
 logger = logging.getLogger('plugins.google-photos')
-logger.setLevel(logging.DEBUG)  # Default level until config is loaded
 
 # Cache configuration
 CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
@@ -201,7 +200,13 @@ def api_data():
         return {'error': str(e)}
 
 def init(config):
-    logger.info("Initializing Google Photos plugin")
+    # Set logger level from config
+    log_level = config.get('logging', 'INFO').upper()
+    if log_level == 'OFF':
+        logger.setLevel(logging.CRITICAL + 1)
+    else:
+        logger.setLevel(getattr(logging, log_level, logging.INFO))
+    logger.info(f"Logger level set to {logger.level} ({log_level})")
     logger.debug(f"Config: {json.dumps(config, indent=2)}")
     ensure_cache_dir()
     return {"data": {}} 
