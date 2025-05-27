@@ -30,6 +30,11 @@ try:
             logger.setLevel(logging.CRITICAL)  # Only show critical errors
         else:
             logger.setLevel(getattr(logging, log_level))
+        # Ensure propagation is enabled
+        logger.propagate = True
+        # Remove any existing handlers to avoid duplicate logging
+        for handler in logger.handlers[:]:
+            logger.removeHandler(handler)
 except Exception as e:
     logger.setLevel(logging.DEBUG)  # Default to DEBUG if config can't be loaded
     logger.error(f"Could not load logging config: {e}")
