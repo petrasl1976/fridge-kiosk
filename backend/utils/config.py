@@ -125,25 +125,55 @@ def get_plugin_config(plugin_name):
     config = load_config()
     return config.get('plugins', {}).get(plugin_name, {}) 
 
+def get_plugin_log_level(plugin_name, config):
+    """
+    Get the log level for a specific plugin from its own config file.
+    
+    Args:
+        plugin_name (str): The name of the plugin.
+        config (dict): The main configuration dictionary.
+        
+    Returns:
+        int: The logging level for the plugin.
+    """
+    # Get plugin's config file path
+    plugin_path = get_plugin_path(plugin_name)
+    plugin_config_path = plugin_path / 'config.json'
+    
+    try:
+        if plugin_config_path.exists():
+            with open(plugin_config_path, 'r') as f:
+                plugin_config = json.load(f)
+                if 'logging' in plugin_config:
+                    level = plugin_config['logging'].upper()
+                    if level == 'OFF':
+                        return logging.CRITICAL + 1  # Effectively disables logging
+                    return getattr(logging, level, logging.INFO)
+    except Exception as e:
+        logger.error(f"Error reading plugin config for {plugin_name}: {e}")
+    
+    # Fall back to system-wide log level
+    return getattr(logging, config.get('system', {}).get('logLevel', 'INFO').upper(), logging.INFO)
+
 def setup_logging(config=None):
     """Set up logging configuration for the entire application"""
     # Create logs directory if it doesn't exist
     logs_dir = Path(__file__).parent.parent.parent / 'logs'
     logs_dir.mkdir(exist_ok=True)
     
-    # Get log level from config or default to INFO
-    log_level = getattr(logging, config.get('system', {}).get('logLevel', 'INFO').upper(), logging.INFO)
+    # Get system-wide log level from config or default to INFO
+    system_log_level = getattr(logging, config.get('system', {}).get('logLevel', 'INFO').upper(), logging.INFO)
     
     # Configure root logger
     root_logger = logging.getLogger()
-    root_logger.setLevel(log_level)
+    root_logger.setLevel(system_log_level)
     
     # Remove existing handlers
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
     
     # Create formatters
-    file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     console_formatter = PluginFormatter('%(asctime)s - %(levelname)s - %(message)s')
     
     # Add rotating file handler
@@ -165,7 +195,6 @@ def setup_logging(config=None):
     # Set specific loggers to WARNING and remove their handlers
     noisy_loggers = [
         'werkzeug', 'googleapiclient', 'urllib3', 'discord', 
-        'google_calendar', 'google_calendar_summary',
         'google_auth_httplib2', 'google.auth.transport.requests', 
         'requests', 'PIL', 'matplotlib'
     ]
@@ -177,9 +206,21 @@ def setup_logging(config=None):
             lgr.removeHandler(handler)
         lgr.propagate = True
     
+    # Configure plugin loggers
+    if config and 'plugins' in config:
+        for plugin_name in config['plugins']:
+            plugin_logger = logging.getLogger(f'plugins.{plugin_name}')
+            plugin_logger.setLevel(get_plugin_log_level(plugin_name, config))
+            # Don't propagate to root logger to avoid duplicate messages
+            plugin_logger.propagate = False
+            # Add handlers to plugin logger
+            plugin_logger.addHandler(file_handler)
+            if os.environ.get('FLASK_ENV') == 'development':
+                plugin_logger.addHandler(console_handler)
+    
     # Log startup information
     root_logger.info("Logging system initialized")
-    root_logger.info(f"Log level set to: {logging.getLevelName(log_level)}")
+    root_logger.info(f"System log level set to: {logging.getLevelName(system_log_level)}")
     root_logger.info(f"Log file: {logs_dir / 'fridge-kiosk.log'}")
     
     return root_logger 
