@@ -418,8 +418,8 @@ def get_summary_events(config=None):
             # Handle both dateTime and date (all day) events
             if "start" in event:
                 if "dateTime" in event["start"]:
-                event["formatted_time"] = format_time(event["start"]["dateTime"])
-                event_date = event["start"]["dateTime"][:10]
+                    event["formatted_time"] = format_time(event["start"]["dateTime"])
+                    event_date = event["start"]["dateTime"][:10]
                 else:  # All day event
                     event["formatted_time"] = "All day"
                     event_date = event["start"]["date"]
