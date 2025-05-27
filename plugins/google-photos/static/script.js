@@ -44,6 +44,12 @@ function showMedia(mediaItem) {
         return;
     }
 
+    console.log('[Google Photos] Processing media item:', {
+        filename: mediaItem.filename,
+        mimeType: mediaItem.mimeType,
+        baseUrl: mediaItem.baseUrl
+    });
+
     // Create progress bar
     const progressBar = document.createElement('div');
     progressBar.id = 'photo-progress';
@@ -59,19 +65,27 @@ function showMedia(mediaItem) {
         mediaElement.muted = true;
         mediaElement.controls = false;
         mediaElement.src = mediaItem.baseUrl + '=dv';
-        console.log('[Google Photos] Displaying video:', mediaItem.filename, mediaElement.src);
+        console.log('[Google Photos] Video URL:', mediaElement.src);
     } else {
         mediaElement = document.createElement('img');
-        mediaElement.src = mediaItem.baseUrl + '=w800-h600';
+        // Add proper parameters for image URL
+        const imageUrl = `${mediaItem.baseUrl}=w1920-h1080-c`;
+        mediaElement.src = imageUrl;
         mediaElement.alt = mediaItem.filename || '';
-        console.log('[Google Photos] Displaying image:', mediaItem.filename, mediaElement.src);
+        console.log('[Google Photos] Image URL:', imageUrl);
     }
 
+    mediaElement.onerror = (error) => {
+        console.error('[Google Photos] Error loading media:', error);
+        container.innerHTML = `<div class="error-message">Error loading media: ${error.message}</div>`;
+    };
+
     mediaElement.onload = () => {
-        console.log('[Google Photos] Media loaded:', mediaItem.filename);
+        console.log('[Google Photos] Media loaded successfully:', mediaItem.filename);
         container.appendChild(mediaElement);
         startProgressBar();
     };
+
     // For video, append immediately (onload doesn't fire for video)
     if (mediaItem.mimeType && mediaItem.mimeType.startsWith('video/')) {
         container.appendChild(mediaElement);
@@ -103,13 +117,19 @@ function updatePhotoBatch() {
         .then(response => {
             if (!response.ok) {
                 console.error('[Google Photos] API response not OK:', response.status, response.statusText);
+                throw new Error(`API response not OK: ${response.status} ${response.statusText}`);
             }
             return response.json();
         })
         .then(data => {
+            console.log('[Google Photos] Received API response:', data);
             if (data.error) {
                 console.error('[Google Photos] API error:', data.error);
-                return;
+                throw new Error(data.error);
+            }
+            if (!data.media || !Array.isArray(data.media)) {
+                console.error('[Google Photos] Invalid media data:', data);
+                throw new Error('Invalid media data received from API');
             }
             currentBatch = data.media;
             currentAlbum = currentBatch.length > 0 ? currentBatch[0].albumTitle : '';
@@ -129,7 +149,7 @@ function updatePhotoBatch() {
             console.error('[Google Photos] Error fetching new photo batch:', error);
             const container = document.getElementById('photo-container');
             if (container) {
-                container.innerHTML = `<div class="error-message">Error fetching photos: ${error}</div>`;
+                container.innerHTML = `<div class="error-message">Error fetching photos: ${error.message}</div>`;
             }
         });
 }

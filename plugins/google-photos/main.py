@@ -41,8 +41,11 @@ def list_albums(creds, page_size=50):
     try:
         response = session.get(url)
         logger.debug(f"Albums API response status: {response.status_code}")
+        logger.debug(f"Albums API response headers: {dict(response.headers)}")
         if response.status_code == 200:
-            albums = response.json().get('albums', [])
+            data = response.json()
+            logger.debug(f"Albums API response data: {json.dumps(data, indent=2)}")
+            albums = data.get('albums', [])
             logger.info(f"Found {len(albums)} albums.")
             return albums
         else:
@@ -63,8 +66,11 @@ def list_media_items_in_album(creds, album_id, page_size=100):
     try:
         response = session.post(url, json=body)
         logger.debug(f"MediaItems API response status: {response.status_code}")
+        logger.debug(f"MediaItems API response headers: {dict(response.headers)}")
         if response.status_code == 200:
-            items = response.json().get('mediaItems', [])
+            data = response.json()
+            logger.debug(f"MediaItems API response data: {json.dumps(data, indent=2)}")
+            items = data.get('mediaItems', [])
             logger.info(f"Found {len(items)} media items in album {album_id}.")
             return items
         else:
@@ -80,25 +86,42 @@ def get_random_photo_batch(creds, batch_size=5):
     if not albums:
         logger.error("No albums found")
         return []
-    album = random.choice(albums)
+    
+    # Filter out empty albums
+    non_empty_albums = []
+    for album in albums:
+        media_items = list_media_items_in_album(creds, album['id'])
+        if media_items:
+            non_empty_albums.append(album)
+    
+    if not non_empty_albums:
+        logger.error("No non-empty albums found")
+        return []
+    
+    album = random.choice(non_empty_albums)
     album_id = album['id']
     album_title = album.get('title', 'Unknown Album')
     logger.info(f"Selected album: {album_title} (ID: {album_id})")
+    
     media_items = list_media_items_in_album(creds, album_id)
     if not media_items:
         logger.error(f"No media items found in album {album_title}")
         return []
+    
     logger.info(f"Total media items in album: {len(media_items)}")
     if len(media_items) <= batch_size:
         start_idx = 0
     else:
         start_idx = random.randint(0, len(media_items) - batch_size)
+    
     batch = media_items[start_idx:start_idx + batch_size]
     logger.info(f"Selected batch from index {start_idx}, batch size: {len(batch)}")
+    
     # Add album info to each item for frontend
     for item in batch:
         item['albumTitle'] = album_title
-    logger.debug(f"Batch media item filenames: {[item.get('filename') for item in batch]}")
+        logger.debug(f"Media item: {json.dumps(item, indent=2)}")
+    
     return batch
 
 def api_data():
@@ -107,6 +130,7 @@ def api_data():
     if not creds:
         logger.error("No credentials returned from get_credentials()")
         return {"error": "No credentials"}
+    
     batch = get_random_photo_batch(creds, batch_size=5)
     logger.info(f"Returning batch with {len(batch)} items.")
     return {"media": batch}
