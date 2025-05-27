@@ -118,7 +118,12 @@ def list_media_items_in_album(album_id):
         return []
 
 def get_random_photo_batch():
-    """Get a random batch of photos from a random album."""
+    # Demonstration of all log levels
+    logger.debug("DEBUG: This is a debug message from google-photos plugin.")
+    logger.info("INFO: This is an info message from google-photos plugin.")
+    logger.warning("WARNING: This is a warning message from google-photos plugin.")
+    logger.error("ERROR: This is an error message from google-photos plugin.")
+    logger.critical("CRITICAL: This is a critical message from google-photos plugin.")
     service = get_photos_session()
     if not service:
         return []
