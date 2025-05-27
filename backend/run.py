@@ -309,6 +309,11 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             with open(token_path, 'w') as f:
                 json.dump(credentials_to_dict(credentials), f)
 
+            # --- RELOAD PLUGINS HERE ---
+            self.server.plugins = load_plugins(self.config)
+            logger.info("Plugins reloaded after OAuth2 callback.")
+            # --- END RELOAD ---
+
             # Redirect to success page
             self.send_response(302)
             self.send_header('Location', '/')
