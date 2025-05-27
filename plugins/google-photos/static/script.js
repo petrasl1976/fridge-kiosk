@@ -48,22 +48,28 @@ function showMedia(mediaItem) {
 
     // Create media element
     let mediaElement;
-    if (mediaItem.mediaType === 'video') {
+    if (mediaItem.mimeType && mediaItem.mimeType.startsWith('video/')) {
         mediaElement = document.createElement('video');
         mediaElement.autoplay = true;
         mediaElement.loop = true;
         mediaElement.muted = true;
         mediaElement.controls = false;
+        mediaElement.src = mediaItem.baseUrl + '=dv';
     } else {
         mediaElement = document.createElement('img');
+        mediaElement.src = mediaItem.baseUrl + '=w800-h600';
+        mediaElement.alt = mediaItem.filename || '';
     }
 
-    // Set source and load
-    mediaElement.src = mediaItem.baseUrl;
     mediaElement.onload = () => {
         container.appendChild(mediaElement);
         startProgressBar();
     };
+    // For video, append immediately (onload doesn't fire for video)
+    if (mediaItem.mimeType && mediaItem.mimeType.startsWith('video/')) {
+        container.appendChild(mediaElement);
+        startProgressBar();
+    }
 
     // Show album title
     const infoDiv = document.createElement('div');
@@ -90,8 +96,8 @@ function updatePhotoBatch() {
                 console.error("Error:", data.error);
                 return;
             }
-            currentBatch = data.photos;
-            currentAlbum = data.album_title;
+            currentBatch = data.media;
+            currentAlbum = currentBatch.length > 0 ? currentBatch[0].albumTitle : '';
             currentIndex = 0;
             if (currentBatch.length > 0) {
                 showMedia(currentBatch[0]);
