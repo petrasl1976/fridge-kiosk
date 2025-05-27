@@ -380,67 +380,130 @@ def get_today_events(config=None):
         return {'error': str(e)}
 
 def get_summary_events(config=None):
-    """Get today's remaining events and tomorrow's events from Google Calendar"""
-    if config is None:
-        config = load_config()
-    calendar_id = os.getenv("GOOGLE_CALENDAR_ID", os.getenv("GOOGLE_CLIENT_ID", "primary"))
-    creds = get_credentials()
-    if not creds:
-        return {'error': 'No valid credentials found'}
+    """Get today's and tomorrow's events from Google Calendar"""
+    logger.debug("Entering get_summary_events()")
     try:
-        service = googleapiclient.discovery.build('calendar', 'v3', credentials=creds)
-        vilnius_tz = ZoneInfo('Europe/Vilnius')
-        now = datetime.datetime.now(vilnius_tz)
-        today_str = now.strftime('%Y-%m-%d')
-        tomorrow = now + datetime.timedelta(days=1)
-        tomorrow_str = tomorrow.strftime('%Y-%m-%d')
-        # Get events from now until end of tomorrow
-        time_min = now.isoformat()
-        time_max = (tomorrow.replace(hour=23, minute=59, second=59)).isoformat()
-        events_result = service.events().list(
-            calendarId=calendar_id,
-            timeMin=time_min,
-            timeMax=time_max,
-            singleEvents=True,
-            orderBy='startTime',
-            timeZone='Europe/Vilnius'
-        ).execute()
-        events = events_result.get('items', [])
-        # Process events: add colors and format times
-        today_events = []
-        tomorrow_events = []
-        for event in events:
-            if "summary" in event:
-                event["color"] = get_event_color(event["summary"])
-            else:
-                event["color"] = get_event_color("")
-            
-            # Handle both dateTime and date (all day) events
-            if "start" in event:
-                if "dateTime" in event["start"]:
-                    event["formatted_time"] = format_time(event["start"]["dateTime"])
-                    event_date = event["start"]["dateTime"][:10]
-                else:  # All day event
-                    event["formatted_time"] = "All day"
-                    event_date = event["start"]["date"]
-                
-                if event_date == today_str:
-                    today_events.append(event)
-                elif event_date == tomorrow_str:
-                    tomorrow_events.append(event)
+        if config is None:
+            logger.debug("No config provided, loading from file")
+            config = load_config()
         
-        return {
-            'today_events': today_events,
-            'tomorrow_events': tomorrow_events
-        }
+        # Get calendar ID from environment variable or use default ("primary")
+        calendar_id = os.getenv("GOOGLE_CALENDAR_ID", os.getenv("GOOGLE_CLIENT_ID", "primary"))
+        logger.info(f"Using calendar ID: {calendar_id}")
+        
+        # Get credentials
+        creds = get_credentials()
+        if not creds:
+            logger.error("No valid credentials found")
+            return {'error': 'No valid credentials found'}
+        
+        # Build the service
+        try:
+            logger.info("Building Google Calendar service")
+            service = googleapiclient.discovery.build('calendar', 'v3', credentials=creds)
+            
+            # Set timezone
+            vilnius_tz = ZoneInfo('Europe/Vilnius')
+            logger.debug(f"Using timezone: Europe/Vilnius")
+            
+            # Get today's and tomorrow's dates
+            now = datetime.datetime.now(vilnius_tz)
+            today = now.date()
+            tomorrow = today + datetime.timedelta(days=1)
+            
+            # Format for API
+            time_min = today.isoformat() + 'T00:00:00Z'
+            time_max = tomorrow.isoformat() + 'T23:59:59Z'
+            
+            logger.info(f"Fetching events from {time_min} to {time_max}")
+            logger.debug(f"Query parameters: calendarId={calendar_id}, timeMin={time_min}, timeMax={time_max}, timeZone=Europe/Vilnius")
+            
+            # Call the Calendar API
+            events_result = service.events().list(
+                calendarId=calendar_id,
+                timeMin=time_min,
+                timeMax=time_max,
+                singleEvents=True,
+                orderBy='startTime',
+                timeZone='Europe/Vilnius'
+            ).execute()
+            
+            events = events_result.get('items', [])
+            logger.info(f"Retrieved {len(events)} events from calendar API")
+            
+            if len(events) > 0:
+                logger.debug(f"First event: {json.dumps(events[0], indent=2, default=str)}")
+            
+            # Process events: add colors and format times
+            for event in events:
+                if "summary" in event:
+                    event["color"] = get_event_color(event["summary"])
+                else:
+                    event["color"] = get_event_color("")
+                
+                # Add formatted time for the template
+                if "start" in event and "dateTime" in event["start"]:
+                    event["formatted_time"] = format_time(event["start"]["dateTime"])
+            
+            # Group events by day
+            today_events = []
+            tomorrow_events = []
+            
+            for event in events:
+                start = event['start'].get('dateTime', event['start'].get('date'))
+                event_date = datetime.datetime.fromisoformat(start.replace('Z', '+00:00')).date()
+                
+                if event_date == today:
+                    today_events.append(event)
+                elif event_date == tomorrow:
+                    tomorrow_events.append(event)
+            
+            logger.debug(f"Grouped events: {len(today_events)} today, {len(tomorrow_events)} tomorrow")
+            
+            return {
+                'today_events': today_events,
+                'tomorrow_events': tomorrow_events
+            }
+            
+        except Exception as e:
+            logger.error(f"Error building calendar service: {e}")
+            logger.debug(f"Service error traceback: {traceback.format_exc()}")
+            return {'error': str(e)}
+            
     except Exception as e:
-        logger.error(f"Error fetching summary events: {e}")
-        logger.debug(f"Traceback: {traceback.format_exc()}")
+        logger.error(f"Error in get_summary_events: {e}")
+        logger.debug(f"Function error traceback: {traceback.format_exc()}")
         return {'error': str(e)}
 
 def api_data():
-    """API endpoint for summary data"""
-    return get_summary_events()
+    """API endpoint for getting calendar summary data."""
+    logger.debug("Entering api_data()")
+    try:
+        events = get_summary_events()
+        logger.debug(f"get_summary_events returned data keys: {list(events.keys())}")
+        
+        # Check if template exists
+        template_path = Path(__file__).parent / "templates" / "view.html"
+        template_exists = template_path.exists()
+        logger.debug(f"Template exists: {template_exists}")
+        
+        if template_exists:
+            with open(template_path) as f:
+                template_content = f.read()
+                logger.debug(f"Template first 100 chars: {template_content[:100]}")
+                # Extract template variables
+                import re
+                variables = re.findall(r'{{\s*([^}]+)\s*}}', template_content)
+                logger.debug(f"Template variables: {variables}")
+        
+        logger.info(f"Google Calendar plugin initialized successfully with {len(events.get('today_events', []))} events")
+        logger.debug(f"Returning init result with keys: {list(events.keys())}")
+        logger.debug(f"Data keys: {list(events.keys())}")
+        return events
+    except Exception as e:
+        logger.error(f"Error in api_data: {e}")
+        logger.debug(f"API error traceback: {traceback.format_exc()}")
+        return {'error': str(e)}
 
 def api_today():
     """API endpoint for today's events"""
