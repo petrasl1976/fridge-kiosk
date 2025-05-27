@@ -7,14 +7,28 @@ import os
 import json
 import logging
 from pathlib import Path
+from logging.handlers import RotatingFileHandler
+import sys
 
 logger = logging.getLogger(__name__)
 
 class PluginFormatter(logging.Formatter):
+    """Custom formatter that adds plugin name and improves readability"""
     def format(self, record):
-        # Gauk failo parent folderio vardą
+        # Get plugin name from path
         folder = os.path.basename(os.path.dirname(record.pathname))
         prefix = f"[{folder}] "
+        
+        # Add color for different log levels
+        if record.levelno >= logging.ERROR:
+            prefix = f"\033[91m{prefix}"  # Red for errors
+        elif record.levelno >= logging.WARNING:
+            prefix = f"\033[93m{prefix}"  # Yellow for warnings
+        elif record.levelno >= logging.INFO:
+            prefix = f"\033[92m{prefix}"  # Green for info
+        else:
+            prefix = f"\033[94m{prefix}"  # Blue for debug
+            
         record.msg = prefix + str(record.msg)
         return super().format(record)
 
@@ -128,23 +142,44 @@ def setup_logging(config=None):
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
     
-    # Naudok custom formatterį
-    formatter = PluginFormatter('%(asctime)s - %(levelname)s - %(message)s')
+    # Create formatters
+    file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    console_formatter = PluginFormatter('%(asctime)s - %(levelname)s - %(message)s')
     
-    # Add file handler ONLY
-    file_handler = logging.FileHandler(logs_dir / 'fridge-kiosk.log')
-    file_handler.setFormatter(formatter)
+    # Add rotating file handler
+    file_handler = RotatingFileHandler(
+        logs_dir / 'fridge-kiosk.log',
+        maxBytes=10*1024*1024,  # 10MB
+        backupCount=5,
+        encoding='utf-8'
+    )
+    file_handler.setFormatter(file_formatter)
     root_logger.addHandler(file_handler)
     
+    # Add console handler for development
+    if os.environ.get('FLASK_ENV') == 'development':
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(console_formatter)
+        root_logger.addHandler(console_handler)
+    
     # Set specific loggers to WARNING and remove their handlers
-    for logger_name in [
-        'werkzeug', 'googleapiclient', 'urllib3', 'discord', 'google_calendar', 'google_calendar_summary',
-        'google_auth_httplib2', 'google.auth.transport.requests', 'requests'
-    ]:
+    noisy_loggers = [
+        'werkzeug', 'googleapiclient', 'urllib3', 'discord', 
+        'google_calendar', 'google_calendar_summary',
+        'google_auth_httplib2', 'google.auth.transport.requests', 
+        'requests', 'PIL', 'matplotlib'
+    ]
+    
+    for logger_name in noisy_loggers:
         lgr = logging.getLogger(logger_name)
         lgr.setLevel(logging.WARNING)
         for handler in lgr.handlers[:]:
             lgr.removeHandler(handler)
         lgr.propagate = True
+    
+    # Log startup information
+    root_logger.info("Logging system initialized")
+    root_logger.info(f"Log level set to: {logging.getLevelName(log_level)}")
+    root_logger.info(f"Log file: {logs_dir / 'fridge-kiosk.log'}")
     
     return root_logger 

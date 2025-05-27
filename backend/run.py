@@ -35,6 +35,7 @@ config = load_config()
 # Set up logging
 logger = setup_logging(config)
 logger.info("Starting Fridge Kiosk server")
+logger.debug(f"Configuration loaded: {json.dumps(config, indent=2)}")
 
 # Initialize Jinja2 template environment
 template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(parent_dir, "backend/templates"))
@@ -76,9 +77,13 @@ def get_credentials():
         try:
             with open(token_path, 'r') as token_file:
                 token_data = json.load(token_file)
+                logger.debug("Successfully loaded token.json")
                 return google.oauth2.credentials.Credentials(**token_data)
         except Exception as e:
             logger.error(f"Error loading credentials: {e}")
+            logger.debug(f"Token file path: {token_path}")
+    else:
+        logger.warning(f"token.json not found at {token_path}")
     return None
 
 class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -97,17 +102,22 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             parsed_path = urlparse(self.path)
             path = parsed_path.path
             query = parse_qs(parsed_path.query)
+            
+            logger.debug(f"Received GET request: {path} with query params: {query}")
 
             # OAuth routes
             if path == '/authorize':
+                logger.info("Handling OAuth authorization request")
                 self.handle_authorize()
                 return
             elif path == '/oauth2callback':
+                logger.info("Handling OAuth callback")
                 self.handle_oauth2callback()
                 return
 
             # Route for the main page
             if path == '/' or path == '/index.html':
+                logger.info("Serving main page")
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
@@ -115,6 +125,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 # Check if token exists
                 token_path = os.path.join(parent_dir, 'config', 'token.json')
                 self.config['token_exists'] = os.path.exists(token_path)
+                logger.debug(f"Token exists: {self.config['token_exists']}")
                 
                 # Render the template
                 try:
@@ -127,6 +138,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                     logger.info("Main page rendered successfully")
                 except Exception as e:
                     logger.error(f"Error rendering template: {e}")
+                    logger.debug(f"Template error traceback: {traceback.format_exc()}")
                     self.wfile.write(f"Error: {str(e)}".encode('utf-8'))
                 
                 return
@@ -138,12 +150,15 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                     plugin_name = parts[2]
                     endpoint = parts[3] if len(parts) > 3 else 'data'
                     
+                    logger.info(f"Handling API request for plugin: {plugin_name}, endpoint: {endpoint}")
+                    
                     # Look for the plugin module
                     try:
                         plugin_path = get_plugin_path(plugin_name)
                         main_py = plugin_path / 'main.py'
                         
                         if main_py.exists():
+                            logger.debug(f"Found plugin module at: {main_py}")
                             # Import the plugin module
                             spec = importlib.util.spec_from_file_location(f"plugin_{plugin_name}", main_py)
                             plugin_module = importlib.util.module_from_spec(spec)
@@ -152,6 +167,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                             # Find the API handler function
                             handler_name = f"api_{endpoint}"
                             if hasattr(plugin_module, handler_name):
+                                logger.debug(f"Found handler: {handler_name}")
                                 handler = getattr(plugin_module, handler_name)
                                 result = handler()
                                 
@@ -159,6 +175,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                                 self.send_header('Content-type', 'application/json')
                                 self.end_headers()
                                 self.wfile.write(json.dumps(result).encode('utf-8'))
+                                logger.info(f"Successfully handled API request for {plugin_name}/{endpoint}")
                                 return
                         
                         # If we get here, the handler wasn't found
@@ -173,6 +190,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                     
                     except Exception as e:
                         logger.error(f"Error handling plugin API request: {e}")
+                        logger.debug(f"API error traceback: {traceback.format_exc()}")
                         self.send_response(500)
                         self.send_header('Content-type', 'application/json')
                         self.end_headers()
@@ -185,6 +203,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             try:
                 # Map URL path to file system path
                 file_path = self.map_path_to_file(path)
+                logger.debug(f"Mapping path {path} to file: {file_path}")
                 
                 if not file_path.exists() or not file_path.is_file():
                     logger.warning(f"File not found: {path}")
@@ -198,6 +217,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 mimetype, _ = mimetypes.guess_type(str(file_path))
                 if mimetype is None:
                     mimetype = 'application/octet-stream'
+                logger.debug(f"Serving file {file_path} with MIME type: {mimetype}")
                 
                 # Send the file
                 self.send_response(200)
@@ -206,9 +226,11 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 
                 with open(file_path, 'rb') as f:
                     self.wfile.write(f.read())
+                logger.info(f"Successfully served file: {path}")
                     
             except Exception as e:
                 logger.error(f"Error serving file: {e}")
+                logger.debug(f"File serving error traceback: {traceback.format_exc()}")
                 self.send_response(500)
                 self.send_header('Content-type', 'text/plain')
                 self.end_headers()
@@ -216,6 +238,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
 
         except Exception as e:
             logger.error(f"Error handling GET request: {e}")
+            logger.debug(f"Request handling error traceback: {traceback.format_exc()}")
             self.send_response(500)
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
@@ -233,14 +256,19 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 plugin_name = parts[1]
                 resource = '/'.join(parts[2:])
                 plugin_path = get_plugin_path(plugin_name)
+                logger.debug(f"Mapping plugin resource: {path} -> {plugin_path / resource}")
                 return plugin_path / resource
         
         # For static files (including favicon)
         if path.startswith('static/'):
-            return Path(self.root_dir) / 'backend' / path
+            file_path = Path(self.root_dir) / 'backend' / path
+            logger.debug(f"Mapping static file: {path} -> {file_path}")
+            return file_path
         
         # For everything else, map to the templates directory
-        return Path(self.root_dir) / 'backend' / 'templates' / path
+        file_path = Path(self.root_dir) / 'backend' / 'templates' / path
+        logger.debug(f"Mapping template file: {path} -> {file_path}")
+        return file_path
     
     def log_message(self, format, *args):
         """Log messages to our logger instead of stderr"""
