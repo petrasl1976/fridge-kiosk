@@ -17,6 +17,8 @@ import mimetypes
 import jinja2
 import traceback
 import datetime
+import google.oauth2.credentials
+import google_auth_oauthlib.flow
 
 # Add parent directory to sys.path to make imports work after moving to backend/
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -46,6 +48,35 @@ def strftime(dt, format_str):
 template_env.filters['datetime_fromtimestamp'] = datetime_fromtimestamp
 template_env.filters['strftime'] = strftime
 
+# Google OAuth configuration
+SCOPES = [
+    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/photoslibrary.readonly'
+]
+
+def credentials_to_dict(credentials):
+    """Convert Google Credentials object to a dictionary."""
+    return {
+        'token': credentials.token,
+        'refresh_token': credentials.refresh_token,
+        'token_uri': credentials.token_uri,
+        'client_id': credentials.client_id,
+        'client_secret': credentials.client_secret,
+        'scopes': credentials.scopes
+    }
+
+def get_credentials():
+    """Get valid credentials from token.json or return None."""
+    token_path = os.path.join(parent_dir, 'config', 'token.json')
+    if os.path.exists(token_path):
+        try:
+            with open(token_path, 'r') as token_file:
+                token_data = json.load(token_file)
+                return google.oauth2.credentials.Credentials(**token_data)
+        except Exception as e:
+            logger.error(f"Error loading credentials: {e}")
+    return None
+
 class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
     """Custom HTTP request handler for the kiosk"""
     
@@ -57,9 +88,19 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
     
     def do_GET(self):
         """Handle GET requests"""
-        # Parse the URL
-        parsed_url = urlparse(self.path)
-        path = parsed_url.path
+        try:
+            # Parse URL path and query parameters
+            parsed_path = urlparse(self.path)
+            path = parsed_path.path
+            query = parse_qs(parsed_path.query)
+
+            # OAuth routes
+            if path == '/authorize':
+                self.handle_authorize()
+                return
+            elif path == '/oauth2callback':
+                self.handle_oauth2callback()
+                return
         
         # Route for the main page
         if path == '/' or path == '/index.html':
@@ -75,7 +116,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                     plugins=self.plugins
                 )
                 self.wfile.write(html.encode('utf-8'))
-                logger.info("Main page rendered successfully")
+                    logger.info("Main page rendered successfully")
             except Exception as e:
                 logger.error(f"Error rendering template: {e}")
                 self.wfile.write(f"Error: {str(e)}".encode('utf-8'))
@@ -113,7 +154,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                             return
                     
                     # If we get here, the handler wasn't found
-                    logger.warning(f"Plugin API endpoint not found: {path}")
+                        logger.warning(f"Plugin API endpoint not found: {path}")
                     self.send_response(404)
                     self.send_header('Content-type', 'application/json')
                     self.end_headers()
@@ -138,7 +179,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             file_path = self.map_path_to_file(path)
             
             if not file_path.exists() or not file_path.is_file():
-                logger.warning(f"File not found: {path}")
+                    logger.warning(f"File not found: {path}")
                 self.send_response(404)
                 self.send_header('Content-type', 'text/plain')
                 self.end_headers()
@@ -160,6 +201,12 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 
         except Exception as e:
             logger.error(f"Error serving file: {e}")
+                self.send_response(500)
+                self.send_header('Content-type', 'text/plain')
+                self.end_headers()
+                self.wfile.write(f"Internal server error: {str(e)}".encode('utf-8'))
+        except Exception as e:
+            logger.error(f"Error handling GET request: {e}")
             self.send_response(500)
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
@@ -191,6 +238,76 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         logger.info("%s - %s",
                     self.address_string(),
                     format % args)
+
+    def handle_authorize(self):
+        """Handle /authorize route for Google OAuth."""
+        client_secret_path = os.path.join(parent_dir, 'config', 'client_secret.json')
+        if not os.path.exists(client_secret_path):
+            self.send_error(500, "client_secret.json not found")
+            return
+
+        flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+            client_secret_path, 
+            scopes=SCOPES
+        )
+        flow.redirect_uri = f'http://localhost:{self.server.server_port}/oauth2callback'
+        authorization_url, state = flow.authorization_url(
+            access_type='offline',
+            prompt='consent'
+        )
+        
+        # Store state in a temporary file since we don't have sessions
+        with open(os.path.join(parent_dir, 'config', '.oauth_state'), 'w') as f:
+            f.write(state)
+
+        self.send_response(302)
+        self.send_header('Location', authorization_url)
+        self.end_headers()
+
+    def handle_oauth2callback(self):
+        """Handle /oauth2callback route for Google OAuth."""
+        try:
+            # Get state from temporary file
+            state_path = os.path.join(parent_dir, 'config', '.oauth_state')
+            if not os.path.exists(state_path):
+                self.send_error(400, "No state found")
+                return
+
+            with open(state_path, 'r') as f:
+                state = f.read().strip()
+            os.remove(state_path)  # Clean up
+
+            client_secret_path = os.path.join(parent_dir, 'config', 'client_secret.json')
+            flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+                client_secret_path,
+                scopes=SCOPES,
+                state=state
+            )
+            flow.redirect_uri = f'http://localhost:{self.server.server_port}/oauth2callback'
+            
+            # Get authorization response URL
+            authorization_response = f'http://localhost:{self.server.server_port}{self.path}'
+            flow.fetch_token(authorization_response=authorization_response)
+            
+            credentials = flow.credentials
+            if not credentials.refresh_token:
+                self.send_error(400, "No refresh token received")
+                return
+
+            # Save credentials
+            token_path = os.path.join(parent_dir, 'config', 'token.json')
+            os.makedirs(os.path.dirname(token_path), exist_ok=True)
+            with open(token_path, 'w') as f:
+                json.dump(credentials_to_dict(credentials), f)
+
+            # Redirect to success page
+            self.send_response(302)
+            self.send_header('Location', '/')
+            self.end_headers()
+
+        except Exception as e:
+            logger.error(f"OAuth callback error: {e}")
+            self.send_error(500, str(e))
 
 
 def load_plugins(config):
