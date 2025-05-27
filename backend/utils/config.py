@@ -60,7 +60,7 @@ def load_config():
                     "theme": "dark",
                     "orientation": "landscape",
                     "fontFamily": "Courier New, monospace",
-                    "logLevel": "info"
+                    "logging": "info"
                 },
                 "enabledPlugins": ["sensors", "date-time"]
             }
@@ -153,7 +153,7 @@ def get_plugin_log_level(plugin_name, config):
         logger.error(f"Error reading plugin config for {plugin_name}: {e}")
     
     # Fall back to system-wide log level
-    return getattr(logging, config.get('system', {}).get('logLevel', 'INFO').upper(), logging.INFO)
+    return getattr(logging, config.get('system', {}).get('logging', 'INFO').upper(), logging.INFO)
 
 def setup_logging(config=None):
     """Set up logging configuration for the entire application"""
@@ -162,7 +162,7 @@ def setup_logging(config=None):
     logs_dir.mkdir(exist_ok=True)
     
     # Get system-wide log level from config or default to INFO
-    system_log_level = getattr(logging, config.get('system', {}).get('logLevel', 'INFO').upper(), logging.INFO)
+    system_log_level = getattr(logging, config.get('system', {}).get('logging', 'INFO').upper(), logging.INFO)
     
     # Configure root logger
     root_logger = logging.getLogger()

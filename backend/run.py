@@ -498,8 +498,8 @@ def main():
     config = load_config()
     
     # Configure logging level from config
-    if 'logLevel' in config.get('system', {}):
-        log_level = getattr(logging, config['system']['logLevel'].upper(), logging.INFO)
+    if 'logging' in config.get('system', {}):
+        log_level = getattr(logging, config['system']['logging'].upper(), logging.INFO)
         logger.setLevel(log_level)
     
     # Load plugins
