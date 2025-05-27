@@ -10,7 +10,25 @@ import subprocess
 from pathlib import Path
 import logging
 
+# Create a custom logger
 logger = logging.getLogger(__name__)
+
+# Load config to get logging level
+config_path = Path(__file__).parent / "config.json"
+try:
+    with open(config_path) as f:
+        config = json.load(f)
+        log_level = config.get('logging', 'DEBUG')
+        if log_level == 'OFF':
+            logger.setLevel(logging.CRITICAL)  # Only show critical errors
+        else:
+            logger.setLevel(getattr(logging, log_level))
+except Exception as e:
+    logger.setLevel(logging.DEBUG)  # Default to DEBUG if config can't be loaded
+    logger.error(f"Could not load logging config: {e}")
+
+# Force a log message to verify logging is working
+logger.info("Sensors Plugin Loaded")
 
 # Plugin info
 PLUGIN_NAME = "sensors"
