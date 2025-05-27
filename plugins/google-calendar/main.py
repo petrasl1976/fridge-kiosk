@@ -46,7 +46,7 @@ def get_event_color(summary):
 def format_time(datetime_str):
     """Format time from ISO format to HH:MM format"""
     if isinstance(datetime_str, str):
-    dt = datetime.datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+        dt = datetime.datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
     else:
         dt = datetime_str
     return dt.strftime("%H:%M")

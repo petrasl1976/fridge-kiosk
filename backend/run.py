@@ -21,6 +21,9 @@ import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import urllib.parse
 
+# Allow OAuth2 over HTTP for development
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
 # Add parent directory to sys.path to make imports work after moving to backend/
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
