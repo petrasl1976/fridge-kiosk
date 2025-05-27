@@ -369,19 +369,28 @@ def load_plugins(config):
     plugins = {}
     enabled_plugins = config.get('enabledPlugins', [])
     
+    # Get system-wide log level
+    system_log_level = config.get('system', {}).get('logging', 'INFO').upper()
+    if system_log_level == 'OFF':
+        system_log_level = logging.CRITICAL + 1  # Effectively disables logging
+    else:
+        system_log_level = getattr(logging, system_log_level, logging.INFO)
+    
     # Get orientation from system config for position selection
     orientation = config.get('system', {}).get('orientation', 'landscape')
-    logger.info(f"System orientation: {orientation}")
-    
-    logger.info(f"Enabled plugins: {enabled_plugins}")
+    if system_log_level <= logging.CRITICAL:
+        logger.info(f"System orientation: {orientation}")
+        logger.info(f"Enabled plugins: {enabled_plugins}")
     
     # Loop through all enabled plugins
     for plugin_name in enabled_plugins:
-        logger.info(f"Configuring: {plugin_name}")
+        if system_log_level <= logging.CRITICAL:
+            logger.info(f"Configuring: {plugin_name}")
         plugin_path = get_plugin_path(plugin_name)
         
         if not os.path.exists(plugin_path):
-            logger.error(f"Plugin directory not found: {plugin_path}")
+            if system_log_level <= logging.CRITICAL:
+                logger.error(f"Plugin directory not found: {plugin_path}")
             continue
         
         # Load plugin's own config file
@@ -394,18 +403,22 @@ def load_plugins(config):
                     plugin_config = json.load(f)
                     # Report logging level
                     log_level = plugin_config.get('logging', 'INFO')
-                    logger.info(f"{plugin_name} - Logging level: {log_level}")
+                    if system_log_level <= logging.CRITICAL:
+                        logger.info(f"{plugin_name} - Logging level: {log_level}")
             except Exception as e:
-                logger.error(f"Error loading plugin config: {e}")
+                if system_log_level <= logging.CRITICAL:
+                    logger.error(f"Error loading plugin config: {e}")
         
         # Ensure plugin has its own data directory
         plugin_data_dir = os.path.join(plugin_path, 'data')
         if not os.path.exists(plugin_data_dir):
             try:
                 os.makedirs(plugin_data_dir, exist_ok=True)
-                logger.debug(f"Created data directory for plugin: {plugin_data_dir}")
+                if system_log_level <= logging.CRITICAL:
+                    logger.debug(f"Created data directory for plugin: {plugin_data_dir}")
             except Exception as e:
-                logger.error(f"Failed to create data directory for plugin {plugin_name}: {e}")
+                if system_log_level <= logging.CRITICAL:
+                    logger.error(f"Failed to create data directory for plugin {plugin_name}: {e}")
         
         # Get the position configuration based on orientation
         position = {}
@@ -413,15 +426,19 @@ def load_plugins(config):
             # If plugin has orientation-specific positions
             if orientation in plugin_config['position']:
                 position = plugin_config['position'][orientation]
-                logger.info(f"{plugin_name} - Position: {position}")
+                if system_log_level <= logging.CRITICAL:
+                    logger.info(f"{plugin_name} - Position: {position}")
             # If it has a general position setting
             elif isinstance(plugin_config['position'], dict) and not ('landscape' in plugin_config['position'] or 'portrait' in plugin_config['position']):
                 position = plugin_config['position']
-                logger.info(f"{plugin_name} - Position: {position}")
+                if system_log_level <= logging.CRITICAL:
+                    logger.info(f"{plugin_name} - Position: {position}")
             else:
-                logger.warning(f"Position config for {plugin_name} does not match expected format: {plugin_config['position']}")
+                if system_log_level <= logging.CRITICAL:
+                    logger.warning(f"Position config for {plugin_name} does not match expected format: {plugin_config['position']}")
         else:
-            logger.warning(f"No position key found in config for plugin {plugin_name}")
+            if system_log_level <= logging.CRITICAL:
+                logger.warning(f"No position key found in config for plugin {plugin_name}")
         
         # Default fallback if no position found
         if not position:
@@ -431,11 +448,13 @@ def load_plugins(config):
                 'width': '100%',
                 'height': '100%'
             }
-            logger.warning(f"No position config found for plugin {plugin_name}, using defaults: {position}")
+            if system_log_level <= logging.CRITICAL:
+                logger.warning(f"No position config found for plugin {plugin_name}, using defaults: {position}")
         
         # Set z_index based on plugin's position in the enabledPlugins array (starting from 1)
         position['z_index'] = enabled_plugins.index(plugin_name) + 1
-        logger.info(f"{plugin_name} - z_index: {position['z_index']}")
+        if system_log_level <= logging.CRITICAL:
+            logger.info(f"{plugin_name} - z_index: {position['z_index']}")
         
         # Try to call init(config) if it exists
         plugin_data = {}
@@ -449,7 +468,8 @@ def load_plugins(config):
                 if hasattr(plugin_module, 'init'):
                     plugin_data = plugin_module.init(plugin_config).get('data', {})
             except Exception as e:
-                logger.error(f"Error calling init() for plugin {plugin_name}: {e}")
+                if system_log_level <= logging.CRITICAL:
+                    logger.error(f"Error calling init() for plugin {plugin_name}: {e}")
 
         plugin_info = {
             'name': plugin_name,
@@ -478,7 +498,8 @@ def load_plugins(config):
                         plugin=plugin_info
                     )
             except Exception as e:
-                logger.error(f"Error reading or rendering plugin view for '{plugin_name}': {e}")
+                if system_log_level <= logging.CRITICAL:
+                    logger.error(f"Error reading or rendering plugin view for '{plugin_name}': {e}")
                 plugin_info['view_content'] = f"<div style='color:red;'>Error rendering {plugin_name} view: {e}</div>"
         
         if os.path.exists(script_path):
@@ -488,7 +509,8 @@ def load_plugins(config):
             plugin_info['style'] = 'static/style.css'
         
         plugins[plugin_name] = plugin_info
-        logger.info(f"{plugin_name} - Loaded successfully")
+        if system_log_level <= logging.CRITICAL:
+            logger.info(f"{plugin_name} - Loaded successfully")
     
     return plugins
 
@@ -510,9 +532,15 @@ def main():
     config = load_config()
     
     # Configure logging level from config
-    if 'logging' in config.get('system', {}):
-        log_level = getattr(logging, config['system']['logging'].upper(), logging.INFO)
-        logger.setLevel(log_level)
+    system_log_level = config.get('system', {}).get('logging', 'INFO').upper()
+    if system_log_level == 'OFF':
+        system_log_level = logging.CRITICAL + 1  # Effectively disables logging
+    else:
+        system_log_level = getattr(logging, system_log_level, logging.INFO)
+    
+    # Set up logging with the configured level
+    logger = setup_logging(config)
+    logger.setLevel(system_log_level)
     
     # Load plugins
     plugins = load_plugins(config)
@@ -530,13 +558,16 @@ def main():
     server_address = ('', args.port)
     httpd = HTTPServer(server_address, handler)
     
-    logger.info(f"Server started on port {args.port}")
-    logger.info(f"Open http://localhost:{args.port} in your browser")
+    # Only log if logging is not OFF
+    if system_log_level <= logging.CRITICAL:
+        logger.info(f"Server started on port {args.port}")
+        logger.info(f"Open http://localhost:{args.port} in your browser")
     
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        logger.info("Server stopped by user")
+        if system_log_level <= logging.CRITICAL:
+            logger.info("Server stopped by user")
         httpd.server_close()
         sys.exit(0)
 
