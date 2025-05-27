@@ -1,5 +1,5 @@
 {
-    "logging": "INFO",
+    "logging": "OFF",
     "position": {
         "landscape": {
             "top": "15%",
