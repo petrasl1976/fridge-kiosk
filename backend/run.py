@@ -380,6 +380,9 @@ def load_plugins(config):
             try:
                 with open(plugin_config_path, 'r') as f:
                     plugin_config = json.load(f)
+                    # Report logging level
+                    log_level = plugin_config.get('logging', 'INFO')
+                    logger.info(f"{plugin_name} - Logging level: {log_level}")
             except Exception as e:
                 logger.error(f"Error loading plugin config: {e}")
         
