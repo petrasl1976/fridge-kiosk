@@ -95,6 +95,24 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         self.root_dir = parent_dir
         super().__init__(*args, **kwargs)
     
+    def log_message(self, format, *args):
+        """Override the default logging to respect our logging configuration"""
+        # Only log if logging is not OFF
+        system_log_level = self.config.get('system', {}).get('logging', 'INFO').upper()
+        if system_log_level != 'OFF':
+            logger.info("%s - %s",
+                        self.address_string(),
+                        format % args)
+    
+    def log_error(self, format, *args):
+        """Override error logging to respect our logging configuration"""
+        # Only log if logging is not OFF
+        system_log_level = self.config.get('system', {}).get('logging', 'INFO').upper()
+        if system_log_level != 'OFF':
+            logger.error("%s - %s",
+                        self.address_string(),
+                        format % args)
+    
     def do_GET(self):
         """Handle GET requests"""
         try:
@@ -270,12 +288,6 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         logger.debug(f"Mapping template file: {path} -> {file_path}")
         return file_path
     
-    def log_message(self, format, *args):
-        """Log messages to our logger instead of stderr"""
-        logger.info("%s - %s",
-                    self.address_string(),
-                    format % args)
-
     def handle_authorize(self):
         """Handle /authorize route for Google OAuth."""
         client_secret_path = os.path.join(parent_dir, 'config', 'client_secret.json')
