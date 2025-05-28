@@ -98,12 +98,12 @@
 
 .photo-filename {
     position: absolute;
-    top: 1.6em; /* Position below the album name, relative to new font size */
+    top: 1.6em;
     left: 0;
     width: 100%;
     text-align: left;
     color: #eee;
-    font-size: 2em;
+    font-size: 1.3em;
     font-weight: normal;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
     padding: 0.1em 0.5em 0 0.5em;
