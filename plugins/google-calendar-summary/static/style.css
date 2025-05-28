@@ -7,7 +7,7 @@
     min-height: 300px;
     display: flex;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 1);
-    background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%);
+    background: transparent !important;
     overflow: hidden;
 }
 
