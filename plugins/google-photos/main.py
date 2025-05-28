@@ -129,13 +129,14 @@ def list_media_items_in_album(album_id):
     if not service:
         logger.error("No valid service session for listing media items")
         return []
-    
+
     try:
-        results = service.mediaItems().list(
-            pageSize=100,
-            albumId=album_id
-        ).execute()
-        
+        # Use the 'search' method, not 'list', and provide albumId in the body
+        body = {
+            "albumId": album_id,
+            "pageSize": 100
+        }
+        results = service.mediaItems().search(body=body).execute()
         media_items = results.get('mediaItems', [])
         logger.info(f"Found {len(media_items)} media items in album {album_id}")
         logger.debug(f"Media items response: {json.dumps(results, indent=2)}")
