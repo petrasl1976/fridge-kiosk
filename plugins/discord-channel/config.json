@@ -10,7 +10,7 @@
       "top": "17%",
       "left": "0%",
       "width": "65%",
-      "height": "43%"
+      "height": "auto"
     }
   },
   "updateInterval": 60,
