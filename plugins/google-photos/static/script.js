@@ -47,6 +47,25 @@ function showMedia(mediaItem) {
         return;
     }
 
+    // --- Add album and file name info above the photo ---
+    // Album name (top line)
+    const albumDiv = document.createElement('div');
+    albumDiv.className = 'photo-album';
+    albumDiv.textContent = mediaItem.album && mediaItem.album.title ? mediaItem.album.title : '';
+    container.appendChild(albumDiv);
+
+    // File name (second line, without extension)
+    const fileDiv = document.createElement('div');
+    fileDiv.className = 'photo-filename';
+    if (mediaItem.filename) {
+        const baseName = mediaItem.filename.replace(/\.[^/.]+$/, '');
+        fileDiv.textContent = baseName;
+    } else {
+        fileDiv.textContent = '';
+    }
+    container.appendChild(fileDiv);
+    // --- End info lines ---
+
     console.log('[Google Photos] Processing media item:', {
         filename: mediaItem.filename,
         mimeType: mediaItem.mimeType,
@@ -120,12 +139,6 @@ function showMedia(mediaItem) {
         mediaElement.classList.add('loaded');
         startProgressBar();
     }
-
-    // Show album title
-    const infoDiv = document.createElement('div');
-    infoDiv.className = 'photo-info';
-    infoDiv.textContent = currentAlbum;
-    container.appendChild(infoDiv);
 }
 
 function nextMedia() {
