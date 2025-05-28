@@ -247,11 +247,11 @@ def init(config):
         credentials = get_credentials()
         if not credentials:
             logger.error("Failed to initialize: No valid credentials found")
-            return False
+            return {'data': {}, 'error': 'No valid credentials found'}
         
         logger.info("Google Photos plugin initialized successfully")
-        return True
+        return {'data': {}}
     except Exception as e:
         logger.error(f"Error initializing plugin: {e}")
         logger.debug(f"Init error traceback: {traceback.format_exc()}")
-        return False 
+        return {'data': {}, 'error': str(e)} 
