@@ -10,7 +10,7 @@
         "video_sound": false,
         "batch_size": 5,
         "cache_expiration": 2592000,
-        "label_font_size": "1.3em"
+        "label_font_size": "2em"
     },
     "position": {
         "landscape": {
