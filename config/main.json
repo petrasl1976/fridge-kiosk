@@ -9,12 +9,12 @@
   },
   "enabledPlugins": [
     "google-photos",
+    "discord-channel",
     "google-calendar",
     "google-calendar-summary",
-    "sensors",
     "date-time",
-    "weather-forecast",
-    "discord-channel"
+    "sensors",
+    "weather-forecast"
   ],
   "userColors": {
     "PE": "#4d26f0",
