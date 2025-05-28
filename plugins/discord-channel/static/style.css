@@ -4,7 +4,7 @@
   overflow: hidden;
   font-size: 1.2em;
   color: #fff;
-  background: transparent;
+  background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%);
   text-shadow: 2px 2px 4px rgba(0,0,0,1);
   padding: 10px;
   /* Optional: add a subtle border or shadow for separation */
