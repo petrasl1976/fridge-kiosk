@@ -90,9 +90,12 @@ def get_photos_session():
     if not credentials:
         logger.error("No valid credentials found")
         return None
-    
+
     try:
-        service = build('photoslibrary', 'v1', credentials=credentials)
+        service = build(
+            'photoslibrary', 'v1', credentials=credentials,
+            discoveryServiceUrl='https://photoslibrary.googleapis.com/$discovery/rest?version=v1'
+        )
         logger.debug("Successfully created Photos API service")
         return service
     except Exception as e:
