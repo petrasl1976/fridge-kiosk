@@ -4,7 +4,7 @@
   overflow: hidden;
   font-size: 1.2em;
   color: #fff;
-  background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%);
+  background: transparent !important;
   text-shadow: 2px 2px 4px rgba(0,0,0,1);
   padding: 10px;
   /* Optional: add a subtle border or shadow for separation */
@@ -38,7 +38,7 @@
 .discord-image-container {
   margin-top: 5px;
   max-width: 100%;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: transparent !important;
   border-radius: 5px;
   padding: 2px;
   text-align: left;
