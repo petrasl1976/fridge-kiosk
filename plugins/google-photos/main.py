@@ -104,18 +104,26 @@ def get_photos_session():
         return None
 
 def list_albums():
-    """List all albums in the user's Google Photos library."""
-    logger.debug("Attempting to list albums")
+    """List all albums in the user's Google Photos library, with caching."""
+    logger.debug("Attempting to list albums (with cache)")
+    # Try to load from cache first
+    cache = load_cache()
+    if cache and 'albums' in cache:
+        logger.info(f"Using cached album list with {len(cache['albums'])} albums")
+        return cache['albums']
+
+    # If not cached, fetch from API
     service = get_photos_session()
     if not service:
         logger.error("No valid service session for listing albums")
         return []
-    
     try:
         results = service.albums().list(pageSize=50).execute()
         albums = results.get('albums', [])
-        logger.info(f"Found {len(albums)} albums")
+        logger.info(f"Found {len(albums)} albums (from API)")
         logger.debug(f"Album list response: {json.dumps(results, indent=2)}")
+        # Save to cache
+        save_cache({'albums': albums})
         return albums
     except HttpError as error:
         logger.error(f"Error listing albums: {error}")
