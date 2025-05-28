@@ -4,6 +4,7 @@ import logging
 import random
 import requests
 import time
+import traceback
 from google.oauth2.credentials import Credentials
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -52,21 +53,39 @@ def save_cache(cache_data):
 def get_credentials():
     """Get valid credentials from token.json or return None."""
     token_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config', 'token.json')
+    logger.debug(f"Looking for token.json at: {token_path}")
+    
     if os.path.exists(token_path):
         try:
             with open(token_path, 'r') as token_file:
                 token_data = json.load(token_file)
-                logger.debug("Successfully loaded token.json")
-                return Credentials(**token_data)
+                logger.debug(f"Successfully loaded token.json with keys: {list(token_data.keys())}")
+                credentials = Credentials(**token_data)
+                
+                # Check if credentials are valid
+                if credentials.expired:
+                    logger.warning("Credentials are expired")
+                    if credentials.refresh_token:
+                        logger.info("Attempting to refresh credentials")
+                        credentials.refresh(None)
+                        logger.info("Credentials refreshed successfully")
+                    else:
+                        logger.error("No refresh token available")
+                        return None
+                
+                logger.info("Credentials loaded and validated successfully")
+                return credentials
         except Exception as e:
             logger.error(f"Error loading credentials: {e}")
             logger.debug(f"Token file path: {token_path}")
+            logger.debug(f"Error traceback: {traceback.format_exc()}")
     else:
         logger.warning(f"token.json not found at {token_path}")
     return None
 
 def get_photos_session():
     """Get a Google Photos API session."""
+    logger.debug("Attempting to get photos session")
     credentials = get_credentials()
     if not credentials:
         logger.error("No valid credentials found")
@@ -78,12 +97,15 @@ def get_photos_session():
         return service
     except Exception as e:
         logger.error(f"Error creating Photos API service: {e}")
+        logger.debug(f"Error traceback: {traceback.format_exc()}")
         return None
 
 def list_albums():
     """List all albums in the user's Google Photos library."""
+    logger.debug("Attempting to list albums")
     service = get_photos_session()
     if not service:
+        logger.error("No valid service session for listing albums")
         return []
     
     try:
@@ -94,12 +116,15 @@ def list_albums():
         return albums
     except HttpError as error:
         logger.error(f"Error listing albums: {error}")
+        logger.debug(f"Error traceback: {traceback.format_exc()}")
         return []
 
 def list_media_items_in_album(album_id):
     """List all media items in a specific album."""
+    logger.debug(f"Attempting to list media items in album {album_id}")
     service = get_photos_session()
     if not service:
+        logger.error("No valid service session for listing media items")
         return []
     
     try:
@@ -114,17 +139,14 @@ def list_media_items_in_album(album_id):
         return media_items
     except HttpError as error:
         logger.error(f"Error listing media items: {error}")
+        logger.debug(f"Error traceback: {traceback.format_exc()}")
         return []
 
 def get_random_photo_batch():
-    # Demonstration of all log levels
-    logger.debug("DEBUG: This is a debug message from google-photos plugin.")
-    logger.info("INFO: This is an info message from google-photos plugin.")
-    logger.warning("WARNING: This is a warning message from google-photos plugin.")
-    logger.error("ERROR: This is an error message from google-photos plugin.")
-    logger.critical("CRITICAL: This is a critical message from google-photos plugin.")
+    logger.debug("Starting get_random_photo_batch")
     service = get_photos_session()
     if not service:
+        logger.error("No valid service session for getting photo batch")
         return []
     
     try:
@@ -176,6 +198,7 @@ def get_random_photo_batch():
                 'id': album['id'],
                 'title': album['title']
             }
+            logger.debug(f"Added album info to photo: {photo.get('filename', 'unknown')}")
         
         return selected_photos
     
@@ -186,6 +209,7 @@ def get_random_photo_batch():
 
 def api_data():
     """API endpoint for getting photo data."""
+    logger.debug("Starting api_data endpoint")
     try:
         photos = get_random_photo_batch()
         if not photos:
@@ -193,6 +217,7 @@ def api_data():
             return {'error': 'No photos available'}
         
         logger.info(f"Returning {len(photos)} photos")
+        logger.debug(f"Returning photos: {json.dumps(photos, indent=2)}")
         return {'media': photos}
     except Exception as e:
         logger.error(f"Error in api_data: {e}")
@@ -200,13 +225,29 @@ def api_data():
         return {'error': str(e)}
 
 def init(config):
-    # Set logger level from config
-    log_level = config.get('logging', 'INFO').upper()
-    if log_level == 'OFF':
-        logger.setLevel(logging.CRITICAL + 1)
-    else:
-        logger.setLevel(getattr(logging, log_level, logging.INFO))
-    logger.info(f"Logger level set to {logger.level} ({log_level})")
-    logger.debug(f"Config: {json.dumps(config, indent=2)}")
-    ensure_cache_dir()
-    return {"data": {}} 
+    """Initialize the plugin with configuration."""
+    logger.debug("Initializing Google Photos plugin")
+    try:
+        # Set logger level from config
+        log_level = config.get('logging', 'INFO')
+        logger.setLevel(getattr(logging, log_level))
+        logger.info(f"Logger level set to {logger.level} ({log_level})")
+        
+        # Log the full config
+        logger.debug(f"Config: {json.dumps(config, indent=2)}")
+        
+        # Initialize cache directory
+        ensure_cache_dir()
+        
+        # Test credentials
+        credentials = get_credentials()
+        if not credentials:
+            logger.error("Failed to initialize: No valid credentials found")
+            return False
+        
+        logger.info("Google Photos plugin initialized successfully")
+        return True
+    except Exception as e:
+        logger.error(f"Error initializing plugin: {e}")
+        logger.debug(f"Init error traceback: {traceback.format_exc()}")
+        return False 
