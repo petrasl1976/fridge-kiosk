@@ -9,7 +9,8 @@
         "media_types": "all",
         "video_sound": false,
         "batch_size": 5,
-        "cache_expiration": 2592000
+        "cache_expiration": 2592000,
+        "label_font_size": "1.3em"
     },
     "position": {
         "landscape": {

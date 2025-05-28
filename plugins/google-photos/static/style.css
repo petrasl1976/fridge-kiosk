@@ -88,8 +88,6 @@
     width: 100%;
     text-align: left;
     color: #fff;
-    font-size: 1.3em;
-    font-weight: bold;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     padding: 0.3em 0.5em 0 0.5em;
     background: transparent;
@@ -103,7 +101,6 @@
     width: 100%;
     text-align: left;
     color: #eee;
-    font-size: 1.3em;
     font-weight: normal;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
     padding: 0.1em 0.5em 0 0.5em;

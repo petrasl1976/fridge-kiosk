@@ -38,6 +38,12 @@ function showMedia(mediaItem) {
         return;
     }
 
+    // Get font size from plugin config
+    let fontSize = '1.3em';
+    try {
+        fontSize = window.PLUGINS?.['google-photos']?.config?.settings?.label_font_size || fontSize;
+    } catch (e) { /* fallback to default */ }
+
     // Clear previous content
     container.innerHTML = '';
 
@@ -52,6 +58,7 @@ function showMedia(mediaItem) {
     const albumDiv = document.createElement('div');
     albumDiv.className = 'photo-album';
     albumDiv.textContent = mediaItem.album && mediaItem.album.title ? mediaItem.album.title : '';
+    albumDiv.style.fontSize = fontSize;
     container.appendChild(albumDiv);
 
     // File name (second line, without extension)
@@ -63,6 +70,7 @@ function showMedia(mediaItem) {
     } else {
         fileDiv.textContent = '';
     }
+    fileDiv.style.fontSize = fontSize;
     container.appendChild(fileDiv);
     // --- End info lines ---
 
