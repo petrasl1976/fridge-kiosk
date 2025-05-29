@@ -31,6 +31,12 @@ function startProgressBar() {
 }
 
 function showMedia(mediaItem) {
+    // Always define fontSize at the start
+    let fontSize = '1.3em';
+    try {
+        fontSize = window.PLUGINS?.['google-photos']?.config?.settings?.label_font_size || fontSize;
+    } catch (e) { /* fallback to default */ }
+
     console.log('[Google Photos] Starting showMedia function');
     const container = document.getElementById('photo-container');
     if (!container) {
@@ -52,6 +58,7 @@ function showMedia(mediaItem) {
     const albumDiv = document.createElement('div');
     albumDiv.className = 'photo-album';
     albumDiv.textContent = mediaItem.album && mediaItem.album.title ? mediaItem.album.title : '';
+    albumDiv.style.fontSize = fontSize;
     container.appendChild(albumDiv);
 
     // File time (second line, when it was taken)
