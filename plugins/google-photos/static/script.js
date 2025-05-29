@@ -75,7 +75,12 @@ function showMedia(mediaItem) {
         const min = String(date.getMinutes()).padStart(2, '0');
         takenTime = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
     }
-    fileDiv.textContent = takenTime;
+    // Show counter if present
+    let counter = '';
+    if (typeof mediaItem.sequence_remaining === 'number') {
+        counter = ` [${mediaItem.sequence_remaining}]`;
+    }
+    fileDiv.textContent = takenTime + counter;
     fileDiv.style.fontSize = fontSize;
     container.appendChild(fileDiv);
     // --- End info lines ---

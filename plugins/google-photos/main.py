@@ -160,14 +160,24 @@ def get_random_photo_batch():
     if not service:
         logger.error("No valid service session for getting photo batch")
         return []
-    
+
+    # Load sequence_count from config.json
+    config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+    sequence_count = 6
+    try:
+        with open(config_path) as f:
+            config = json.load(f)
+            sequence_count = int(config.get('settings', {}).get('sequence_count', 6))
+    except Exception as e:
+        logger.warning(f"Could not read sequence_count from config: {e}")
+
     try:
         # Get all albums
         albums = list_albums()
         if not albums:
             logger.warning("No albums found")
             return []
-        
+
         # Filter out empty albums
         non_empty_albums = []
         for album in albums:
@@ -178,42 +188,49 @@ def get_random_photo_batch():
                     logger.debug(f"Album {album['title']} has {media_count} items")
             except ValueError:
                 logger.warning(f"Invalid mediaItemsCount for album {album['title']}")
-        
+
         if not non_empty_albums:
             logger.warning("No non-empty albums found")
             return []
-        
+
         # Select a random album
         album = random.choice(non_empty_albums)
         logger.info(f"Selected album: {album['title']}")
-        
+
         # Get all media items in the album
         media_items = list_media_items_in_album(album['id'])
         if not media_items:
             logger.warning(f"No media items found in album {album['title']}")
             return []
-        
+
         # Filter for photos only (not videos)
         photos = [item for item in media_items if not item.get('mimeType', '').startswith('video/')]
         if not photos:
             logger.warning(f"No photos found in album {album['title']}")
             return []
-        
-        # Select a random batch of photos
-        batch_size = min(10, len(photos))
-        selected_photos = random.sample(photos, batch_size)
-        logger.info(f"Selected {batch_size} photos from album {album['title']}")
-        
-        # Add album information to each photo
-        for photo in selected_photos:
+
+        # Pick a random start index
+        total_photos = len(photos)
+        if total_photos == 0:
+            return []
+        start_index = random.randint(0, total_photos - 1)
+
+        # Build the sequence, wrapping around if needed
+        sequence = []
+        for i in range(sequence_count):
+            idx = (start_index + i) % total_photos
+            photo = photos[idx]
+            # Add album info
             photo['album'] = {
                 'id': album['id'],
                 'title': album['title']
             }
-            logger.debug(f"Added album info to photo: {photo.get('filename', 'unknown')}")
-        
-        return selected_photos
-    
+            # Add counter: remaining in sequence (decreasing)
+            photo['sequence_remaining'] = sequence_count - i
+            sequence.append(photo)
+
+        return sequence
+
     except Exception as e:
         logger.error(f"Error getting random photo batch: {e}")
         logger.debug(f"Error traceback: {traceback.format_exc()}")
