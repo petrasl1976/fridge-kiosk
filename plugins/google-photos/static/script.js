@@ -152,11 +152,21 @@ function showMedia(mediaItem) {
         // Portrait/landscape logic for images
         if (mediaElement.tagName === 'IMG') {
             if (mediaElement.naturalHeight > mediaElement.naturalWidth) {
-                // Portrait: full height
+                // Portrait: full height, align to top
+                mediaElement.style.position = 'absolute';
+                mediaElement.style.top = '0';
+                mediaElement.style.left = '50%';
+                mediaElement.style.bottom = '';
+                mediaElement.style.transform = 'translateX(-50%)';
                 mediaElement.style.height = '100%';
                 mediaElement.style.width = 'auto';
             } else {
-                // Landscape: full width
+                // Landscape: full width, align to bottom
+                mediaElement.style.position = 'absolute';
+                mediaElement.style.bottom = '0';
+                mediaElement.style.left = '50%';
+                mediaElement.style.top = '';
+                mediaElement.style.transform = 'translateX(-50%)';
                 mediaElement.style.width = '100%';
                 mediaElement.style.height = 'auto';
             }
