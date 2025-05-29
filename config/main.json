@@ -8,9 +8,9 @@
     "fontFamily": "'Courier Prime', 'Courier New', monospace"
   },
   "enabledPlugins": [
-    "google-photos",
     "discord-channel",
     "google-calendar",
+    "google-photos",
     "google-calendar-summary",
     "date-time",
     "sensors",
