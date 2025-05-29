@@ -38,12 +38,6 @@ function showMedia(mediaItem) {
         return;
     }
 
-    // Get font size from plugin config
-    let fontSize = '1.3em';
-    try {
-        fontSize = window.PLUGINS?.['google-photos']?.config?.settings?.label_font_size || fontSize;
-    } catch (e) { /* fallback to default */ }
-
     // Clear previous content
     container.innerHTML = '';
 
@@ -58,18 +52,23 @@ function showMedia(mediaItem) {
     const albumDiv = document.createElement('div');
     albumDiv.className = 'photo-album';
     albumDiv.textContent = mediaItem.album && mediaItem.album.title ? mediaItem.album.title : '';
-    albumDiv.style.fontSize = fontSize;
     container.appendChild(albumDiv);
 
-    // File name (second line, without extension)
+    // File time (second line, when it was taken)
     const fileDiv = document.createElement('div');
     fileDiv.className = 'photo-filename';
-    if (mediaItem.filename) {
-        const baseName = mediaItem.filename.replace(/\.[^/.]+$/, '');
-        fileDiv.textContent = baseName;
-    } else {
-        fileDiv.textContent = '';
+    let takenTime = '';
+    if (mediaItem.mediaMetadata && mediaItem.mediaMetadata.creationTime) {
+        // Format as YYYY-MM-DD HH:mm
+        const date = new Date(mediaItem.mediaMetadata.creationTime);
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        const hh = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        takenTime = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
     }
+    fileDiv.textContent = takenTime;
     fileDiv.style.fontSize = fontSize;
     container.appendChild(fileDiv);
     // --- End info lines ---
