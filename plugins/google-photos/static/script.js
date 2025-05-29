@@ -181,7 +181,14 @@ function nextMedia() {
         return;
     }
 
-    currentIndex = (currentIndex + 1) % currentBatch.length;
+    if (currentIndex + 1 >= currentBatch.length) {
+        // End of sequence: fetch a new random album and sequence
+        console.log('[Google Photos] End of sequence, fetching new random album and sequence...');
+        updatePhotoBatch();
+        return;
+    }
+
+    currentIndex = currentIndex + 1;
     console.log(`[Google Photos] Showing next media: index ${currentIndex} of ${currentBatch.length}`);
     showMedia(currentBatch[currentIndex]);
 }
