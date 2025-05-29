@@ -5,7 +5,7 @@
     "orientation": "portrait",
     "displayTimeout": 60,
     "logging": "WARNING",
-    "fontFamily": "Courier New, monospace"
+    "fontFamily": "'Courier Prime', 'Courier New', monospace"
   },
   "enabledPlugins": [
     "google-photos",
