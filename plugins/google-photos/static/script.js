@@ -91,13 +91,13 @@ function showMedia(mediaItem) {
         takenTime = mediaItem.filename.replace(/\.[^/.]+$/, '');
     }
 
-    // Info line: xxx / yyy / z qqqqqqqqqqqqqq
+    // Info line: xxx | yyy | z | qqqqqqqqqqqqqq
     let infoLine = '';
     if (typeof mediaItem.album_total_count === 'number' && typeof mediaItem.album_index === 'number' && typeof mediaItem.sequence_remaining === 'number') {
-        infoLine = `${mediaItem.album_total_count} / ${mediaItem.album_index} / ${mediaItem.sequence_remaining}`;
+        infoLine = `${mediaItem.album_total_count} | ${mediaItem.album_index} | ${mediaItem.sequence_remaining}`;
     }
     if (takenTime) {
-        infoLine += ' ' + takenTime;
+        infoLine += ` | ${takenTime}`;
     }
 
     // File time (second line, when it was taken)
