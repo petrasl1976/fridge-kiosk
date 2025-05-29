@@ -227,6 +227,9 @@ def get_random_photo_batch():
             }
             # Add counter: remaining in sequence (decreasing)
             item['sequence_remaining'] = sequence_count - i
+            # Add total count and current index (1-based)
+            item['album_total_count'] = total_media
+            item['album_index'] = idx + 1  # 1-based index
             sequence.append(item)
 
         return sequence
