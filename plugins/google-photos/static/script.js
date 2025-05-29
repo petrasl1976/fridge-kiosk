@@ -76,6 +76,21 @@ function showMedia(mediaItem) {
     albumDiv.style.fontSize = fontSize;
     container.appendChild(albumDiv);
 
+    // File time or fallback to filename
+    let takenTime = '';
+    if (mediaItem.mediaMetadata && mediaItem.mediaMetadata.creationTime) {
+        // Format as YYYY-MM-DD HH:mm
+        const date = new Date(mediaItem.mediaMetadata.creationTime);
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        const hh = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        takenTime = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+    } else if (mediaItem.filename) {
+        takenTime = mediaItem.filename.replace(/\.[^/.]+$/, '');
+    }
+
     // Info line: xxx / yyy / z qqqqqqqqqqqqqq
     let infoLine = '';
     if (typeof mediaItem.album_total_count === 'number' && typeof mediaItem.album_index === 'number' && typeof mediaItem.sequence_remaining === 'number') {
