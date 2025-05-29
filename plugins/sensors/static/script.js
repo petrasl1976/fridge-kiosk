@@ -38,11 +38,13 @@ function sensorsInit(container) {
     
     // Function to apply CPU temperature warning classes
     function applyCpuTempWarning(element, value, warning, critical) {
-        element.classList.remove('warning', 'critical');
+        element.classList.remove('normal', 'warning', 'critical');
         if (value >= critical) {
             element.classList.add('critical');
         } else if (value >= warning) {
             element.classList.add('warning');
+        } else {
+            element.classList.add('normal');
         }
     }
     
