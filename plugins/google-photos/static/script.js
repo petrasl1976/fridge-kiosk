@@ -69,10 +69,18 @@ function showMedia(mediaItem) {
     }
 
     // --- Add album and file name info above the photo ---
+    // Album line: aaa | bbb | cccccc
+    let albumLine = '';
+    if (typeof mediaItem.total_albums === 'number' && typeof mediaItem.album_number === 'number' && mediaItem.album && mediaItem.album.title) {
+        albumLine = `${mediaItem.total_albums} | ${mediaItem.album_number} | ${mediaItem.album.title}`;
+    } else if (mediaItem.album && mediaItem.album.title) {
+        albumLine = mediaItem.album.title;
+    }
+
     // Album name (top line)
     const albumDiv = document.createElement('div');
     albumDiv.className = 'photo-album';
-    albumDiv.textContent = mediaItem.album && mediaItem.album.title ? mediaItem.album.title : '';
+    albumDiv.textContent = albumLine;
     albumDiv.style.fontSize = fontSize;
     container.appendChild(albumDiv);
 

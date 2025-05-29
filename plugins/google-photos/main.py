@@ -215,6 +215,9 @@ def get_random_photo_batch():
             return []
         start_index = random.randint(0, total_media - 1)
 
+        # Add album info for album line
+        total_albums = len(non_empty_albums)
+        album_number = non_empty_albums.index(album) + 1 if album in non_empty_albums else 1
         # Build the sequence, wrapping around if needed
         sequence = []
         for i in range(sequence_count):
@@ -230,6 +233,9 @@ def get_random_photo_batch():
             # Add total count and current index (1-based)
             item['album_total_count'] = total_media
             item['album_index'] = idx + 1  # 1-based index
+            # Add album line info
+            item['total_albums'] = total_albums
+            item['album_number'] = album_number
             sequence.append(item)
 
         return sequence
