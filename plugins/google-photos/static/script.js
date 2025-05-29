@@ -143,6 +143,20 @@ function showMedia(mediaItem) {
         mediaElement.style.opacity = '1';
         mediaElement.classList.add('loaded');
         container.appendChild(mediaElement);
+
+        // Portrait/landscape logic for images
+        if (mediaElement.tagName === 'IMG') {
+            if (mediaElement.naturalHeight > mediaElement.naturalWidth) {
+                // Portrait: full height
+                mediaElement.style.height = '100%';
+                mediaElement.style.width = 'auto';
+            } else {
+                // Landscape: full width
+                mediaElement.style.width = '100%';
+                mediaElement.style.height = 'auto';
+            }
+        }
+
         startProgressBar();
     };
 
