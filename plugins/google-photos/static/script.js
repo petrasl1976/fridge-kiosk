@@ -5,9 +5,24 @@ let progressIntervalId = null;
 let retryCount = 0;
 const MAX_RETRIES = 3;
 
-function startProgressBar() {
+function startProgressBar(mediaItem) {
     if (progressIntervalId) {
         clearInterval(progressIntervalId);
+    }
+
+    // Get durations from config
+    let photoDuration = 30;
+    let videoDuration = 60;
+    try {
+        const settings = window.PLUGINS?.['google-photos']?.config?.settings || {};
+        photoDuration = parseInt(settings.photo_duration) || photoDuration;
+        videoDuration = parseInt(settings.video_duration) || videoDuration;
+    } catch (e) { /* fallback to defaults */ }
+
+    // Determine duration based on media type
+    let duration = photoDuration;
+    if (mediaItem && mediaItem.mimeType && mediaItem.mimeType.startsWith('video/')) {
+        duration = videoDuration;
     }
 
     let timePassed = 0;
@@ -18,12 +33,12 @@ function startProgressBar() {
 
     progressIntervalId = setInterval(() => {
         timePassed++;
-        const percentLeft = 100 - (timePassed / 30) * 100; // 30 seconds per photo
+        const percentLeft = 100 - (timePassed / duration) * 100;
         if (progressEl) {
             progressEl.style.width = percentLeft + '%';
         }
 
-        if (timePassed >= 30) {
+        if (timePassed >= duration) {
             clearInterval(progressIntervalId);
             nextMedia();
         }
@@ -172,7 +187,7 @@ function showMedia(mediaItem) {
             }
         }
 
-        startProgressBar();
+        startProgressBar(mediaItem);
     };
 
     // For video, append immediately (onload doesn't fire for video)
@@ -180,7 +195,7 @@ function showMedia(mediaItem) {
         loadingDiv.remove();
         container.appendChild(mediaElement);
         mediaElement.classList.add('loaded');
-        startProgressBar();
+        startProgressBar(mediaItem);
     }
 }
 

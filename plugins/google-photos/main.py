@@ -203,31 +203,31 @@ def get_random_photo_batch():
             logger.warning(f"No media items found in album {album['title']}")
             return []
 
-        # Filter for photos only (not videos)
-        photos = [item for item in media_items if not item.get('mimeType', '').startswith('video/')]
-        if not photos:
-            logger.warning(f"No photos found in album {album['title']}")
+        # Use all media items (photos and videos)
+        media = media_items  # include both photos and videos
+        if not media:
+            logger.warning(f"No media items found in album {album['title']}")
             return []
 
         # Pick a random start index
-        total_photos = len(photos)
-        if total_photos == 0:
+        total_media = len(media)
+        if total_media == 0:
             return []
-        start_index = random.randint(0, total_photos - 1)
+        start_index = random.randint(0, total_media - 1)
 
         # Build the sequence, wrapping around if needed
         sequence = []
         for i in range(sequence_count):
-            idx = (start_index + i) % total_photos
-            photo = photos[idx]
+            idx = (start_index + i) % total_media
+            item = media[idx]
             # Add album info
-            photo['album'] = {
+            item['album'] = {
                 'id': album['id'],
                 'title': album['title']
             }
             # Add counter: remaining in sequence (decreasing)
-            photo['sequence_remaining'] = sequence_count - i
-            sequence.append(photo)
+            item['sequence_remaining'] = sequence_count - i
+            sequence.append(item)
 
         return sequence
 
