@@ -87,14 +87,15 @@ function showMedia(mediaItem) {
     // File time or fallback to filename
     let takenTime = '';
     if (mediaItem.mediaMetadata && mediaItem.mediaMetadata.creationTime) {
-        // Format as YYYY-MM-DD HH:mm
+        // Format as YYYY-MM-DD HH:mm:ss
         const date = new Date(mediaItem.mediaMetadata.creationTime);
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, '0');
         const dd = String(date.getDate()).padStart(2, '0');
         const hh = String(date.getHours()).padStart(2, '0');
         const min = String(date.getMinutes()).padStart(2, '0');
-        takenTime = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+        const ss = String(date.getSeconds()).padStart(2, '0');
+        takenTime = `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
     } else if (mediaItem.filename) {
         takenTime = mediaItem.filename.replace(/\.[^/.]+$/, '');
     }
