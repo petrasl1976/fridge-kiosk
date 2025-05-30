@@ -58,11 +58,11 @@ def load_config():
                 "system": {
                     "name": "Fridge Kiosk",
                     "theme": "dark",
-                    "orientation": "landscape",
-                    "fontFamily": "Courier New, monospace",
-                    "logging": "info"
+                    "orientation": "portrait",
+                    "logging": "WARNING",
+                    "fontFamily": "'Courier New', monospace"
                 },
-                "enabledPlugins": ["sensors", "date-time"]
+                "enabledPlugins": [ "date-time" ]
             }
     except Exception as e:
         logger.error(f"Error loading configuration: {e}")

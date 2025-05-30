@@ -3,7 +3,6 @@
     "name": "Fridge Kiosk",
     "theme": "dark",
     "orientation": "portrait",
-    "displayTimeout": 60,
     "logging": "WARNING",
     "fontFamily": "'Courier Prime', 'Courier New', monospace"
   },
