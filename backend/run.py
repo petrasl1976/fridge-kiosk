@@ -472,7 +472,7 @@ def load_plugins(config):
             'script': None,
             'style': None,
             'view_content': None,
-            'data_dir': plugin_data_dir,
+            'data_dir': str(plugin_data_dir),
             'config': plugin_config,
             'data': plugin_data
         }
