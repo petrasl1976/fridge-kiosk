@@ -194,24 +194,14 @@ function showMedia(mediaItem) {
         mediaElement.classList.add('loaded');
         container.appendChild(mediaElement);
 
-        // Portrait/landscape logic for images
+        // Always align images to the bottom and center horizontally, regardless of orientation
         if (mediaElement.tagName === 'IMG') {
-            if (mediaElement.naturalHeight > mediaElement.naturalWidth) {
-                // Portrait: full height, vertically centered
-                mediaElement.style.position = 'absolute';
-                mediaElement.style.left = '50%';
-                mediaElement.style.top = '0';
-                mediaElement.style.bottom = '0';
-                mediaElement.style.transform = 'translateX(-50%)';
-            } else {
-                // Landscape: align to bottom
-                mediaElement.style.position = 'absolute';
-                mediaElement.style.left = '50%';
-                mediaElement.style.top = 'auto';
-                mediaElement.style.bottom = '0';
-                mediaElement.style.transform = 'translateX(-50%)';
-            }
-            // Do not set width or height here
+            mediaElement.style.position = 'absolute';
+            mediaElement.style.left = '50%';
+            mediaElement.style.bottom = '0';
+            mediaElement.style.top = 'auto';
+            mediaElement.style.transform = 'translateX(-50%)';
+            // Do not set width or height here; CSS handles sizing
         }
 
         startProgressBar(mediaItem);
