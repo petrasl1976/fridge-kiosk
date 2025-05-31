@@ -40,7 +40,7 @@ def load_config():
         dict: The configuration dictionary, or empty dict if not found.
     """
     # Get the project root directory (parent of the backend directory)
-    project_root = Path(__file__).resolve().parent.parent
+    project_root = Path(__file__).resolve().parent.parent.parent
     
     # Path to the config file
     config_path = project_root / 'config' / 'main.json'
@@ -91,7 +91,7 @@ def get_plugin_path(plugin_name):
     Returns:
         str: The absolute path to the plugin directory.
     """
-    project_root = Path(__file__).resolve().parent.parent
+    project_root = Path(__file__).resolve().parent.parent.parent
     return project_root / 'plugins' / plugin_name
 
 def list_plugins():
@@ -101,7 +101,7 @@ def list_plugins():
     Returns:
         list: A list of plugin names.
     """
-    project_root = Path(__file__).resolve().parent.parent
+    project_root = Path(__file__).resolve().parent.parent.parent
     plugins_dir = project_root / 'plugins'
     
     if not plugins_dir.exists():
