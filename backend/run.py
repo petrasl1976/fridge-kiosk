@@ -27,12 +27,12 @@ from googleapiclient.discovery import build
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Add parent directory to sys.path to make imports work after moving to backend/
-parent_dir = Path(__file__).resolve().parent
-sys.path.append(str(parent_dir))
+project_root = Path(__file__).resolve().parent.parent
+sys.path.append(str(project_root))
 from backend.utils.config import load_config, get_plugin_path, get_env, setup_logging
 
 # Initialize Jinja2 template environment
-template_loader = jinja2.FileSystemLoader(searchpath=str(parent_dir / "backend/templates"))
+template_loader = jinja2.FileSystemLoader(searchpath=str(project_root / "backend/templates"))
 template_env = jinja2.Environment(loader=template_loader)
 
 # Add custom filters
@@ -66,7 +66,7 @@ def credentials_to_dict(credentials):
 
 def get_credentials():
     """Get valid credentials from token.json or return None."""
-    token_path = Path(parent_dir / 'config' / 'token.json')
+    token_path = Path(project_root / 'config' / 'token.json')
     if token_path.exists():
         try:
             with open(token_path, 'r') as token_file:
@@ -86,7 +86,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, config=None, plugins=None, **kwargs):
         self.config = config or {}
         self.plugins = plugins or {}
-        self.root_dir = parent_dir
+        self.root_dir = project_root
         super().__init__(*args, **kwargs)
     
     def log_message(self, format, *args):
@@ -135,7 +135,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 
                 # Check if token exists
-                token_path = Path(parent_dir / 'config' / 'token.json')
+                token_path = Path(project_root / 'config' / 'token.json')
                 self.config['token_exists'] = token_path.exists()
                 logger.debug(f"Token exists: {self.config['token_exists']}")
                 
@@ -284,7 +284,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
     
     def handle_authorize(self):
         """Handle /authorize route for Google OAuth."""
-        client_secret_path = Path(parent_dir / 'config' / 'client_secret.json')
+        client_secret_path = Path(project_root / 'config' / 'client_secret.json')
         if not client_secret_path.exists():
             self.send_error(500, "client_secret.json not found")
             return
@@ -300,7 +300,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         )
         
         # Store state in a temporary file since we don't have sessions
-        with open(Path(parent_dir / 'config' / '.oauth_state'), 'w') as f:
+        with open(Path(project_root / 'config' / '.oauth_state'), 'w') as f:
             f.write(state)
 
         self.send_response(302)
@@ -311,7 +311,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         """Handle /oauth2callback route for Google OAuth."""
         try:
             # Get state from temporary file
-            state_path = Path(parent_dir / 'config' / '.oauth_state')
+            state_path = Path(project_root / 'config' / '.oauth_state')
             if not state_path.exists():
                 self.send_error(400, "No state found")
                 return
@@ -320,7 +320,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 state = f.read().strip()
             state_path.unlink()  # Clean up
 
-            client_secret_path = Path(parent_dir / 'config' / 'client_secret.json')
+            client_secret_path = Path(project_root / 'config' / 'client_secret.json')
             flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
                 str(client_secret_path),
                 scopes=SCOPES,
@@ -338,7 +338,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 return
 
             # Save credentials
-            token_path = Path(parent_dir / 'config' / 'token.json')
+            token_path = Path(project_root / 'config' / 'token.json')
             token_path.parent.mkdir(exist_ok=True)
             with open(token_path, 'w') as f:
                 json.dump(credentials_to_dict(credentials), f)
