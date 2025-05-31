@@ -8,9 +8,9 @@
   },
   "enabledPlugins": [
     "discord-channel",
-    "google-calendar",
-    "google-photos",
     "google-calendar-summary",
+    "google-photos",
+    "google-calendar",
     "date-time",
     "sensors",
     "weather-forecast"

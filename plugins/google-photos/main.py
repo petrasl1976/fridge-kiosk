@@ -260,7 +260,8 @@ def api_data():
             album = item.get('album', {}).get('title', 'Unknown Album')
             filename = item.get('filename', 'Unknown File')
             media_type = item.get('mimeType', 'unknown')
-            logger.warning(f"[DISPLAYED] [{album}] {filename} ({media_type})")
+            now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            logger.warning(f"[DISPLAYED] {now} [{album}] {filename} ({media_type})")
         
         logger.info(f"Returning {len(photos)} photos")
         logger.debug(f"Returning photos: {json.dumps(photos, indent=2)}")
