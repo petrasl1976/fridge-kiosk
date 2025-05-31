@@ -160,26 +160,26 @@ def setup_logging(config=None):
     # Create logs directory if it doesn't exist
     logs_dir = Path(__file__).parent.parent.parent / 'logs'
     logs_dir.mkdir(exist_ok=True)
-    
+
     # Get system-wide log level from config or default to INFO
     system_log_level = config.get('system', {}).get('logging', 'INFO').upper()
     if system_log_level == 'OFF':
         system_log_level = logging.CRITICAL + 1  # Effectively disables logging
     else:
         system_log_level = getattr(logging, system_log_level, logging.INFO)
-    
+
     # Configure root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(system_log_level)
-    
+
     # Remove existing handlers
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
-    
+
     # Create formatters
     file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     console_formatter = PluginFormatter('%(asctime)s - %(levelname)s - %(message)s')
-    
+
     # Add rotating file handler
     file_handler = RotatingFileHandler(
         logs_dir / 'fridge-kiosk.log',
@@ -189,42 +189,30 @@ def setup_logging(config=None):
     )
     file_handler.setFormatter(file_formatter)
     root_logger.addHandler(file_handler)
-    
+
     # Add console handler for development
     if os.environ.get('FLASK_ENV') == 'development':
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(console_formatter)
         root_logger.addHandler(console_handler)
-    
+
     # Set specific loggers to WARNING and remove their handlers
     noisy_loggers = [
         'werkzeug', 'googleapiclient', 'urllib3', 'discord', 
         'google_auth_httplib2', 'google.auth.transport.requests', 
         'requests', 'PIL', 'matplotlib'
     ]
-    
+
     for logger_name in noisy_loggers:
         lgr = logging.getLogger(logger_name)
         lgr.setLevel(logging.WARNING)
         for handler in lgr.handlers[:]:
             lgr.removeHandler(handler)
         lgr.propagate = True
-    
-    # Configure plugin loggers
-    if config and 'enabledPlugins' in config:
-        for plugin_name in config['enabledPlugins']:
-            plugin_logger = logging.getLogger(f'plugins.{plugin_name}')
-            plugin_logger.setLevel(get_plugin_log_level(plugin_name, config))
-            # Don't propagate to root logger to avoid duplicate messages
-            plugin_logger.propagate = False
-            # Add handlers to plugin logger
-            plugin_logger.addHandler(file_handler)
-            if os.environ.get('FLASK_ENV') == 'development':
-                plugin_logger.addHandler(console_handler)
-    
+
     # Log startup information
     root_logger.info("Logging system initialized")
     root_logger.info(f"System log level set to: {logging.getLevelName(system_log_level)}")
     root_logger.info(f"Log file: {logs_dir / 'fridge-kiosk.log'}")
-    
+
     return root_logger 
