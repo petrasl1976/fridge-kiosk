@@ -284,6 +284,7 @@ def init(config):
             return {'data': {}, 'error': 'No valid credentials found'}
         
         logger.info("Google Photos plugin initialized successfully")
+        logger.propagate = False
         return {'data': {}}
     except Exception as e:
         logger.error(f"Error initializing plugin: {e}")
