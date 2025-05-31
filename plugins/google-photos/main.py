@@ -10,6 +10,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from http.server import BaseHTTPRequestHandler
 
 # Get plugin-specific logger
 logger = logging.getLogger('plugins.google-photos')
@@ -253,6 +254,13 @@ def api_data():
         if not photos:
             logger.warning("No photos returned from get_random_photo_batch")
             return {'error': 'No photos available'}
+        
+        # Log kiekvieną perduodamą media failą kaip WARNING
+        for item in photos:
+            album = item.get('album', {}).get('title', 'Unknown Album')
+            filename = item.get('filename', 'Unknown File')
+            media_type = item.get('mimeType', 'unknown')
+            logger.warning(f"[DISPLAYED] [{album}] {filename} ({media_type})")
         
         logger.info(f"Returning {len(photos)} photos")
         logger.debug(f"Returning photos: {json.dumps(photos, indent=2)}")
