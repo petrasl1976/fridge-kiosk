@@ -69,11 +69,9 @@ function showMedia(mediaItem) {
     }
 
     // --- Add album and file name info above the photo ---
-    // Album line: aaa | bbb | cccccc
+    // Album line: just album title
     let albumLine = '';
-    if (typeof mediaItem.total_albums === 'number' && typeof mediaItem.album_number === 'number' && mediaItem.album && mediaItem.album.title) {
-        albumLine = `${mediaItem.total_albums}|${mediaItem.album_number}|${mediaItem.album.title}`;
-    } else if (mediaItem.album && mediaItem.album.title) {
+    if (mediaItem.album && mediaItem.album.title) {
         albumLine = mediaItem.album.title;
     }
 
@@ -100,13 +98,28 @@ function showMedia(mediaItem) {
         takenTime = mediaItem.filename.replace(/\.[^/.]+$/, '');
     }
 
-    // Info line: xxx | yyy | z | qqqqqqqqqqqqqq
-    let infoLine = '';
-    if (typeof mediaItem.album_total_count === 'number' && typeof mediaItem.album_index === 'number' && typeof mediaItem.sequence_remaining === 'number') {
-        infoLine = `${mediaItem.album_total_count}|${mediaItem.album_index}|${mediaItem.sequence_remaining}`;
+    // Series id (current index in batch, from end to start)
+    let seriesId = '';
+    if (typeof currentIndex === 'number' && Array.isArray(currentBatch)) {
+        seriesId = (currentBatch.length - currentIndex);
     }
+
+    // Orientation: P (portrait) or L (landscape)
+    let orientation = '';
+    if (mediaItem.mediaMetadata && mediaItem.mediaMetadata.width && mediaItem.mediaMetadata.height) {
+        orientation = (parseInt(mediaItem.mediaMetadata.height) > parseInt(mediaItem.mediaMetadata.width)) ? 'P' : 'L';
+    }
+
+    // Info line: Timestamp seriesId Orientation
+    let infoLine = '';
     if (takenTime) {
-        infoLine += `|${takenTime}`;
+        infoLine += takenTime;
+    }
+    if (seriesId) {
+        infoLine += ` | ${seriesId}`;
+    }
+    if (orientation) {
+        infoLine += ` | ${orientation}`;
     }
 
     // File time (second line, when it was taken)
