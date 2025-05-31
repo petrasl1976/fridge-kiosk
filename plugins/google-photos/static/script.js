@@ -196,11 +196,21 @@ function showMedia(mediaItem) {
 
         // Portrait/landscape logic for images
         if (mediaElement.tagName === 'IMG') {
-            // Remove all manual height/width settings, let CSS handle sizing
-            mediaElement.style.position = 'absolute';
-            mediaElement.style.left = '50%';
-            mediaElement.style.top = '50%';
-            mediaElement.style.transform = 'translate(-50%, -50%)';
+            if (mediaElement.naturalHeight > mediaElement.naturalWidth) {
+                // Portrait: full height, vertically centered
+                mediaElement.style.position = 'absolute';
+                mediaElement.style.left = '50%';
+                mediaElement.style.top = '0';
+                mediaElement.style.bottom = '0';
+                mediaElement.style.transform = 'translateX(-50%)';
+            } else {
+                // Landscape: align to bottom
+                mediaElement.style.position = 'absolute';
+                mediaElement.style.left = '50%';
+                mediaElement.style.top = 'auto';
+                mediaElement.style.bottom = '0';
+                mediaElement.style.transform = 'translateX(-50%)';
+            }
             // Do not set width or height here
         }
 
