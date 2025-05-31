@@ -156,7 +156,7 @@ function showMedia(mediaItem) {
     } else {
         mediaElement = document.createElement('img');
         // Add proper parameters for image URL
-        const imageUrl = `${mediaItem.baseUrl}=w1920-h1080-c`;
+        const imageUrl = `${mediaItem.baseUrl}=w1920-h1080`;
         mediaElement.src = imageUrl;
         mediaElement.alt = mediaItem.filename || '';
         console.log('[Google Photos] Image URL:', imageUrl);
