@@ -3,7 +3,7 @@
     "name": "Fridge Kiosk",
     "theme": "dark",
     "orientation": "portrait",
-    "logging": "DEBUG",
+    "logging": "WARNING",
     "fontFamily": "'Courier Prime', 'Courier New', monospace"
   },
   "enabledPlugins": [
