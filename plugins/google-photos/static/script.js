@@ -116,10 +116,10 @@ function showMedia(mediaItem) {
         infoLine += takenTime;
     }
     if (seriesId) {
-        infoLine += ` | ${seriesId}`;
+        infoLine += ` ${seriesId}`;
     }
     if (orientation) {
-        infoLine += ` | ${orientation}`;
+        infoLine += ` ${orientation}`;
     }
 
     // File time (second line, when it was taken)
