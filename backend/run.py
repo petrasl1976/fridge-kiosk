@@ -71,13 +71,13 @@ def get_credentials():
         try:
             with open(token_path, 'r') as token_file:
                 token_data = json.load(token_file)
-                logger.debug("Successfully loaded token.json")
-                return google.oauth2.credentials.Credentials(**token_data)
+            logging.getLogger().debug("Successfully loaded token.json")
+            return google.oauth2.credentials.Credentials(**token_data)
         except Exception as e:
-            logger.error(f"Error loading credentials: {e}")
-            logger.debug(f"Token file path: {token_path}")
+            logging.getLogger().error(f"Error loading credentials: {e}")
+            logging.getLogger().debug(f"Token file path: {token_path}")
     else:
-        logger.warning(f"token.json not found at {token_path}")
+        logging.getLogger().warning(f"token.json not found at {token_path}")
     return None
 
 class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -94,7 +94,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         # Only log if logging is not OFF
         system_log_level = self.config.get('system', {}).get('logging', 'INFO').upper()
         if system_log_level != 'OFF':
-            logger.info("%s - %s",
+            logging.getLogger().info("%s - %s",
                         self.address_string(),
                         format % args)
     
@@ -103,7 +103,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         # Only log if logging is not OFF
         system_log_level = self.config.get('system', {}).get('logging', 'INFO').upper()
         if system_log_level != 'OFF':
-            logger.error("%s - %s",
+            logging.getLogger().error("%s - %s",
                         self.address_string(),
                         format % args)
     
@@ -115,21 +115,21 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             path = parsed_path.path
             query = parse_qs(parsed_path.query)
             
-            logger.debug(f"Received GET request: {path} with query params: {query}")
+            logging.getLogger().debug(f"Received GET request: {path} with query params: {query}")
 
             # OAuth routes
             if path == '/authorize':
-                logger.info("Handling OAuth authorization request")
+                logging.getLogger().info("Handling OAuth authorization request")
                 self.handle_authorize()
                 return
             elif path == '/oauth2callback':
-                logger.info("Handling OAuth callback")
+                logging.getLogger().info("Handling OAuth callback")
                 self.handle_oauth2callback()
                 return
 
             # Route for the main page
             if path == '/' or path == '/index.html':
-                logger.info("Serving main page")
+                logging.getLogger().info("Serving main page")
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
@@ -137,7 +137,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 # Check if token exists
                 token_path = Path(project_root / 'config' / 'token.json')
                 self.config['token_exists'] = token_path.exists()
-                logger.debug(f"Token exists: {self.config['token_exists']}")
+                logging.getLogger().debug(f"Token exists: {self.config['token_exists']}")
                 
                 # Render the template
                 try:
@@ -147,10 +147,10 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                         plugins=self.plugins
                     )
                     self.wfile.write(html.encode('utf-8'))
-                    logger.info("Main page rendered successfully")
+                    logging.getLogger().info("Main page rendered successfully")
                 except Exception as e:
-                    logger.error(f"Error rendering template: {e}")
-                    logger.debug(f"Template error traceback: {traceback.format_exc()}")
+                    logging.getLogger().error(f"Error rendering template: {e}")
+                    logging.getLogger().debug(f"Template error traceback: {traceback.format_exc()}")
                     self.wfile.write(f"Error: {str(e)}".encode('utf-8'))
                 
                 return
@@ -162,7 +162,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                     plugin_name = parts[2]
                     endpoint = parts[3] if len(parts) > 3 else 'data'
                     
-                    logger.info(f"Handling API request for plugin: {plugin_name}, endpoint: {endpoint}")
+                    logging.getLogger().info(f"Handling API request for plugin: {plugin_name}, endpoint: {endpoint}")
                     
                     # Look for the plugin module
                     try:
@@ -170,7 +170,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                         main_py = plugin_path / 'main.py'
                         
                         if main_py.exists():
-                            logger.debug(f"Found plugin module at: {main_py}")
+                            logging.getLogger().debug(f"Found plugin module at: {main_py}")
                             # Import the plugin module
                             spec = importlib.util.spec_from_file_location(f"plugin_{plugin_name}", main_py)
                             plugin_module = importlib.util.module_from_spec(spec)
@@ -179,7 +179,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                             # Find the API handler function
                             handler_name = f"api_{endpoint}"
                             if hasattr(plugin_module, handler_name):
-                                logger.debug(f"Found handler: {handler_name}")
+                                logging.getLogger().debug(f"Found handler: {handler_name}")
                                 handler = getattr(plugin_module, handler_name)
                                 result = handler()
                                 
@@ -187,11 +187,11 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                                 self.send_header('Content-type', 'application/json')
                                 self.end_headers()
                                 self.wfile.write(json.dumps(result).encode('utf-8'))
-                                logger.info(f"Successfully handled API request for {plugin_name}/{endpoint}")
+                                logging.getLogger().info(f"Successfully handled API request for {plugin_name}/{endpoint}")
                                 return
                         
                         # If we get here, the handler wasn't found
-                        logger.warning(f"Plugin API endpoint not found: {path}")
+                        logging.getLogger().warning(f"Plugin API endpoint not found: {path}")
                         self.send_response(404)
                         self.send_header('Content-type', 'application/json')
                         self.end_headers()
@@ -201,8 +201,8 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                         return
                     
                     except Exception as e:
-                        logger.error(f"Error handling plugin API request: {e}")
-                        logger.debug(f"API error traceback: {traceback.format_exc()}")
+                        logging.getLogger().error(f"Error handling plugin API request: {e}")
+                        logging.getLogger().debug(f"API error traceback: {traceback.format_exc()}")
                         self.send_response(500)
                         self.send_header('Content-type', 'application/json')
                         self.end_headers()
@@ -215,10 +215,10 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             try:
                 # Map URL path to file system path
                 file_path = self.map_path_to_file(path)
-                logger.debug(f"Mapping path {path} to file: {file_path}")
+                logging.getLogger().debug(f"Mapping path {path} to file: {file_path}")
                 
                 if not file_path.exists() or not file_path.is_file():
-                    logger.warning(f"File not found: {path}")
+                    logging.getLogger().warning(f"File not found: {path}")
                     self.send_response(404)
                     self.send_header('Content-type', 'text/plain')
                     self.end_headers()
@@ -229,7 +229,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 mimetype, _ = mimetypes.guess_type(str(file_path))
                 if mimetype is None:
                     mimetype = 'application/octet-stream'
-                logger.debug(f"Serving file {file_path} with MIME type: {mimetype}")
+                logging.getLogger().debug(f"Serving file {file_path} with MIME type: {mimetype}")
                 
                 # Send the file
                 self.send_response(200)
@@ -238,19 +238,19 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 
                 with open(file_path, 'rb') as f:
                     self.wfile.write(f.read())
-                logger.info(f"Successfully served file: {path}")
+                logging.getLogger().info(f"Successfully served file: {path}")
                     
             except Exception as e:
-                logger.error(f"Error serving file: {e}")
-                logger.debug(f"File serving error traceback: {traceback.format_exc()}")
+                logging.getLogger().error(f"Error serving file: {e}")
+                logging.getLogger().debug(f"File serving error traceback: {traceback.format_exc()}")
                 self.send_response(500)
                 self.send_header('Content-type', 'text/plain')
                 self.end_headers()
                 self.wfile.write(f"Internal server error: {str(e)}".encode('utf-8'))
 
         except Exception as e:
-            logger.error(f"Error handling GET request: {e}")
-            logger.debug(f"Request handling error traceback: {traceback.format_exc()}")
+            logging.getLogger().error(f"Error handling GET request: {e}")
+            logging.getLogger().debug(f"Request handling error traceback: {traceback.format_exc()}")
             self.send_response(500)
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
@@ -268,18 +268,18 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 plugin_name = parts[1]
                 resource = '/'.join(parts[2:])
                 plugin_path = get_plugin_path(plugin_name)
-                logger.debug(f"Mapping plugin resource: {path} -> {plugin_path / resource}")
+                logging.getLogger().debug(f"Mapping plugin resource: {path} -> {plugin_path / resource}")
                 return plugin_path / resource
         
         # For static files (including favicon)
         if path.startswith('static/'):
             file_path = Path(self.root_dir) / 'backend' / path
-            logger.debug(f"Mapping static file: {path} -> {file_path}")
+            logging.getLogger().debug(f"Mapping static file: {path} -> {file_path}")
             return file_path
         
         # For everything else, map to the templates directory
         file_path = Path(self.root_dir) / 'backend' / 'templates' / path
-        logger.debug(f"Mapping template file: {path} -> {file_path}")
+        logging.getLogger().debug(f"Mapping template file: {path} -> {file_path}")
         return file_path
     
     def handle_authorize(self):
@@ -345,7 +345,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
 
             # --- RELOAD PLUGINS HERE ---
             self.server.plugins = load_plugins(self.config)
-            logger.info("Plugins reloaded after OAuth2 callback.")
+            logging.getLogger().info("Plugins reloaded after OAuth2 callback.")
             # --- END RELOAD ---
 
             # Redirect to success page
@@ -354,7 +354,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
         except Exception as e:
-            logger.error(f"OAuth callback error: {e}")
+            logging.getLogger().error(f"OAuth callback error: {e}")
             self.send_error(500, str(e))
 
 
@@ -373,18 +373,18 @@ def load_plugins(config):
     # Get orientation from system config for position selection
     orientation = config.get('system', {}).get('orientation', 'landscape')
     if system_log_level <= logging.CRITICAL:
-        logger.info(f"System orientation: {orientation}")
-        logger.info(f"Enabled plugins: {enabled_plugins}")
+        logging.getLogger().info(f"System orientation: {orientation}")
+        logging.getLogger().info(f"Enabled plugins: {enabled_plugins}")
     
     # Loop through all enabled plugins
     for plugin_name in enabled_plugins:
         if system_log_level <= logging.CRITICAL:
-            logger.info(f"Configuring: {plugin_name}")
+            logging.getLogger().info(f"Configuring: {plugin_name}")
         plugin_path = get_plugin_path(plugin_name)
         
         if not plugin_path.exists():
             if system_log_level <= logging.CRITICAL:
-                logger.error(f"Plugin directory not found: {plugin_path}")
+                logging.getLogger().error(f"Plugin directory not found: {plugin_path}")
             continue
         
         # Load plugin's own config file
@@ -398,10 +398,10 @@ def load_plugins(config):
                     # Report logging level
                     log_level = plugin_config.get('logging', 'INFO')
                     if system_log_level <= logging.CRITICAL:
-                        logger.info(f"{plugin_name} - Logging level: {log_level}")
+                        logging.getLogger().info(f"{plugin_name} - Logging level: {log_level}")
             except Exception as e:
                 if system_log_level <= logging.CRITICAL:
-                    logger.error(f"Error loading plugin config: {e}")
+                    logging.getLogger().error(f"Error loading plugin config: {e}")
         
         # Ensure plugin has its own data directory
         plugin_data_dir = plugin_path / 'data'
@@ -409,10 +409,10 @@ def load_plugins(config):
             try:
                 plugin_data_dir.mkdir(exist_ok=True)
                 if system_log_level <= logging.CRITICAL:
-                    logger.debug(f"Created data directory for plugin: {plugin_data_dir}")
+                    logging.getLogger().debug(f"Created data directory for plugin: {plugin_data_dir}")
             except Exception as e:
                 if system_log_level <= logging.CRITICAL:
-                    logger.error(f"Failed to create data directory for plugin {plugin_name}: {e}")
+                    logging.getLogger().error(f"Failed to create data directory for plugin {plugin_name}: {e}")
         
         # Get the position configuration based on orientation
         position = {}
@@ -421,18 +421,18 @@ def load_plugins(config):
             if orientation in plugin_config['position']:
                 position = plugin_config['position'][orientation]
                 if system_log_level <= logging.CRITICAL:
-                    logger.info(f"{plugin_name} - Position: {position}")
+                    logging.getLogger().info(f"{plugin_name} - Position: {position}")
             # If it has a general position setting
             elif isinstance(plugin_config['position'], dict) and not ('landscape' in plugin_config['position'] or 'portrait' in plugin_config['position']):
                 position = plugin_config['position']
                 if system_log_level <= logging.CRITICAL:
-                    logger.info(f"{plugin_name} - Position: {position}")
+                    logging.getLogger().info(f"{plugin_name} - Position: {position}")
             else:
                 if system_log_level <= logging.CRITICAL:
-                    logger.warning(f"Position config for {plugin_name} does not match expected format: {plugin_config['position']}")
+                    logging.getLogger().warning(f"Position config for {plugin_name} does not match expected format: {plugin_config['position']}")
         else:
             if system_log_level <= logging.CRITICAL:
-                logger.warning(f"No position key found in config for plugin {plugin_name}")
+                logging.getLogger().warning(f"No position key found in config for plugin {plugin_name}")
         
         # Default fallback if no position found
         if not position:
@@ -443,12 +443,12 @@ def load_plugins(config):
                 'height': '100%'
             }
             if system_log_level <= logging.CRITICAL:
-                logger.warning(f"No position config found for plugin {plugin_name}, using defaults: {position}")
+                logging.getLogger().warning(f"No position config found for plugin {plugin_name}, using defaults: {position}")
         
         # Set z_index based on plugin's position in the enabledPlugins array (starting from 1)
         position['z_index'] = enabled_plugins.index(plugin_name) + 1
         if system_log_level <= logging.CRITICAL:
-            logger.info(f"{plugin_name} - z_index: {position['z_index']}")
+            logging.getLogger().info(f"{plugin_name} - z_index: {position['z_index']}")
         
         # Try to call init(config) if it exists
         plugin_data = {}
@@ -463,7 +463,7 @@ def load_plugins(config):
                     plugin_data = plugin_module.init(plugin_config).get('data', {})
             except Exception as e:
                 if system_log_level <= logging.CRITICAL:
-                    logger.error(f"Error calling init() for plugin {plugin_name}: {e}")
+                    logging.getLogger().error(f"Error calling init() for plugin {plugin_name}: {e}")
 
         plugin_info = {
             'name': plugin_name,
@@ -493,7 +493,7 @@ def load_plugins(config):
                     )
             except Exception as e:
                 if system_log_level <= logging.CRITICAL:
-                    logger.error(f"Error reading or rendering plugin view for '{plugin_name}': {e}")
+                    logging.getLogger().error(f"Error reading or rendering plugin view for '{plugin_name}': {e}")
                 plugin_info['view_content'] = f"<div style='color:red;'>Error rendering {plugin_name} view: {e}</div>"
         
         if script_path.exists():
@@ -504,7 +504,7 @@ def load_plugins(config):
         
         plugins[plugin_name] = plugin_info
         if system_log_level <= logging.CRITICAL:
-            logger.info(f"{plugin_name} - Loaded successfully")
+            logging.getLogger().info(f"{plugin_name} - Loaded successfully")
     
     return plugins
 
@@ -554,14 +554,14 @@ def main():
     
     # Only log if logging is not OFF
     if system_log_level <= logging.CRITICAL:
-        logger.info(f"Server started on port {args.port}")
-        logger.info(f"Open http://localhost:{args.port} in your browser")
+        logging.getLogger().info(f"Server started on port {args.port}")
+        logging.getLogger().info(f"Open http://localhost:{args.port} in your browser")
     
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         if system_log_level <= logging.CRITICAL:
-            logger.info("Server stopped by user")
+            logging.getLogger().info("Server stopped by user")
         httpd.server_close()
         sys.exit(0)
 
