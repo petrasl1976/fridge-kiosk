@@ -40,15 +40,15 @@ def load_config():
         dict: The configuration dictionary, or empty dict if not found.
     """
     # Get the project root directory (parent of the backend directory)
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    project_root = Path(__file__).resolve().parent.parent
     
     # Path to the config file
-    config_path = os.path.join(project_root, 'config', 'main.json')
+    config_path = project_root / 'config' / 'main.json'
     
     try:
-        if os.path.exists(config_path):
+        if config_path.exists():
             logger.info(f"Loading configuration from {config_path}")
-            with open(config_path, 'r') as f:
+            with config_path.open('r') as f:
                 config = json.load(f)
             return config
         else:
@@ -91,8 +91,8 @@ def get_plugin_path(plugin_name):
     Returns:
         str: The absolute path to the plugin directory.
     """
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    return Path(os.path.join(project_root, 'plugins', plugin_name))
+    project_root = Path(__file__).resolve().parent.parent
+    return project_root / 'plugins' / plugin_name
 
 def list_plugins():
     """
@@ -101,16 +101,15 @@ def list_plugins():
     Returns:
         list: A list of plugin names.
     """
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    plugins_dir = os.path.join(project_root, 'plugins')
+    project_root = Path(__file__).resolve().parent.parent
+    plugins_dir = project_root / 'plugins'
     
-    if not os.path.exists(plugins_dir):
+    if not plugins_dir.exists():
         logger.warning(f"Plugins directory not found: {plugins_dir}")
         return []
     
     # Get all directories in the plugins directory
-    return [d for d in os.listdir(plugins_dir) 
-            if os.path.isdir(os.path.join(plugins_dir, d)) and not d.startswith('_')]
+    return [d.name for d in plugins_dir.iterdir() if d.is_dir() and not d.name.startswith('_')]
 
 def get_plugin_config(plugin_name):
     """

@@ -27,20 +27,12 @@ from googleapiclient.discovery import build
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Add parent directory to sys.path to make imports work after moving to backend/
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(parent_dir)
+parent_dir = Path(__file__).resolve().parent
+sys.path.append(str(parent_dir))
 from backend.utils.config import load_config, get_plugin_path, get_env, setup_logging
 
-# Load configuration
-config = load_config()
-
-# Set up logging
-logger = setup_logging(config)
-logger.info("Starting Fridge Kiosk server")
-logger.debug(f"Configuration loaded: {json.dumps(config, indent=2)}")
-
 # Initialize Jinja2 template environment
-template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(parent_dir, "backend/templates"))
+template_loader = jinja2.FileSystemLoader(searchpath=str(parent_dir / "backend/templates"))
 template_env = jinja2.Environment(loader=template_loader)
 
 # Add custom filters
@@ -74,8 +66,8 @@ def credentials_to_dict(credentials):
 
 def get_credentials():
     """Get valid credentials from token.json or return None."""
-    token_path = os.path.join(parent_dir, 'config', 'token.json')
-    if os.path.exists(token_path):
+    token_path = Path(parent_dir / 'config' / 'token.json')
+    if token_path.exists():
         try:
             with open(token_path, 'r') as token_file:
                 token_data = json.load(token_file)
@@ -143,8 +135,8 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 
                 # Check if token exists
-                token_path = os.path.join(parent_dir, 'config', 'token.json')
-                self.config['token_exists'] = os.path.exists(token_path)
+                token_path = Path(parent_dir / 'config' / 'token.json')
+                self.config['token_exists'] = token_path.exists()
                 logger.debug(f"Token exists: {self.config['token_exists']}")
                 
                 # Render the template
@@ -292,13 +284,13 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
     
     def handle_authorize(self):
         """Handle /authorize route for Google OAuth."""
-        client_secret_path = os.path.join(parent_dir, 'config', 'client_secret.json')
-        if not os.path.exists(client_secret_path):
+        client_secret_path = Path(parent_dir / 'config' / 'client_secret.json')
+        if not client_secret_path.exists():
             self.send_error(500, "client_secret.json not found")
             return
 
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-            client_secret_path, 
+            str(client_secret_path), 
             scopes=SCOPES
         )
         flow.redirect_uri = f'http://localhost:{self.server.server_port}/oauth2callback'
@@ -308,7 +300,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         )
         
         # Store state in a temporary file since we don't have sessions
-        with open(os.path.join(parent_dir, 'config', '.oauth_state'), 'w') as f:
+        with open(Path(parent_dir / 'config' / '.oauth_state'), 'w') as f:
             f.write(state)
 
         self.send_response(302)
@@ -319,18 +311,18 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         """Handle /oauth2callback route for Google OAuth."""
         try:
             # Get state from temporary file
-            state_path = os.path.join(parent_dir, 'config', '.oauth_state')
-            if not os.path.exists(state_path):
+            state_path = Path(parent_dir / 'config' / '.oauth_state')
+            if not state_path.exists():
                 self.send_error(400, "No state found")
                 return
 
             with open(state_path, 'r') as f:
                 state = f.read().strip()
-            os.remove(state_path)  # Clean up
+            state_path.unlink()  # Clean up
 
-            client_secret_path = os.path.join(parent_dir, 'config', 'client_secret.json')
+            client_secret_path = Path(parent_dir / 'config' / 'client_secret.json')
             flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-                client_secret_path,
+                str(client_secret_path),
                 scopes=SCOPES,
                 state=state
             )
@@ -346,8 +338,8 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 return
 
             # Save credentials
-            token_path = os.path.join(parent_dir, 'config', 'token.json')
-            os.makedirs(os.path.dirname(token_path), exist_ok=True)
+            token_path = Path(parent_dir / 'config' / 'token.json')
+            token_path.parent.mkdir(exist_ok=True)
             with open(token_path, 'w') as f:
                 json.dump(credentials_to_dict(credentials), f)
 
@@ -390,16 +382,16 @@ def load_plugins(config):
             logger.info(f"Configuring: {plugin_name}")
         plugin_path = get_plugin_path(plugin_name)
         
-        if not os.path.exists(plugin_path):
+        if not plugin_path.exists():
             if system_log_level <= logging.CRITICAL:
                 logger.error(f"Plugin directory not found: {plugin_path}")
             continue
         
         # Load plugin's own config file
-        plugin_config_path = os.path.join(plugin_path, 'config.json')
+        plugin_config_path = plugin_path / 'config.json'
         plugin_config = {}
         
-        if os.path.exists(plugin_config_path):
+        if plugin_config_path.exists():
             try:
                 with open(plugin_config_path, 'r') as f:
                     plugin_config = json.load(f)
@@ -412,10 +404,10 @@ def load_plugins(config):
                     logger.error(f"Error loading plugin config: {e}")
         
         # Ensure plugin has its own data directory
-        plugin_data_dir = os.path.join(plugin_path, 'data')
-        if not os.path.exists(plugin_data_dir):
+        plugin_data_dir = plugin_path / 'data'
+        if not plugin_data_dir.exists():
             try:
-                os.makedirs(plugin_data_dir, exist_ok=True)
+                plugin_data_dir.mkdir(exist_ok=True)
                 if system_log_level <= logging.CRITICAL:
                     logger.debug(f"Created data directory for plugin: {plugin_data_dir}")
             except Exception as e:
@@ -460,8 +452,8 @@ def load_plugins(config):
         
         # Try to call init(config) if it exists
         plugin_data = {}
-        main_py = os.path.join(plugin_path, 'main.py')
-        if os.path.exists(main_py):
+        main_py = plugin_path / 'main.py'
+        if main_py.exists():
             try:
                 import importlib.util
                 spec = importlib.util.spec_from_file_location(f"plugin_{plugin_name}", main_py)
@@ -486,11 +478,11 @@ def load_plugins(config):
         }
         
         # Check for basic files
-        view_path = os.path.join(plugin_path, 'view.html')
-        script_path = os.path.join(plugin_path, 'static', 'script.js')
-        style_path = os.path.join(plugin_path, 'static', 'style.css')
+        view_path = plugin_path / 'view.html'
+        script_path = plugin_path / 'static' / 'script.js'
+        style_path = plugin_path / 'static' / 'style.css'
         
-        if os.path.exists(view_path):
+        if view_path.exists():
             plugin_info['view'] = 'view.html'
             try:
                 with open(view_path, 'r') as f:
@@ -504,10 +496,10 @@ def load_plugins(config):
                     logger.error(f"Error reading or rendering plugin view for '{plugin_name}': {e}")
                 plugin_info['view_content'] = f"<div style='color:red;'>Error rendering {plugin_name} view: {e}</div>"
         
-        if os.path.exists(script_path):
+        if script_path.exists():
             plugin_info['script'] = 'static/script.js'
         
-        if os.path.exists(style_path):
+        if style_path.exists():
             plugin_info['style'] = 'static/style.css'
         
         plugins[plugin_name] = plugin_info
@@ -536,7 +528,7 @@ def main():
     # Configure logging level from config
     system_log_level = config.get('system', {}).get('logging', 'INFO').upper()
     if system_log_level == 'OFF':
-        system_log_level = logging.CRITICAL + 1  # Effectively disables logging
+        system_log_level = logging.CRITICAL + 1  # system_log_level=51  Effectively disables logging   
     else:
         system_log_level = getattr(logging, system_log_level, logging.INFO)
     
