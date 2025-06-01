@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!ts) return;
                 const dateStr = new Date(ts * 1000).toISOString().slice(0, 10);
                 const forecast = forecastByDate[dateStr];
+                console.log('Checking cell', dateStr, 'timestamp:', ts, 'forecast:', forecast);
                 if (forecast) {
                     const min = Math.round(forecast.main.temp_min);
                     const max = Math.round(forecast.main.temp_max);
