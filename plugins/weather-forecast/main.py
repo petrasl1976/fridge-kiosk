@@ -3,6 +3,7 @@ import requests
 import datetime
 from pathlib import Path
 import pytz
+import time
 
 def load_config():
     config_path = Path(__file__).parent / "config.json"
@@ -103,8 +104,35 @@ def get_weather(config=None):
         print(f"Error fetching weather data: {e}")
         return {}
 
+weather_cache = {
+    'data': None,
+    'timestamp': 0
+}
+
+def get_weather_data():
+    config = load_config()
+    interval = config.get('updateInterval', 900)
+    now = time.time()
+    if weather_cache['data'] and (now - weather_cache['timestamp'] < interval):
+        return weather_cache['data']
+    # Fetch new data from API
+    data = get_weather()
+    weather_cache['data'] = data
+    weather_cache['timestamp'] = now
+    return data
+
 def api_data():
-    return get_weather()
+    return get_weather_data()
+
+def api_day(timestamp):
+    data = get_weather_data()
+    from datetime import datetime
+    target_date = datetime.utcfromtimestamp(timestamp).date()
+    for day in data.get('daily', []):
+        day_date = datetime.utcfromtimestamp(day['dt']).date()
+        if day_date == target_date:
+            return day
+    return {'error': 'No forecast for this day'}
 
 def get_refresh_interval():
     config = load_config()
