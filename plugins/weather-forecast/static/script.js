@@ -82,6 +82,7 @@ function weatherInit(container) {
  * Usage: renderWeatherForecastDay(timestamp, container)
  */
 function renderWeatherForecastDay(timestamp, container) {
+    console.log('renderWeatherForecastDay called for timestamp:', timestamp, 'container:', container);
     fetch(`/api/plugins/weather-forecast/day/${timestamp}`)
         .then(response => response.json())
         .then(day => {

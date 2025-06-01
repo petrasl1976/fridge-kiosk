@@ -74,4 +74,36 @@
     background: #888 !important;
     color: #808080 !important;
     box-shadow: 0 2px 12px #0008;
+}
+
+/* Weather forecast in calendar cell */
+.weather-forecast-container {
+    min-height: 48px;
+    text-align: center;
+    margin: 2px 0 4px 0;
+    padding: 0;
+}
+.weather-forecast-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.9em;
+    line-height: 1.2;
+    margin: 0 auto;
+}
+.weather-forecast-day .temp {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+}
+.weather-forecast-day .min {
+    color: #03a9f4;
+}
+.weather-forecast-day .max {
+    color: #ff5252;
+}
+.weather-forecast-day img {
+    width: 24px;
+    height: 24px;
+    margin-top: 2px;
 } 
