@@ -7,13 +7,13 @@
     "fontFamily": "'Courier Prime', 'Courier New', monospace"
   },
   "enabledPlugins": [
+    "google-photos",
     "weather-forecast",
     "sensors",
     "date-time",
     "discord-channel",
     "google-calendar-summary",
-    "google-calendar",
-    "google-photos"
+    "google-calendar"
   ],
   "userColors": {
     "PE": "#4d26f0",
