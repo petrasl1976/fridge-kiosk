@@ -2,11 +2,10 @@
  * Date-time Plugin Styles - Simple version
  */
 
-.datetime-container {
+.dat-etime {
     background-color: transparent;
     border-radius: 8px;
     padding: 12px 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     text-align: right;
     font-family: var(--font-family, 'Courier New, monospace');
     color: white;
@@ -17,7 +16,6 @@
 
 /* Time display */
 .datetime-container .time {
-    /* Font size is set by JavaScript from config */
     font-weight: bold;
     margin-bottom: 5px;
     line-height: 1;
@@ -27,12 +25,6 @@
 
 /* Date display */
 .datetime-container .date {
-    /* Font size is set by JavaScript from config */
-    opacity: 0.9;
+    opacity: 1;
     white-space: nowrap;
 }
-
-/* Basic error styling */
-.datetime-container .error {
-    color: #ff5252;
-} 

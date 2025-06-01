@@ -3,7 +3,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('plugin-date-time');
+    const container = document.getElementById('date-time');
     if (!container) return;
     
     // Initialize
@@ -11,22 +11,17 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function dateTimeInit(container) {
-    // Get plugin configuration and data
+    // Get plugin configuration
     const plugin = window.PLUGINS?.['date-time'] || {};
     const pluginConfig = plugin.config || {};
-    const pluginData = plugin.data || {};
     
     // DOM elements
-    const timeElement = container.querySelector('#datetime-time');
-    const dateElement = container.querySelector('#datetime-date');
+    const timeElement = container.querySelector('#date-time-time');
+    const dateElement = container.querySelector('#date-time-date');
     
     // Apply font sizes from config
     timeElement.style.cssText += `font-size: ${pluginConfig.format.time_font_size} !important;`;
     dateElement.style.cssText += `font-size: ${pluginConfig.format.date_font_size} !important;`;
-    
-    // Display initial data
-    timeElement.textContent = pluginData.time || '--:--';
-    dateElement.textContent = pluginData.date || '----.--.--';
     
     // Function to fetch date and time from the API
     function fetchDateTime() {
@@ -37,15 +32,13 @@ function dateTimeInit(container) {
                 if (data.date) dateElement.textContent = data.date;
             })
             .catch(() => {
-                timeElement.textContent = 'Error';
+                timeElement.textContent = 'ERROR';
                 dateElement.textContent = 'Connection failed';
-                timeElement.classList.add('error');
-                dateElement.classList.add('error');
             });
     }
     
     // Set up automatic refresh from API
     const refreshInterval = parseInt(pluginConfig.updateInterval) || 10;
-    fetchDateTime(); // Iškart gauti duomenis
+    fetchDateTime(); // Fetch data immediately
     setInterval(fetchDateTime, refreshInterval * 1000);
 } 

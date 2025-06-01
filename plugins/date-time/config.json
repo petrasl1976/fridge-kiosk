@@ -1,24 +1,24 @@
 {
-    "logging": "WARNING",
-    "position": {
-        "landscape": {
-            "top": "20%",
-            "left": "65%",
-            "width": "35%",
-            "height": "auto"
-        },
-        "portrait": {
-            "top": "12%",
-            "left": "60%",
-            "width": "40%",
-            "height": "auto"
-        }
-    },
     "updateInterval": 15,
+    "logging": "WARNING",
     "format": {
         "time": "%H:%M",
         "date": "%Y.%m.%d",
         "time_font_size": "8em",
         "date_font_size": "4em"
+    },
+    "position": {
+        "portrait": {
+            "top": "12%",
+            "left": "60%",
+            "width": "40%",
+            "height": "auto"
+        },
+        "landscape": {
+            "top": "20%",
+            "left": "65%",
+            "width": "35%",
+            "height": "auto"
+        }
     }
 } 

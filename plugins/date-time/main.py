@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""
-Date Time Plugin - Main API handler
-Provides current date and time data
-"""
-import os
+"""Date Time Plugin - Shows current date and time"""
 import json
 import datetime
 import logging
@@ -43,14 +39,10 @@ def get_formatted_datetime():
         'date': now.strftime(config.get('format', {}).get('date', '%Y.%m.%d'))
     }
 
-def init():
-    """Initialize the plugin"""
-    return get_formatted_datetime()
-
 def api_data():
     """Get current date and time"""
     return get_formatted_datetime()
 
 # For testing directly
 if __name__ == "__main__":
-    print(init()) 
+    print(api_data()) 
