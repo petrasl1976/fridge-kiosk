@@ -4,8 +4,6 @@
 
 #date-time {
     background-color: transparent;
-    border-radius: 8px;
-    padding: 12px 20px;
     text-align: right;
     color: white;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
@@ -17,14 +15,10 @@
 #date-time-time {
     font-size: 8em;
     font-weight: bold;
-    margin-bottom: 5px;
-    line-height: 1;
-    letter-spacing: 2px;
     white-space: nowrap;
 }
 
 #date-time-date {
     font-size: 4em;
-    opacity: 1;
     white-space: nowrap;
 }
