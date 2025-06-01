@@ -196,11 +196,11 @@ function showMedia(mediaItem) {
 
         // Always align images to the bottom and center horizontally, regardless of orientation
         if (mediaElement.tagName === 'IMG') {
-            mediaElement.style.position = 'absolute';
-            mediaElement.style.left = '50%';
-            mediaElement.style.bottom = '0';
+                mediaElement.style.position = 'absolute';
+                mediaElement.style.left = '50%';
+                mediaElement.style.bottom = '0';
             mediaElement.style.top = 'auto';
-            mediaElement.style.transform = 'translateX(-50%)';
+                mediaElement.style.transform = 'translateX(-50%)';
             // Do not set width or height here; CSS handles sizing
         }
 

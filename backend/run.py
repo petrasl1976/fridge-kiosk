@@ -555,7 +555,6 @@ def main():
     # Only log if logging is not OFF
     if system_log_level <= logging.CRITICAL:
         logging.getLogger().info(f"Server started on port {args.port}")
-        logging.getLogger().info(f"Open http://localhost:{args.port} in your browser")
     
     try:
         httpd.serve_forever()

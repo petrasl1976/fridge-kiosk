@@ -68,20 +68,15 @@ def get_formatted_datetime(config=None):
         'date': now.strftime(format_config.get('date', '%Y.%m.%d'))
     }
 
-def init(config):
+def init():
     """
     Initialize the plugin with configuration.
     This is called by the backend when the plugin is loaded.
     
     Returns:
-        Dictionary with initial data for frontend
+        Dictionary with formatted time and date
     """
-    formatted_data = get_formatted_datetime(config)
-    
-    # Return data for the frontend
-    return {
-        'data': formatted_data
-    }
+    return api_data()
 
 def api_data():
     """
@@ -91,8 +86,9 @@ def api_data():
     Returns:
         Dictionary with formatted time and date
     """
-    # Return formatted time and date
-    return get_formatted_datetime()
+    # Always load config for API
+    config = load_config()
+    return get_formatted_datetime(config)
 
 # For testing directly
 if __name__ == "__main__":
