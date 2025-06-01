@@ -1,33 +1,84 @@
 {% if plugin['data'] and plugin['data'].daily %}
-<div class="weather-forecast" style="
-    --font-size: {{ plugin['config'].format.font_size }};
-    --text-color: {{ plugin['config'].format.color }};
-    --padding: {{ plugin['config'].format.padding }};
-">
-    {% if plugin['data'].current %}
-    <div class="weather-current">
-        <div class="temp">
-            <div class="max"><nobr>{{ plugin['data'].current.forecastTimeUtc|string|slice(11, 16) }} {{ plugin['data'].current.temperature|round|int }}° {{ plugin['data'].current.feelsLike|round|int }}°</nobr></div>
-            <div class="max"><nobr>{{ plugin['data'].current.windSpeed }} m/s {{ plugin['data'].current.precipitation }} mm</nobr></div>
-            <div class="max"><nobr>{{ plugin['data'].current.pressure }} hPa {{ plugin['data'].current.humidity }}%</nobr></div>
-            <div class="max">{{ plugin['data'].current.conditionCode }}</div>
-        </div>
+<div id="weather">
+    <div id="weather-current">
+        <div id="weather-time">--:--</div>
+        <div id="weather-temp">--° --°</div>
+        <div id="weather-wind">-- m/s -- mm</div>
+        <div id="weather-pressure">-- hPa --%</div>
+        <div id="weather-condition">--</div>
     </div>
-    {% endif %}
     
-    {% for day in plugin['data'].daily %}
-    <div class="weather-day">
-        <div class="date">{{ day.dt|datetime_fromtimestamp|strftime('%a') }}</div>
-        <div class="temp">
-            <span class="max">{{ day.main.temp_max|round|int }}°</span>
-            <span class="min">{{ day.main.temp_min|round|int }}°</span>
+    <div id="weather-forecast">
+        <div class="weather-day">
+            <div class="date">--</div>
+            <div class="temp">
+                <span class="max">--°</span>
+                <span class="min">--°</span>
+            </div>
+            <div class="condition">
+                <img src="/plugins/weather-forecast/icons/clear.png" alt="weather">
+            </div>
         </div>
-        <div class="condition">
-            <img src="/plugins/weather-forecast/icons/{{ day.weather[0].description }}.png" 
-                 alt="{{ day.weather[0].description }}"
-                 onerror="this.src='/plugins/weather-forecast/icons/clear.png'">
+        <div class="weather-day">
+            <div class="date">--</div>
+            <div class="temp">
+                <span class="max">--°</span>
+                <span class="min">--°</span>
+            </div>
+            <div class="condition">
+                <img src="/plugins/weather-forecast/icons/clear.png" alt="weather">
+            </div>
+        </div>
+        <div class="weather-day">
+            <div class="date">--</div>
+            <div class="temp">
+                <span class="max">--°</span>
+                <span class="min">--°</span>
+            </div>
+            <div class="condition">
+                <img src="/plugins/weather-forecast/icons/clear.png" alt="weather">
+            </div>
+        </div>
+        <div class="weather-day">
+            <div class="date">--</div>
+            <div class="temp">
+                <span class="max">--°</span>
+                <span class="min">--°</span>
+            </div>
+            <div class="condition">
+                <img src="/plugins/weather-forecast/icons/clear.png" alt="weather">
+            </div>
+        </div>
+        <div class="weather-day">
+            <div class="date">--</div>
+            <div class="temp">
+                <span class="max">--°</span>
+                <span class="min">--°</span>
+            </div>
+            <div class="condition">
+                <img src="/plugins/weather-forecast/icons/clear.png" alt="weather">
+            </div>
+        </div>
+        <div class="weather-day">
+            <div class="date">--</div>
+            <div class="temp">
+                <span class="max">--°</span>
+                <span class="min">--°</span>
+            </div>
+            <div class="condition">
+                <img src="/plugins/weather-forecast/icons/clear.png" alt="weather">
+            </div>
+        </div>
+        <div class="weather-day">
+            <div class="date">--</div>
+            <div class="temp">
+                <span class="max">--°</span>
+                <span class="min">--°</span>
+            </div>
+            <div class="condition">
+                <img src="/plugins/weather-forecast/icons/clear.png" alt="weather">
+            </div>
         </div>
     </div>
-    {% endfor %}
 </div>
 {% endif %} 

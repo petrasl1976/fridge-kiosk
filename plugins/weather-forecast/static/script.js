@@ -1,28 +1,47 @@
 /**
- * Weather Forecast Plugin - Displays weather forecast for the next 7 days
+ * Weather Forecast Plugin - Displays current weather and forecast
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    const container = document.querySelector('.weather-forecast');
+    const container = document.getElementById('weather');
     if (!container) return;
     
     // Initialize
-    weatherForecastInit(container);
+    weatherInit(container);
 });
 
-function weatherForecastInit(container) {
-    // Get plugin configuration and data
+function weatherInit(container) {
+    // Get plugin configuration
     const plugin = window.PLUGINS?.['weather-forecast'] || {};
     const pluginConfig = plugin.config || {};
-    const pluginData = plugin.data || {};
     
-    // Apply font size and other styles from config
-    if (container) {
-        container.style.cssText += `
-            font-size: ${pluginConfig.format.font_size} !important;
-            color: ${pluginConfig.format.color} !important;
-            padding: ${pluginConfig.format.padding} !important;
-        `;
+    // DOM elements
+    const timeElement = container.querySelector('#weather-time');
+    const tempElement = container.querySelector('#weather-temp');
+    const windElement = container.querySelector('#weather-wind');
+    const pressureElement = container.querySelector('#weather-pressure');
+    const conditionElement = container.querySelector('#weather-condition');
+    const forecastContainer = container.querySelector('#weather-forecast');
+    
+    // Function to update forecast
+    function updateForecast(daily) {
+        const days = forecastContainer.querySelectorAll('.weather-day');
+        daily.forEach((day, index) => {
+            if (index >= days.length) return;
+            
+            const dayElement = days[index];
+            const date = new Date(day.dt * 1000);
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+            
+            dayElement.querySelector('.date').textContent = dayName;
+            dayElement.querySelector('.max').textContent = `${Math.round(day.main.temp_max)}°`;
+            dayElement.querySelector('.min').textContent = `${Math.round(day.main.temp_min)}°`;
+            
+            const img = dayElement.querySelector('img');
+            img.src = `/plugins/weather-forecast/icons/${day.weather[0].description}.png`;
+            img.alt = day.weather[0].description;
+            img.onerror = () => img.src = '/plugins/weather-forecast/icons/clear.png';
+        });
     }
     
     // Function to fetch weather data from the API
@@ -30,64 +49,30 @@ function weatherForecastInit(container) {
         fetch('/api/plugins/weather-forecast/data')
             .then(response => response.json())
             .then(data => {
-                if (data) {
-                    let html = '';
-                    
-                    // Add current weather section if available
-                    if (data.current) {
-                        const current = data.current;
-                        const currentTime = new Date(current.dt * 1000);
-                        const timeStr = currentTime.toTimeString().substring(0, 5);
-                        const iconPath = `/plugins/weather-forecast/icons/${current.conditionCode}.png`;
-                        
-                        html += `
-                            <div class="weather-current">
-                                <div class="temp">
-                                    <div class="max"><nobr>${timeStr} ${Math.round(current.temperature)}° ${Math.round(current.feelsLike)}°</nobr></div>
-                                    <div class="max"><nobr>${current.windSpeed} m/s ${current.precipitation} mm</nobr></div>
-                                    <div class="max"><nobr>${current.pressure} hPa ${current.humidity}%</nobr></div>
-                                    <div class="max">${current.conditionCode}</div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                    
-                    // Add daily forecast
-                    if (data.daily) {
-                        html += data.daily.map(day => {
-                            const date = new Date(day.dt * 1000);
-                            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-                            const condition = day.weather[0].description;
-                            const iconPath = `/plugins/weather-forecast/icons/${condition}.png`;
-                            
-                            return `
-                                <div class="weather-day">
-                                    <div class="date">${dayName}</div>
-                                    <div class="temp">
-                                        <span class="max">${Math.round(day.main.temp_max)}°</span>
-                                        <span class="min">${Math.round(day.main.temp_min)}°</span>
-                                    </div>
-                                    <div class="condition">
-                                        <img src="${iconPath}" 
-                                             alt="${condition}"
-                                             onerror="this.src='/plugins/weather-forecast/icons/clear.png'">
-                                    </div>
-                                </div>
-                            `;
-                        }).join('');
-                    }
-                    
-                    container.innerHTML = html;
+                if (data.current) {
+                    const time = new Date(data.current.forecastTimeUtc);
+                    timeElement.textContent = time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    tempElement.textContent = `${Math.round(data.current.temperature)}° ${Math.round(data.current.feelsLike)}°`;
+                    windElement.textContent = `${data.current.windSpeed} m/s ${data.current.precipitation} mm`;
+                    pressureElement.textContent = `${data.current.pressure} hPa ${data.current.humidity}%`;
+                    conditionElement.textContent = data.current.conditionCode;
+                }
+                
+                if (data.daily) {
+                    updateForecast(data.daily);
                 }
             })
-            .catch(error => {
-                console.error('Error fetching weather data:', error);
-                container.innerHTML = '<div class="error">Error loading weather data</div>';
+            .catch(() => {
+                timeElement.textContent = 'Error';
+                tempElement.textContent = 'Error';
+                windElement.textContent = 'Error';
+                pressureElement.textContent = 'Error';
+                conditionElement.textContent = 'Error';
             });
     }
     
     // Set up automatic refresh from API
-    const refreshInterval = parseInt(pluginConfig.updateInterval) || 3600;
-    fetchWeatherData(); // Get data immediately
+    const refreshInterval = parseInt(pluginConfig.updateInterval) || 900;
+    fetchWeatherData(); // Fetch data immediately
     setInterval(fetchWeatherData, refreshInterval * 1000);
 } 
