@@ -8,6 +8,38 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize
     calendarInit(container);
+
+    // Fetch the full week weather forecast once
+    fetch('/api/plugins/weather-forecast/data')
+        .then(response => response.json())
+        .then(data => {
+            const forecastByDate = {};
+            if (data.daily) {
+                data.daily.forEach(day => {
+                    const dateStr = new Date(day.dt * 1000).toISOString().slice(0, 10);
+                    forecastByDate[dateStr] = day;
+                });
+            }
+            document.querySelectorAll('.weather-forecast-container').forEach(div => {
+                const ts = parseInt(div.getAttribute('data-timestamp'));
+                if (!ts) return;
+                const dateStr = new Date(ts * 1000).toISOString().slice(0, 10);
+                const forecast = forecastByDate[dateStr];
+                if (forecast) {
+                    const min = Math.round(forecast.main.temp_min);
+                    const max = Math.round(forecast.main.temp_max);
+                    const icon = forecast.weather && forecast.weather[0] ? forecast.weather[0].description : 'clear';
+                    div.innerHTML = `
+                        <div class="weather-forecast-day">
+                            <div class="temp"><span class="min">${min}°</span> - <span class="max">${max}°</span></div>
+                            <div class="icon"><img src="/plugins/weather-forecast/icons/${icon}.png" alt="${icon}" onerror="this.src='/plugins/weather-forecast/icons/clear.png'" /></div>
+                        </div>
+                    `;
+                } else {
+                    div.innerHTML = '';
+                }
+            });
+        });
 });
 
 function calendarInit(container) {
