@@ -16,7 +16,7 @@
     },
     "updateInterval": 900,
     "format": {
-        "font_size": "1.5em",
+        "font_size": "1.7em",
         "color": "#fff",
         "padding": "10px"
     }
