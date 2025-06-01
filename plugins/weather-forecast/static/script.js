@@ -75,4 +75,34 @@ function weatherInit(container) {
     const refreshInterval = parseInt(pluginConfig.updateInterval) || 900;
     fetchWeatherData(); // Fetch data immediately
     setInterval(fetchWeatherData, refreshInterval * 1000);
+}
+
+/**
+ * Fetch and render a single day's weather forecast by timestamp
+ * Usage: renderWeatherForecastDay(timestamp, container)
+ */
+function renderWeatherForecastDay(timestamp, container) {
+    fetch(`/api/plugins/weather-forecast/day/${timestamp}`)
+        .then(response => response.json())
+        .then(day => {
+            if (day.error) {
+                container.innerHTML = '<div class="weather-forecast-day">No forecast</div>';
+                return;
+            }
+            const date = new Date(day.dt * 1000);
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+            const min = Math.round(day.main.temp_min);
+            const max = Math.round(day.main.temp_max);
+            const icon = day.weather && day.weather[0] ? day.weather[0].description : 'clear';
+            container.innerHTML = `
+                <div class="weather-forecast-day">
+                    <div class="date">${dayName}</div>
+                    <div class="temp"><span class="min">${min}°</span> - <span class="max">${max}°</span></div>
+                    <div class="icon"><img src="/plugins/weather-forecast/icons/${icon}.png" alt="${icon}" onerror="this.src='/plugins/weather-forecast/icons/clear.png'" /></div>
+                </div>
+            `;
+        })
+        .catch(() => {
+            container.innerHTML = '<div class="weather-forecast-day">Error loading forecast</div>';
+        });
 } 

@@ -3,6 +3,8 @@ import requests
 import datetime
 from pathlib import Path
 import pytz
+import time
+from flask import Blueprint, jsonify, request
 
 def load_config():
     config_path = Path(__file__).parent / "config.json"
@@ -103,8 +105,41 @@ def get_weather(config=None):
         print(f"Error fetching weather data: {e}")
         return {}
 
+weather_cache = {
+    'data': None,
+    'timestamp': 0
+}
+
+def get_weather_data():
+    config = load_config()
+    interval = config.get('updateInterval', 900)
+    now = time.time()
+    if weather_cache['data'] and (now - weather_cache['timestamp'] < interval):
+        return weather_cache['data']
+    # Fetch new data from API
+    data = get_weather()
+    weather_cache['data'] = data
+    weather_cache['timestamp'] = now
+    return data
+
+# Flask blueprint for plugin API
+bp = Blueprint('weather_forecast', __name__)
+
+@bp.route('/api/plugins/weather-forecast/data')
 def api_data():
-    return get_weather()
+    return jsonify(get_weather_data())
+
+@bp.route('/api/plugins/weather-forecast/day/<int:timestamp>')
+def api_day(timestamp):
+    data = get_weather_data()
+    # Find the daily forecast for the given timestamp (date only)
+    from datetime import datetime
+    target_date = datetime.utcfromtimestamp(timestamp).date()
+    for day in data.get('daily', []):
+        day_date = datetime.utcfromtimestamp(day['dt']).date()
+        if day_date == target_date:
+            return jsonify(day)
+    return jsonify({'error': 'No forecast for this day'}), 404
 
 def get_refresh_interval():
     config = load_config()

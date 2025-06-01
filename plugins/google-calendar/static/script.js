@@ -8,6 +8,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize
     calendarInit(container);
+
+    // Render weather forecast for each day cell
+    document.querySelectorAll('.weather-forecast-container').forEach(div => {
+        const ts = parseInt(div.getAttribute('data-timestamp'));
+        if (ts) {
+            if (typeof renderWeatherForecastDay === 'function') {
+                renderWeatherForecastDay(ts, div);
+            } else if (window.renderWeatherForecastDay) {
+                window.renderWeatherForecastDay(ts, div);
+            }
+        }
+    });
 });
 
 function calendarInit(container) {
