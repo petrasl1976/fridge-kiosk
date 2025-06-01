@@ -1,5 +1,5 @@
 /**
- * Date Time Plugin - Displays current time and date
+ * Date Time Plugin js
  */
 
 document.addEventListener('DOMContentLoaded', function() {

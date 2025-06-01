@@ -3,7 +3,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('plugin-sensors');
+    const container = document.getElementById('sensors');
     if (!container) return;
     
     // Initialize
@@ -11,40 +11,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function sensorsInit(container) {
-    // Get plugin configuration and data
+    // Get plugin configuration
     const plugin = window.PLUGINS?.['sensors'] || {};
     const pluginConfig = plugin.config || {};
-    const pluginData = plugin.data || {};
     
     // DOM elements
-    const temperatureElement = container.querySelector('#sensors-temperature');
+    const tempElement = container.querySelector('#sensors-temperature');
     const humidityElement = container.querySelector('#sensors-humidity');
     const cpuTempElement = container.querySelector('#sensors-cpu-temp');
-    const sensorReadings = container.querySelector('.sensor-readings');
     
-    // Apply font size from config
-    sensorReadings.style.cssText += `font-size: ${pluginConfig.format.font_size} !important;`;
-    
-    // Display initial data
-    if (pluginData.temperature) temperatureElement.textContent = `${pluginData.temperature}°C`;
-    if (pluginData.humidity) humidityElement.textContent = `${pluginData.humidity}%`;
-    if (pluginData.cpu_temp) cpuTempElement.textContent = `${pluginData.cpu_temp}°C`;
-    
-    // Set thresholds for CPU temperature warnings
-    const cpuThresholds = pluginConfig.thresholds?.cpu_temp || {
-        warning: 60,
-        critical: 70
-    };
-    
-    // Function to apply CPU temperature warning classes
-    function applyCpuTempWarning(element, value, warning, critical) {
-        element.classList.remove('normal', 'warning', 'critical');
-        if (value >= critical) {
-            element.classList.add('critical');
-        } else if (value >= warning) {
-            element.classList.add('warning');
+    // Function to update CPU temperature color
+    function updateCpuTempColor(temp) {
+        cpuTempElement.classList.remove('normal', 'warning', 'critical');
+        if (temp >= 70) {
+            cpuTempElement.classList.add('critical');
+        } else if (temp >= 60) {
+            cpuTempElement.classList.add('warning');
         } else {
-            element.classList.add('normal');
+            cpuTempElement.classList.add('normal');
         }
     }
     
@@ -53,33 +37,22 @@ function sensorsInit(container) {
         fetch('/api/plugins/sensors/data')
             .then(response => response.json())
             .then(data => {
-                if (data.temperature) {
-                    temperatureElement.textContent = `${data.temperature}°C`;
-    }
-    
-                if (data.humidity) {
-                    humidityElement.textContent = `${data.humidity}%`;
-                }
-                
+                if (data.temperature) tempElement.textContent = `${data.temperature}°C`;
+                if (data.humidity) humidityElement.textContent = `${data.humidity}%`;
                 if (data.cpu_temp) {
                     cpuTempElement.textContent = `${data.cpu_temp}°C`;
-                    applyCpuTempWarning(
-                        cpuTempElement, 
-                        data.cpu_temp,
-                        cpuThresholds.warning, 
-                        cpuThresholds.critical
-                );
-            }
+                    updateCpuTempColor(data.cpu_temp);
+                }
             })
             .catch(() => {
-                temperatureElement.classList.add('error');
-                humidityElement.classList.add('error');
-                cpuTempElement.classList.add('error');
+                tempElement.textContent = 'Error';
+                humidityElement.textContent = 'Error';
+                cpuTempElement.textContent = 'Error';
             });
-        }
-        
+    }
+    
     // Set up automatic refresh from API
     const refreshInterval = parseInt(pluginConfig.updateInterval) || 30;
-    fetchSensorData(); // Iškart gauti duomenis
+    fetchSensorData(); // Fetch data immediately
     setInterval(fetchSensorData, refreshInterval * 1000);
 } 

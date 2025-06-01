@@ -1,5 +1,6 @@
 {
-    "logging": "WARNING",
+    "logging": "INFO",
+    "updateInterval": 30,
     "position": {
         "landscape": {
             "top": "15%",
@@ -13,19 +14,5 @@
             "width": "40%",
             "height": "auto"
         }
-    },
-    "updateInterval": 30,
-    "thresholds": {
-        "cpu_temp": {
-            "warning": 60,
-            "critical": 70
-        }
-        },
-    "format": {
-        "font_size": "2em"
-        },
-    "broadlink": {
-        "discover_timeout": 5,
-        "target_type_prefix": "RM4"
     }
 } 

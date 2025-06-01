@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""
-Sensors Plugin - Main API handler
-Provides temperature, humidity and CPU temperature data
-"""
+"""Sensors Plugin - Shows temperature, humidity and CPU temperature"""
 import os
 import json
 import time
@@ -12,61 +9,45 @@ import logging
 
 # Create a custom logger
 logger = logging.getLogger(__name__)
+logger.info(f"{Path(__file__).parent.name} Plugin Loaded")
 
-# Load config to get logging level
-config_path = Path(__file__).parent / "config.json"
-try:
-    with open(config_path) as f:
-        config = json.load(f)
-        log_level = config.get('logging', 'DEBUG')
-        if log_level == 'OFF':
-            logger.setLevel(logging.CRITICAL)  # Only show critical errors
-        else:
-            logger.setLevel(getattr(logging, log_level))
-except Exception as e:
-    logger.setLevel(logging.DEBUG)  # Default to DEBUG if config can't be loaded
-    logger.error(f"Could not load logging config: {e}")
-
-# Force a log message to verify logging is working
-logger.info("Sensors Plugin Loaded")
-
-# Plugin info
-PLUGIN_NAME = "sensors"
-PLUGIN_VERSION = "1.0.0"
-PLUGIN_DESCRIPTION = "Display temperature, humidity and CPU temperature"
+# Broadlink settings
+BROADLINK_DISCOVER_TIMEOUT = 5
+BROADLINK_TARGET_TYPE = "RM4"
 
 def load_config():
     """Load the plugin configuration"""
-    plugin_dir = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(plugin_dir, 'config.json')
+    config_path = Path(__file__).parent / "config.json"
     
-    with open(config_path, 'r') as f:
-        return json.load(f)
+    try:
+        with open(config_path) as f:
+            config = json.load(f)
+            log_level = config.get('logging', 'INFO')
+            if log_level == 'OFF':
+                logger.setLevel(logging.CRITICAL)
+            else:
+                logger.setLevel(getattr(logging, log_level))
+    except Exception as e:
+        logger.setLevel(logging.INFO)
+        logger.error(f"Could not load logging config: {e}")
+        config = {}
+    
+    return config
 
-def get_sensor_data(config=None):
-    """
-    Get sensor data including temperature, humidity and CPU temperature
-    
-    Returns:
-        Dictionary with sensor data
-    """
-    # Default result with placeholders
+def get_sensor_data():
+    """Get sensor data including temperature, humidity and CPU temperature"""
     result = {
         "temperature": None,
         "humidity": None,
-        "cpu_temp": None,
-        "timestamp": time.time()
+        "cpu_temp": None
     }
     
     # Try to get temperature and humidity from sensor
-    broadlink_config = (config or {}).get('broadlink', {})
-    discover_timeout = broadlink_config.get('discover_timeout', 5)
-    target_type_prefix = broadlink_config.get('target_type_prefix', 'RM4')
     try:
         import broadlink
-        devices = broadlink.discover(timeout=discover_timeout)
+        devices = broadlink.discover(timeout=BROADLINK_DISCOVER_TIMEOUT)
         for device in devices:
-            if device.type.startswith(target_type_prefix):
+            if device.type.startswith(BROADLINK_TARGET_TYPE):
                 device.auth()
                 sensor_data = device.check_sensors()
                 if sensor_data:
@@ -74,69 +55,30 @@ def get_sensor_data(config=None):
                     result["humidity"] = sensor_data.get("humidity")
                     if result["temperature"] is not None and result["humidity"] is not None:
                         break
-        if result["temperature"] is None or result["humidity"] is None:
-            raise Exception("No data from broadlink")
     except Exception as e:
         logger.error(f"Error reading broadlink sensor: {e}")
-        result["temperature"] = "err"
-        result["humidity"] = "err"
     
     # Get CPU temperature
     try:
-        cpu_temp = get_cpu_temperature()
-        result["cpu_temp"] = cpu_temp
+        if os.path.exists('/sys/class/thermal/thermal_zone0/temp'):
+            with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
+                temp = float(f.read()) / 1000.0
+                result["cpu_temp"] = round(temp, 1)
+        else:
+            result = subprocess.run(['vcgencmd', 'measure_temp'], capture_output=True, text=True)
+            if result.returncode == 0:
+                temp_text = result.stdout.strip()
+                temp = float(temp_text.replace('temp=', '').replace('\'C', ''))
+                result["cpu_temp"] = round(temp, 1)
     except Exception as e:
         logger.error(f"Error reading CPU temperature: {e}")
     
     return result
 
-def get_cpu_temperature():
-    """Get CPU temperature on Raspberry Pi"""
-    try:
-        # Method 1: Try to read from thermal_zone0
-        if os.path.exists('/sys/class/thermal/thermal_zone0/temp'):
-            with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
-                temp = float(f.read()) / 1000.0
-                return round(temp, 1)
-        
-        # Method 2: Try using vcgencmd (Raspberry Pi only)
-        result = subprocess.run(['vcgencmd', 'measure_temp'], capture_output=True, text=True)
-        if result.returncode == 0:
-            temp_text = result.stdout.strip()
-            temp = float(temp_text.replace('temp=', '').replace('\'C', ''))
-            return round(temp, 1)
-        
-        # Fallback to dummy data when not on Raspberry Pi
-        if os.environ.get('FLASK_ENV') != 'production':
-            return 45.6
-        return None
-    except Exception as e:
-        logger.error(f"Error getting CPU temperature: {e}")
-        return None
-
-def init(config):
-    """
-    Initialize the plugin with configuration.
-    This is called by the backend when the plugin is loaded.
-    
-    Returns:
-        Dictionary with initial data for frontend
-    """
-    # Get initial sensor readings
-    sensor_data = get_sensor_data(config)
-    
-    # Return data for frontend
-    return {
-        'data': sensor_data
-    }
-
 def api_data():
-    """
-    API handler to get current sensor data.
-    This is the endpoint for /api/plugins/sensors/data
-    
-    Returns:
-        Dictionary with sensor data
-    """
-    # Return formatted sensor data
-    return get_sensor_data() 
+    """Get current sensor data"""
+    return get_sensor_data()
+
+# For testing directly
+if __name__ == "__main__":
+    print(api_data()) 
