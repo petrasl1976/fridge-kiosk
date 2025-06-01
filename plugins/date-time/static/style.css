@@ -2,7 +2,7 @@
  * Date-time Plugin Styles - Simple version
  */
 
-.dat-etime {
+.date-time {
     background-color: transparent;
     border-radius: 8px;
     padding: 12px 20px;
@@ -12,10 +12,15 @@
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
     float: right;
     width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 /* Time display */
-.datetime-container .time {
+.date-time .time {
+    font-size: 8em;
     font-weight: bold;
     margin-bottom: 5px;
     line-height: 1;
@@ -24,7 +29,8 @@
 }
 
 /* Date display */
-.datetime-container .date {
+.date-time .date {
+    font-size: 4em;
     opacity: 1;
     white-space: nowrap;
 }

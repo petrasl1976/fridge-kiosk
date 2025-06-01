@@ -19,10 +19,6 @@ function dateTimeInit(container) {
     const timeElement = container.querySelector('#date-time-time');
     const dateElement = container.querySelector('#date-time-date');
     
-    // Apply font sizes from config
-    timeElement.style.cssText += `font-size: ${pluginConfig.format.time_font_size} !important;`;
-    dateElement.style.cssText += `font-size: ${pluginConfig.format.date_font_size} !important;`;
-    
     // Function to fetch date and time from the API
     function fetchDateTime() {
         fetch('/api/plugins/date-time/data')
@@ -32,7 +28,7 @@ function dateTimeInit(container) {
                 if (data.date) dateElement.textContent = data.date;
             })
             .catch(() => {
-                timeElement.textContent = 'ERROR';
+                timeElement.textContent = 'Error';
                 dateElement.textContent = 'Connection failed';
             });
     }
