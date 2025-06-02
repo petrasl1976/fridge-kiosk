@@ -507,12 +507,12 @@ def get_weather_now():
         return {}
 
 def api_data():
-    """API endpoint for getting calendar summary data."""
-    logger.debug("Entering api_data()")
+    logger.info("!!! TEST: api_data() called !!!")
     try:
         events = get_summary_events()
-        logger.debug(f"get_summary_events returned data keys: {list(events.keys())}")
+        logger.info("!!! TEST: about to call get_weather_now() !!!")
         weather_now = get_weather_now()
+        logger.info(f"!!! TEST: weather_now = {weather_now} !!!")
         events['weather_now'] = weather_now
         return events
     except Exception as e:
