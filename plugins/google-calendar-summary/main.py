@@ -493,7 +493,7 @@ def get_weather_now():
     """Fetch current weather from the weather-forecast plugin API."""
     try:
         logger.info("Fetching weather from http://localhost:8080/api/plugins/weather-forecast/data")
-        resp = requests.get("http://localhost:8080/api/plugins/weather-forecast/data", timeout=5)
+        resp = requests.get("http://localhost:8080/api/plugins/weather-forecast/data", timeout=10)
         logger.info(f"Weather API status: {resp.status_code}")
         if resp.status_code == 200:
             data = resp.json()
