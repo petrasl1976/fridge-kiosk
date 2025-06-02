@@ -492,7 +492,7 @@ def get_summary_events(config=None):
 def get_weather_now():
     """Fetch current weather from the weather-forecast plugin API."""
     try:
-        resp = requests.get("http://localhost:8090/api/plugins/weather-forecast/data", timeout=5)
+        resp = requests.get("http://localhost:8080/api/plugins/weather-forecast/data", timeout=5)
         if resp.status_code == 200:
             data = resp.json()
             return data.get('current', {})
