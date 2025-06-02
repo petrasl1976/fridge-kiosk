@@ -27,7 +27,7 @@ function calendarInit(container) {
     
     // Function to fetch calendar data from the API
     function fetchCalendarData() {
-        fetch('/api/plugins/google-calendar/data')
+        fetch('/api/plugins/google-calendar-summary/data')
             .then(response => response.json())
             .then(data => {
                 if (data && data.weeks) {
