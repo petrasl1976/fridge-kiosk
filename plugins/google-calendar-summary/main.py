@@ -490,6 +490,7 @@ def get_summary_events(config=None):
         return {'error': str(e)}
 
 def get_weather_now():
+    logger.info("!!! TEST: get_weather_now called !!!")
     """Fetch current weather from the weather-forecast plugin API."""
     try:
         logger.info("Fetching weather from http://localhost:8080/api/plugins/weather-forecast/data")
@@ -507,7 +508,7 @@ def get_weather_now():
         return {}
 
 def api_data():
-    logger.info("!!! TEST: api_data() called !!!")
+    logger.info("!!! TEST: api_data called !!!")
     try:
         events = get_summary_events()
         logger.info("!!! TEST: about to call get_weather_now() !!!")
@@ -617,48 +618,40 @@ def get_refresh_interval():
     return config.get('updateInterval', 900)
 
 def init(config):
-    """Initialize the plugin"""
+    logger.info("!!! TEST: init called !!!")
     # Log the plugin initialization
     logger.info("Initializing Google Calendar plugin")
     logger.debug(f"Config: {json.dumps(config, indent=2, default=str)}")
-    
     try:
         # Check if client_secret.json exists
         if not CLIENT_SECRET_FILE.exists():
             logger.error(f"client_secret.json not found at {CLIENT_SECRET_FILE}")
             return {'data': {}, 'error': 'Client secret file not found - please create it first'}
-        
         # Check if we need to authenticate
         if not TOKEN_FILE.exists():
             logger.info("No token.json found, authentication required")
             return {'data': {}, 'error': 'Authentication required - run "python3 -m backend.utils.auth.google_auth_server --service "Google Calendar"" and visit the displayed URL to authenticate'}
-        
         # Try to get the events
         data = get_summary_events(config)
         logger.debug(f"get_summary_events returned data keys: {list(data.keys() if isinstance(data, dict) else [])}")
-        
         if 'error' in data:
             logger.error(f"Error getting events: {data['error']}")
             return {'data': data, 'error': data['error']}
-        
         # Debug view template variables
         try:
             from jinja2 import Environment, FileSystemLoader
             template_path = Path(__file__).parent / "view.html"
             logger.debug(f"Template exists: {template_path.exists()}")
-            
             if template_path.exists():
                 with open(template_path, 'r') as f:
                     template_content = f.read()
                 logger.debug(f"Template first 100 chars: {template_content[:100]}")
-                
                 # Check template variables
                 import re
                 variables = re.findall(r'{{\s*([^}|]*)[}|]', template_content)
                 logger.debug(f"Template variables: {set(variables)}")
         except Exception as e:
             logger.debug(f"Error analyzing template: {e}")
-            
         logger.info(f"Google Calendar plugin initialized successfully with {len(data.get('today_events', [])) + len(data.get('tomorrow_events', []))} events")
         init_result = {'data': data}
         logger.debug(f"Returning init result with keys: {list(init_result.keys())}")
