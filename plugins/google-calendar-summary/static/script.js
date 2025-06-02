@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function calendarInit(container) {
     // Get plugin configuration and data
-    const plugin = window.PLUGINS?.['google-calendar'] || {};
+    const plugin = window.PLUGINS?.['google-calendar-summary'] || {};
     const pluginConfig = plugin.config || {};
     const pluginData = plugin.data || {};
     
