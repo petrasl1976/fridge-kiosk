@@ -720,6 +720,4 @@ def api_debug():
     except Exception as e:
         logger.error(f"Exception in api_debug: {e}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
-        return {'error': f"Exception in debug endpoint: {str(e)}"}
-
-raise Exception("TEST: This should crash the backend if this file is loaded!") 
+        return {'error': f"Exception in debug endpoint: {str(e)}"} 
