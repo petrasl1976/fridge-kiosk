@@ -490,7 +490,7 @@ def get_summary_events(config=None):
         return {'error': str(e)}
 
 def get_weather_now():
-    logger.info("!!! DEBUG: get_weather_now called !!!")
+    logger.info("!!! get_weather_now called (FIXED) !!!")
     try:
         logger.info("Fetching weather from http://localhost:8080/api/plugins/weather-forecast/data")
         resp = requests.get("http://localhost:8080/api/plugins/weather-forecast/data", timeout=10)
@@ -498,8 +498,11 @@ def get_weather_now():
         if resp.status_code == 200:
             data = resp.json()
             logger.info(f"Weather API data: {data}")
-            print("Weather API data (DEBUG):", data)
-            return data  # Return full data for debug
+            if "current" in data:
+                return data["current"]
+            else:
+                logger.error("No 'current' key in weather API response!")
+                return {}
         else:
             logger.error(f"Weather API returned status {resp.status_code}")
             return {}
