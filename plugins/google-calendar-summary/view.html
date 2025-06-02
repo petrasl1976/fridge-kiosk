@@ -7,14 +7,12 @@
   {% else %}
     <div class="calendar-widget summary-list" style="font-size: {{ plugin['config'].format.font_size }}; color: {{ plugin['config'].format.color }}; padding: {{ plugin['config'].format.padding }}; text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
       {% set w = plugin['data'].weather_now %}
-      {% if w and w.temperature is defined %}
-        <div class="summary-weather" style="margin-bottom: 10px; text-align: right;">
-          <div><span>{{ w.temperature }}°</span> <span>{{ w.feelsLike }}°</span></div>
-          <div><span>{{ w.windSpeed }} m/s</span> <span>{{ w.precipitation }} mm</span></div>
-          <div><span>{{ w.pressure }} hPa</span> <span>{{ w.humidity }}%</span></div>
-          <div><span>{{ w.conditionCode }}</span></div>
-        </div>
-      {% endif %}
+      <div class="summary-weather" style="margin-bottom: 10px; text-align: right;">
+        <div><span>{{ w.temperature if w and w.temperature is defined else '?' }}°</span> <span>{{ w.feelsLike if w and w.feelsLike is defined else '?' }}°</span></div>
+        <div><span>{{ w.windSpeed if w and w.windSpeed is defined else '?' }} m/s</span> <span>{{ w.precipitation if w and w.precipitation is defined else '?' }} mm</span></div>
+        <div><span>{{ w.pressure if w and w.pressure is defined else '?' }} hPa</span> <span>{{ w.humidity if w and w.humidity is defined else '?' }}%</span></div>
+        <div><span>{{ w.conditionCode if w and w.conditionCode is defined else '?' }}</span></div>
+      </div>
       {% if plugin['data'].today_events %}
         <div class="summary-section" style="width: 100%;">
           <div class="summary-events-col" style="display: flex; flex-direction: column; align-items: flex-end;">
