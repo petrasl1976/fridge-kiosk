@@ -9,37 +9,67 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize
     calendarInit(container);
 
-    // Fetch the full week weather forecast once
-    fetch('/api/plugins/weather-forecast/data')
-        .then(response => response.json())
-        .then(data => {
-            const forecastByDate = {};
-            if (data.daily) {
-                data.daily.forEach(day => {
-                    const dateStr = new Date(day.dt * 1000).toISOString().slice(0, 10);
-                    forecastByDate[dateStr] = day;
-                });
+    // Initialize weather containers
+    const weatherContainers = document.querySelectorAll('.weather-forecast-container');
+    
+    // Function to update weather data
+    async function updateWeatherData() {
+        try {
+            // Get weather data from the weather plugin
+            const response = await fetch('/api/plugins/weather-forecast/data');
+            const weatherData = await response.json();
+            
+            if (!weatherData || !weatherData.daily) {
+                console.error('Invalid weather data received');
+                return;
             }
-            document.querySelectorAll('.weather-forecast-container').forEach(div => {
-                const ts = parseInt(div.getAttribute('data-timestamp'));
-                if (!ts) return;
-                const dateStr = new Date(ts * 1000).toISOString().slice(0, 10);
-                const forecast = forecastByDate[dateStr];
-                if (forecast) {
-                    const min = Math.round(forecast.main.temp_min);
-                    const max = Math.round(forecast.main.temp_max);
-                    const icon = forecast.weather && forecast.weather[0] ? forecast.weather[0].description : 'clear';
-                    div.innerHTML = `
-                        <div class="weather-forecast-day">
-                            <div class="temp"><span class="min">${min}°</span> - <span class="max">${max}°</span></div>
-                            <div class="icon"><img src="/plugins/weather-forecast/icons/${icon}.png" alt="${icon}" onerror="this.src='/plugins/weather-forecast/icons/clear.png'" /></div>
+            
+            // Update each weather container
+            weatherContainers.forEach(container => {
+                const timestamp = parseInt(container.dataset.timestamp);
+                const dayData = weatherData.daily.find(day => {
+                    const dayDate = new Date(day.dt * 1000);
+                    const containerDate = new Date(timestamp * 1000);
+                    return dayDate.toDateString() === containerDate.toDateString();
+                });
+                
+                if (dayData) {
+                    const tempMin = Math.round(dayData.main.temp_min);
+                    const tempMax = Math.round(dayData.main.temp_max);
+                    const condition = dayData.weather[0].description;
+                    
+                    // Create weather display
+                    container.innerHTML = `
+                        <div class="weather-info" style="
+                            display: flex;
+                            align-items: center;
+                            gap: 4px;
+                            font-size: 0.9em;
+                            margin: 4px 0;
+                            padding: 2px 4px;
+                            background: rgba(0, 0, 0, 0.2);
+                            border-radius: 4px;
+                        ">
+                            <img src="/plugins/weather-forecast/icons/${condition}.png" 
+                                 alt="${condition}" 
+                                 style="width: 24px; height: 24px;">
+                            <span style="color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">
+                                ${tempMin}° - ${tempMax}°
+                            </span>
                         </div>
                     `;
-                } else {
-                    div.innerHTML = '';
                 }
             });
-        });
+        } catch (error) {
+            console.error('Error updating weather data:', error);
+        }
+    }
+    
+    // Initial weather update
+    updateWeatherData();
+    
+    // Update weather data every 5 minutes
+    setInterval(updateWeatherData, 5 * 60 * 1000);
 });
 
 function calendarInit(container) {
