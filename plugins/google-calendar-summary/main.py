@@ -490,19 +490,11 @@ def get_summary_events(config=None):
         return {'error': str(e)}
 
 def get_weather_now():
-    logger.info("!!! get_weather_now called (DEBUG2) !!!")
     try:
-        logger.info("Fetching weather from http://localhost:8080/api/plugins/weather-forecast/data")
         resp = requests.get("http://localhost:8080/api/plugins/weather-forecast/data", timeout=10)
-        logger.info(f"Weather API status: {resp.status_code}")
-        logger.info(f"Weather API raw text: {resp.text}")
-        print("Weather API raw text (DEBUG2):", resp.text)
         if resp.status_code == 200:
             data = resp.json()
-            logger.info(f"Weather API data: {data}")
-            print("Weather API data (DEBUG2):", data)
             if "current" in data:
-                logger.info(f"Returning current: {data['current']}")
                 return data["current"]
             else:
                 logger.error("No 'current' key in weather API response!")
@@ -515,23 +507,11 @@ def get_weather_now():
         return {}
 
 def api_data():
-    logger.info("!!! api_data called (FORCE TEST WEATHER) !!!")
+    logger.info("api_data called")
     try:
         events = get_summary_events()
-        logger.info("!!! About to call get_weather_now() (FORCE TEST WEATHER) !!!")
-        # Force a test weather object
-        weather_now = {
-            "temperature": 21.5,
-            "feelsLike": 20.0,
-            "windSpeed": 3.2,
-            "pressure": 1012,
-            "humidity": 60,
-            "precipitation": 0.2,
-            "conditionCode": "partly-cloudy"
-        }
-        logger.info(f"!!! TEST: weather_now = {weather_now} !!!")
+        weather_now = get_weather_now()
         events['weather_now'] = weather_now
-        print("API_DATA RESPONSE (FORCE TEST WEATHER):", events)  # Debug print
         return events
     except Exception as e:
         logger.error(f"Error in api_data: {e}")
