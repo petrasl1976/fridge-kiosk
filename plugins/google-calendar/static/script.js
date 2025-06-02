@@ -38,24 +38,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     const tempMax = Math.round(dayData.main.temp_max);
                     const condition = dayData.weather[0].description;
                     
-                    // Create weather display
+                    // Create weather display: min (blue, large), max (red, large), icon below
                     container.innerHTML = `
-                        <div class="weather-info" style="
-                            display: flex;
-                            align-items: center;
-                            gap: 4px;
-                            font-size: 0.9em;
-                            margin: 4px 0;
-                            padding: 2px 4px;
-                            background: rgba(0, 0, 0, 0.2);
-                            border-radius: 4px;
-                        ">
+                        <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
+                            <span style="color: #2196f3; font-size: 1.3em; font-weight: bold;">${tempMin}°</span>
+                            <span style="color: #e53935; font-size: 1.3em; font-weight: bold;">${tempMax}°</span>
+                        </div>
+                        <div style="margin-top: 2px;">
                             <img src="/plugins/weather-forecast/icons/${condition}.png" 
                                  alt="${condition}" 
-                                 style="width: 24px; height: 24px;">
-                            <span style="color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">
-                                ${tempMin}° - ${tempMax}°
-                            </span>
+                                 style="width: 28px; height: 28px; display: block;">
                         </div>
                     `;
                 }
