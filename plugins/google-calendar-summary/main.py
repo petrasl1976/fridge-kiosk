@@ -9,6 +9,7 @@ from collections import defaultdict
 import logging
 import traceback  # Added for detailed stack traces
 import dateutil.parser
+import requests
 
 # Get the project root directory (two levels up from this file)
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -488,30 +489,27 @@ def get_summary_events(config=None):
         logger.debug(f"Function error traceback: {traceback.format_exc()}")
         return {'error': str(e)}
 
+def get_weather_now():
+    """Fetch current weather from the weather-forecast plugin API."""
+    try:
+        resp = requests.get("http://localhost:8090/api/plugins/weather-forecast/data", timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            return data.get('current', {})
+        else:
+            return {}
+    except Exception as e:
+        logger.error(f"Error fetching weather data for summary: {e}")
+        return {}
+
 def api_data():
     """API endpoint for getting calendar summary data."""
     logger.debug("Entering api_data()")
     try:
         events = get_summary_events()
         logger.debug(f"get_summary_events returned data keys: {list(events.keys())}")
-        
-        # Check if template exists
-        template_path = Path(__file__).parent / "templates" / "view.html"
-        template_exists = template_path.exists()
-        logger.debug(f"Template exists: {template_exists}")
-        
-        if template_exists:
-            with open(template_path) as f:
-                template_content = f.read()
-                logger.debug(f"Template first 100 chars: {template_content[:100]}")
-                # Extract template variables
-                import re
-                variables = re.findall(r'{{\s*([^}]+)\s*}}', template_content)
-                logger.debug(f"Template variables: {variables}")
-        
-        logger.info(f"Google Calendar plugin initialized successfully with {len(events.get('today_events', []))} events")
-        logger.debug(f"Returning init result with keys: {list(events.keys())}")
-        logger.debug(f"Data keys: {list(events.keys())}")
+        weather_now = get_weather_now()
+        events['weather_now'] = weather_now
         return events
     except Exception as e:
         logger.error(f"Error in api_data: {e}")
