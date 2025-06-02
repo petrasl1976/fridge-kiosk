@@ -512,23 +512,14 @@ def get_weather_now():
         return {}
 
 def api_data():
-    logger.info("!!! TEST: api_data called !!!")
+    logger.info("!!! api_data called (PROD) !!!")
     try:
         events = get_summary_events()
-        logger.info("!!! TEST: about to call get_weather_now() !!!")
-        # Force a test weather object
-        weather_now = {
-            "temperature": 99,
-            "feelsLike": 88,
-            "windSpeed": 7,
-            "pressure": 1000,
-            "humidity": 50,
-            "precipitation": 1,
-            "conditionCode": "test"
-        }
-        logger.info(f"!!! TEST: weather_now = {weather_now} !!!")
+        logger.info("!!! About to call get_weather_now() (PROD) !!!")
+        weather_now = get_weather_now()
+        logger.info(f"!!! PROD: weather_now = {weather_now} !!!")
         events['weather_now'] = weather_now
-        print("API_DATA RESPONSE:", events)  # Debug print
+        print("API_DATA RESPONSE (PROD):", events)  # Debug print
         return events
     except Exception as e:
         logger.error(f"Error in api_data: {e}")
