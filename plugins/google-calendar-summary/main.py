@@ -528,6 +528,7 @@ def api_data():
         }
         logger.info(f"!!! TEST: weather_now = {weather_now} !!!")
         events['weather_now'] = weather_now
+        print("API_DATA RESPONSE:", events)  # Debug print
         return events
     except Exception as e:
         logger.error(f"Error in api_data: {e}")
