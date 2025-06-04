@@ -519,6 +519,10 @@ def main():
     
     # Load configuration
     config = load_config()
+    SCOPES = config.get('scopes', [
+        'https://www.googleapis.com/auth/calendar.readonly',
+        'https://www.googleapis.com/auth/photoslibrary.readonly'
+    ])
     
     # Configure logging level from config
     system_log_level = config.get('system', {}).get('logging', 'INFO').upper()
