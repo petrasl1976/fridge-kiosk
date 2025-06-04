@@ -1,14 +1,14 @@
 {
     "logging": "WARNING",
     "position": {
-        "landscape": {
-            "top": "38%",
+        "portrait": {
+            "top": "14%",
             "left": "60%",
             "width": "40%",
             "height": "auto"
         },
-        "portrait": {
-            "top": "24%",
+        "landscape": {
+            "top": "38%",
             "left": "60%",
             "width": "40%",
             "height": "auto"
