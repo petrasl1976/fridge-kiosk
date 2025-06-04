@@ -10,47 +10,32 @@
       <!-- Detailed Weather Forecast Section -->
       {% set w = plugin['data'].weather_now %}
       {% if w and w.temperature is defined and w.temperature is not none %}
-        <div class="summary-weather-detailed" style="margin-bottom: 20px; text-align: right; border: 1px solid #444; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); width: 100%; box-sizing: border-box;">
-          <div class="weather-header" style="font-size: 1.1em; font-weight: bold; margin-bottom: 8px; color: #87CEEB;">
-            Dabar
+        <div class="summary-weather-detailed" style="margin-bottom: 20px; text-align: right; width: 100%; box-sizing: border-box;">
+          {% if w.forecastTimeUtc %}
+          <div style="font-size: 0.8em; color: #888; margin-bottom: 4px;">{{ w.forecastTimeUtc }}</div>
+          {% endif %}
+          <div style="font-size: 0.9em; color: #ccc; margin-bottom: 6px;">{{ w.conditionCode or 'N/A' }}</div>
+          <div class="weather-temp" style="font-size: 1.8em; font-weight: bold; color: #fff; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); margin-bottom: 6px;">
+            {{ w.temperature }}°C
           </div>
-          <div class="weather-main" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div class="weather-temp" style="font-size: 1.8em; font-weight: bold;">
-              {{ w.temperature }}°C
-            </div>
-            <div class="weather-condition" style="text-align: right;">
-              <div style="font-size: 0.9em; color: #ccc;">{{ w.conditionCode or 'N/A' }}</div>
-              {% if w.forecastTimeUtc %}
-              <div style="font-size: 0.8em; color: #888;">{{ w.forecastTimeUtc }}</div>
-              {% endif %}
-            </div>
-          </div>
-          <div class="weather-details" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.85em;">
-            <div>Jaučiasi: {{ w.feelsLike or 'N/A' }}°C</div>
-            <div>Vėjas: {{ w.windSpeed or 'N/A' }} m/s</div>
-            <div>Spaudimas: {{ w.pressure or 'N/A' }} hPa</div>
-            <div>Drėgmė: {{ w.humidity or 'N/A' }}%</div>
-            {% if w.precipitation and w.precipitation > 0 %}
-            <div style="grid-column: span 2; color: #87CEEB;">Krituliai: {{ w.precipitation }} mm</div>
-            {% endif %}
-          </div>
+          <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px;">Jaučiasi: {{ w.feelsLike or 'N/A' }}°C</div>
+          <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px;">Vėjas: {{ w.windSpeed or 'N/A' }} m/s</div>
+          {% if w.precipitation and w.precipitation > 0 %}
+          <div style="font-size: 0.85em; color: #87CEEB; margin-bottom: 3px;">Krituliai: {{ w.precipitation }} mm</div>
+          {% endif %}
+          <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px;">Spaudimas: {{ w.pressure or 'N/A' }} hPa</div>
+          <div style="font-size: 0.85em; color: #ddd;">Drėgmė: {{ w.humidity or 'N/A' }}%</div>
         </div>
       {% elif w %}
         <!-- Weather data exists but is incomplete -->
-        <div class="summary-weather-detailed" style="margin-bottom: 20px; text-align: right; border: 1px solid #444; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); width: 100%; box-sizing: border-box;">
-          <div class="weather-header" style="font-size: 1.1em; font-weight: bold; margin-bottom: 8px; color: #87CEEB;">
-            Dabar
-          </div>
+        <div class="summary-weather-detailed" style="margin-bottom: 20px; text-align: right; width: 100%; box-sizing: border-box;">
           <div style="font-size: 0.9em; color: #888;">
             Kraunama orų prognozė...
           </div>
         </div>
       {% else %}
         <!-- No weather data available -->
-        <div class="summary-weather-detailed" style="margin-bottom: 20px; text-align: right; border: 1px solid #444; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.2); width: 100%; box-sizing: border-box;">
-          <div class="weather-header" style="font-size: 1.1em; font-weight: bold; margin-bottom: 8px; color: #87CEEB;">
-            Dabar
-          </div>
+        <div class="summary-weather-detailed" style="margin-bottom: 20px; text-align: right; width: 100%; box-sizing: border-box;">
           <div style="font-size: 0.9em; color: #888;">
             Orų duomenys nepasiekiami
           </div>
