@@ -9,6 +9,7 @@ from collections import defaultdict
 import logging
 import traceback  # Added for detailed stack traces
 import dateutil.parser
+import requests
 
 # Get the project root directory (two levels up from this file)
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -488,30 +489,53 @@ def get_summary_events(config=None):
         logger.debug(f"Function error traceback: {traceback.format_exc()}")
         return {'error': str(e)}
 
+def get_weather_now():
+    """Fetch detailed current weather by directly calling the weather-forecast plugin."""
+    try:
+        # First try HTTP request (for runtime updates)
+        logger.info("Attempting to fetch weather via HTTP API")
+        resp = requests.get("http://localhost:8080/api/plugins/weather-forecast/current", timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            logger.info(f"Weather API data: {data}")
+            return data
+        else:
+            logger.warning(f"Weather API returned status {resp.status_code}, trying direct import")
+    except Exception as e:
+        logger.warning(f"HTTP request failed: {e}, trying direct import")
+    
+    # Fallback: import weather plugin directly
+    try:
+        import sys
+        from pathlib import Path
+        
+        # Add weather-forecast plugin to path
+        weather_plugin_path = Path(__file__).parent.parent / 'weather-forecast'
+        if weather_plugin_path.exists():
+            sys.path.insert(0, str(weather_plugin_path))
+            import main as weather_main
+            sys.path.remove(str(weather_plugin_path))
+            
+            # Get weather data directly
+            weather_data = weather_main.get_weather_data()
+            current_weather = weather_data.get('current', {}) if weather_data else {}
+            logger.info(f"Direct weather data: {current_weather}")
+            return current_weather
+        else:
+            logger.error(f"Weather plugin path not found: {weather_plugin_path}")
+            return {}
+    except Exception as e:
+        logger.error(f"Error fetching weather data directly: {e}")
+        return {}
+
 def api_data():
-    """API endpoint for getting calendar summary data."""
-    logger.debug("Entering api_data()")
+    logger.info("!!! TEST: api_data() called !!!")
     try:
         events = get_summary_events()
-        logger.debug(f"get_summary_events returned data keys: {list(events.keys())}")
-        
-        # Check if template exists
-        template_path = Path(__file__).parent / "templates" / "view.html"
-        template_exists = template_path.exists()
-        logger.debug(f"Template exists: {template_exists}")
-        
-        if template_exists:
-            with open(template_path) as f:
-                template_content = f.read()
-                logger.debug(f"Template first 100 chars: {template_content[:100]}")
-                # Extract template variables
-                import re
-                variables = re.findall(r'{{\s*([^}]+)\s*}}', template_content)
-                logger.debug(f"Template variables: {variables}")
-        
-        logger.info(f"Google Calendar plugin initialized successfully with {len(events.get('today_events', []))} events")
-        logger.debug(f"Returning init result with keys: {list(events.keys())}")
-        logger.debug(f"Data keys: {list(events.keys())}")
+        logger.info("!!! TEST: about to call get_weather_now() !!!")
+        weather_now = get_weather_now()
+        logger.info(f"!!! TEST: weather_now = {weather_now} !!!")
+        events['weather_now'] = weather_now
         return events
     except Exception as e:
         logger.error(f"Error in api_data: {e}")
@@ -617,7 +641,7 @@ def get_refresh_interval():
 def init(config):
     """Initialize the plugin"""
     # Log the plugin initialization
-    logger.info("Initializing Google Calendar plugin")
+    logger.info("Initializing Google Calendar Summary plugin")
     logger.debug(f"Config: {json.dumps(config, indent=2, default=str)}")
     
     try:
@@ -639,6 +663,20 @@ def init(config):
             logger.error(f"Error getting events: {data['error']}")
             return {'data': data, 'error': data['error']}
         
+        # Try to add weather data to the initialization (but don't fail if it's not available)
+        logger.info("Attempting to fetch weather data for initialization")
+        try:
+            weather_now = get_weather_now()
+            if weather_now:
+                data['weather_now'] = weather_now
+                logger.info(f"Successfully added weather data during initialization")
+            else:
+                logger.warning("No weather data available during initialization, will be fetched later")
+                data['weather_now'] = {}
+        except Exception as e:
+            logger.warning(f"Could not fetch weather data during initialization: {e}")
+            data['weather_now'] = {}
+        
         # Debug view template variables
         try:
             from jinja2 import Environment, FileSystemLoader
@@ -657,13 +695,16 @@ def init(config):
         except Exception as e:
             logger.debug(f"Error analyzing template: {e}")
             
-        logger.info(f"Google Calendar plugin initialized successfully with {len(data.get('today_events', [])) + len(data.get('tomorrow_events', []))} events")
+        event_count = len(data.get('today_events', [])) + len(data.get('tomorrow_events', []))
+        weather_status = "with weather data" if data.get('weather_now') else "without weather data"
+        logger.info(f"Google Calendar Summary plugin initialized successfully with {event_count} events {weather_status}")
+        
         init_result = {'data': data}
         logger.debug(f"Returning init result with keys: {list(init_result.keys())}")
         logger.debug(f"Data keys: {list(init_result['data'].keys())}")
         return init_result
     except Exception as e:
-        logger.error(f"Error initializing Google Calendar plugin: {e}")
+        logger.error(f"Error initializing Google Calendar Summary plugin: {e}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
         return {'data': {}, 'error': str(e)}
 

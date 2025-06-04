@@ -249,83 +249,57 @@ def get_events(config=None):
             # Add formatted time for the template
             if "start" in event and "dateTime" in event["start"]:
                 event["formatted_time"] = format_time(event["start"]["dateTime"])
+            elif "start" in event and "date" in event["start"]:
+                event["formatted_time"] = "All day"
+            else:
+                event["formatted_time"] = ""
         
         # Group events by day
         events_by_day = defaultdict(list)
         for event in events:
-            start = event['start'].get('dateTime', event['start'].get('date'))
-            day_str = start[:10]  # YYYY-MM-DD
-            events_by_day[day_str].append(event)
+            if "start" in event:
+                if "dateTime" in event["start"]:
+                    date_str = event["start"]["dateTime"][:10]
+                elif "date" in event["start"]:
+                    date_str = event["start"]["date"]
+                else:
+                    continue
+                events_by_day[date_str].append(event)
         
-        # Generate list of days for the calendar
+        # Create weeks array
         weeks = []
-        cur_day = start_of_week
-        for _ in range(weeks_to_show):
-            week = []
-            for __ in range(7):
-                # Create date string in YYYY-MM-DD format for template
-                day_str = cur_day.strftime("%Y-%m-%d")
-                # Add day of month as a separate field
-                day_info = {
-                    "date": cur_day.strftime("%Y-%m-%d"),  # Convert date to string
-                    "day": cur_day.day,
-                    "weekday": cur_day.weekday(),
-                    "is_today": (cur_day == today),
-                    "date_str": day_str
-                }
-                week.append(day_info)
-                cur_day = cur_day + datetime.timedelta(days=1)
-            weeks.append(week)
+        current_week = []
+        current_date = start_of_week
         
-        # Create response data
-        response = {
+        while current_date <= end_of_range:
+            date_str = current_date.isoformat()
+            current_week.append({
+                'date': date_str,
+                'date_str': date_str,
+                'day': current_date.day,
+                'weekday': current_date.weekday(),
+                'timestamp': int(datetime.datetime.combine(current_date, datetime.time.min).replace(tzinfo=vilnius_tz).timestamp())
+            })
+            
+            if len(current_week) == 7:
+                weeks.append(current_week)
+                current_week = []
+            
+            current_date += datetime.timedelta(days=1)
+        
+        if current_week:
+            weeks.append(current_week)
+        
+        return {
             'weeks': weeks,
             'events_by_day': dict(events_by_day),
-            'today': today.strftime("%Y-%m-%d"),
-            'holidays': config.get('holidays', {}),
-            'summary_max_length': config.get('options', {}).get('event_summary_max_length', 28),
-            'show_holidays': config.get('options', {}).get('show_holidays', True)
+            'today': today.isoformat()
         }
         
-        logger.info(f"Calendar response created with {len(weeks)} weeks")
-        logger.debug(f"Response keys: {list(response.keys())}")
-        logger.debug(f"Today: {response['today']}")
-        logger.debug(f"Number of event days: {len(response['events_by_day'])}")
-        # If weeks is empty, fall through to fake data below
-        if weeks:
-            return response
     except Exception as e:
         logger.error(f"Error fetching calendar events: {e}")
         logger.debug(f"Traceback: {traceback.format_exc()}")
-    # If we get here, return a minimal fake calendar grid for debug
-    logger.warning("Returning minimal fake calendar grid for debug!")
-    today = datetime.date.today()
-    start_of_week = today - datetime.timedelta(days=today.weekday())
-    weeks_to_show = config.get('options', {}).get('weeks_to_show', 6)
-    weeks = []
-    cur_day = start_of_week
-    for _ in range(weeks_to_show):
-        week = []
-        for __ in range(7):
-            day_str = cur_day.strftime("%Y-%m-%d")
-            day_info = {
-                "date": cur_day.strftime("%Y-%m-%d"),  # Convert date to string
-                "day": cur_day.day,
-                "weekday": cur_day.weekday(),
-                "is_today": (cur_day == today),
-                "date_str": day_str
-            }
-            week.append(day_info)
-            cur_day = cur_day + datetime.timedelta(days=1)
-        weeks.append(week)
-    return {
-        'weeks': weeks,
-        'events_by_day': {},
-        'today': today.strftime("%Y-%m-%d"),
-        'holidays': {},
-        'summary_max_length': 28,
-        'show_holidays': True
-    }
+        return {'error': str(e)}
 
 def get_today_events(config=None):
     """Get only today's events from Google Calendar"""

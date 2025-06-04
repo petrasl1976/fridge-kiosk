@@ -9,38 +9,59 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize
     calendarInit(container);
 
-    // Fetch the full week weather forecast once
-    fetch('/api/plugins/weather-forecast/data')
-        .then(response => response.json())
-        .then(data => {
-            const forecastByDate = {};
-            if (data.daily) {
-                data.daily.forEach(day => {
-                    const dateStr = new Date(day.dt * 1000).toISOString().slice(0, 10);
-                    forecastByDate[dateStr] = day;
-                });
+    // Initialize weather containers
+    const weatherContainers = document.querySelectorAll('.weather-forecast-container');
+    
+    // Function to update weather data
+    async function updateWeatherData() {
+        try {
+            // Get weather data from the weather plugin
+            const response = await fetch('/api/plugins/weather-forecast/data');
+            const weatherData = await response.json();
+            
+            if (!weatherData || !weatherData.daily) {
+                console.error('Invalid weather data received');
+                return;
             }
-            document.querySelectorAll('.weather-forecast-container').forEach(div => {
-                const ts = parseInt(div.getAttribute('data-timestamp'));
-                if (!ts) return;
-                const dateStr = new Date(ts * 1000).toISOString().slice(0, 10);
-                const forecast = forecastByDate[dateStr];
-                console.log('Checking cell', dateStr, 'timestamp:', ts, 'forecast:', forecast);
-                if (forecast) {
-                    const min = Math.round(forecast.main.temp_min);
-                    const max = Math.round(forecast.main.temp_max);
-                    const icon = forecast.weather && forecast.weather[0] ? forecast.weather[0].description : 'clear';
-                    div.innerHTML = `
-                        <div class="weather-forecast-day">
-                            <div class="temp"><span class="min">${min}°</span> - <span class="max">${max}°</span></div>
-                            <div class="icon"><img src="/plugins/weather-forecast/icons/${icon}.png" alt="${icon}" onerror="this.src='/plugins/weather-forecast/icons/clear.png'" /></div>
+            
+            // Update each weather container
+            weatherContainers.forEach(container => {
+                const timestamp = parseInt(container.dataset.timestamp);
+                const dayData = weatherData.daily.find(day => {
+                    const dayDate = new Date(day.dt * 1000);
+                    const containerDate = new Date(timestamp * 1000);
+                    return dayDate.toDateString() === containerDate.toDateString();
+                });
+                
+                if (dayData) {
+                    const tempMin = Math.round(dayData.main.temp_min);
+                    const tempMax = Math.round(dayData.main.temp_max);
+                    const condition = dayData.weather[0].description;
+                    
+                    // Create weather display: min (blue, large), max (red, large), icon below
+                    container.innerHTML = `
+                        <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
+                            <span style="color: #2196f3; font-size: 1.3em; font-weight: bold;">${tempMin}°</span>
+                            <span style="color: #e53935; font-size: 1.3em; font-weight: bold;">${tempMax}°</span>
+                        </div>
+                        <div style="margin-top: 2px;">
+                            <img src="/plugins/weather-forecast/icons/${condition}.png" 
+                                 alt="${condition}" 
+                                 style="width: 28px; height: 28px; display: block;">
                         </div>
                     `;
-                } else {
-                    div.innerHTML = '';
                 }
             });
-        });
+        } catch (error) {
+            console.error('Error updating weather data:', error);
+        }
+    }
+    
+    // Initial weather update
+    updateWeatherData();
+    
+    // Update weather data every 5 minutes
+    setInterval(updateWeatherData, 5 * 60 * 1000);
 });
 
 function calendarInit(container) {

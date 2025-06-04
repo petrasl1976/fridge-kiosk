@@ -2,16 +2,16 @@
     "logging": "INFO",
     "updateInterval": 30,
     "position": {
+        "portrait": {
+            "top": "12%",
+            "left": "55%",
+            "width": "45%",
+            "height": "auto"
+        },
         "landscape": {
             "top": "15%",
             "left": "65%",
             "width": "35%",
-            "height": "auto"
-        },
-        "portrait": {
-            "top": "10%",
-            "left": "60%",
-            "width": "40%",
             "height": "auto"
         }
     }
