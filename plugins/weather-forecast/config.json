@@ -4,19 +4,5 @@
     "api": {
         "location": "vilnius-paneriai",
         "base_url": "https://api.meteo.lt/v1"
-    },
-    "position": {
-        "landscape": {
-            "top": "0%",
-            "left": "0%",
-            "width": "100%",
-            "height": "auto"
-        },
-        "portrait": {
-            "top": "0%",
-            "left": "0%",
-            "width": "100%",
-            "height": "auto"
-        }
     }
 } 

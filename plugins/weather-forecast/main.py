@@ -213,5 +213,7 @@ def get_refresh_interval():
     return config.get('updateInterval', 3600)
 
 def init(config):
-    """Initialize the plugin"""
-    return {'data': get_weather(config)} 
+    """Initialize the plugin as a service-only provider"""
+    # This plugin now serves only as a backend API provider
+    # No UI initialization needed
+    return {'data': {}} 
