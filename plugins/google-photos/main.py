@@ -107,12 +107,37 @@ def get_photos_session():
         logger.error("No valid credentials found")
         return None
 
+    # Force refresh the credentials to ensure we have the latest token
+    try:
+        if credentials.refresh_token:
+            logger.info("Forcing credential refresh for Photos API")
+            from google.auth.transport.requests import Request
+            credentials.refresh(Request())
+            logger.info("Credentials refreshed successfully for Photos API")
+            
+            # Save the refreshed token
+            token_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config', 'token.json')
+            refreshed_token_data = {
+                'token': credentials.token,
+                'refresh_token': credentials.refresh_token,
+                'token_uri': credentials.token_uri,
+                'client_id': credentials.client_id,
+                'client_secret': credentials.client_secret,
+                'scopes': credentials.scopes
+            }
+            with open(token_path, 'w') as token_file:
+                json.dump(refreshed_token_data, token_file, indent=2)
+            logger.info("Updated token.json with fresh credentials")
+    except Exception as e:
+        logger.error(f"Error refreshing credentials for Photos API: {e}")
+
     try:
         service = build(
             'photoslibrary', 'v1', credentials=credentials,
             discoveryServiceUrl='https://photoslibrary.googleapis.com/$discovery/rest?version=v1'
         )
         logger.debug("Successfully created Photos API service")
+        logger.debug(f"Using credentials with scopes: {credentials.scopes}")
         return service
     except Exception as e:
         logger.error(f"Error creating Photos API service: {e}")
