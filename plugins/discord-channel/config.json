@@ -1,17 +1,17 @@
 {
   "logging": "WARNING",
   "position": {
+    "portrait": {
+      "top": "5%",
+      "left": "0%",
+      "width": "60%",
+      "height": "auto"
+    },
     "landscape": {
       "top": "10%",
       "left": "0%",
       "width": "65%",
       "height": "45%"
-    },
-    "portrait": {
-      "top": "17%",
-      "left": "0%",
-      "width": "60%",
-      "height": "auto"
     }
   },
   "updateInterval": 60,
