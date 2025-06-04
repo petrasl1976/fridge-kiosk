@@ -490,20 +490,42 @@ def get_summary_events(config=None):
         return {'error': str(e)}
 
 def get_weather_now():
-    """Fetch detailed current weather from the weather-forecast plugin API."""
+    """Fetch detailed current weather by directly calling the weather-forecast plugin."""
     try:
-        logger.info("Fetching detailed weather from http://localhost:8080/api/plugins/weather-forecast/current")
+        # First try HTTP request (for runtime updates)
+        logger.info("Attempting to fetch weather via HTTP API")
         resp = requests.get("http://localhost:8080/api/plugins/weather-forecast/current", timeout=5)
-        logger.info(f"Weather API status: {resp.status_code}")
         if resp.status_code == 200:
             data = resp.json()
             logger.info(f"Weather API data: {data}")
             return data
         else:
-            logger.error(f"Weather API returned status {resp.status_code}")
+            logger.warning(f"Weather API returned status {resp.status_code}, trying direct import")
+    except Exception as e:
+        logger.warning(f"HTTP request failed: {e}, trying direct import")
+    
+    # Fallback: import weather plugin directly
+    try:
+        import sys
+        from pathlib import Path
+        
+        # Add weather-forecast plugin to path
+        weather_plugin_path = Path(__file__).parent.parent / 'weather-forecast'
+        if weather_plugin_path.exists():
+            sys.path.insert(0, str(weather_plugin_path))
+            import main as weather_main
+            sys.path.remove(str(weather_plugin_path))
+            
+            # Get weather data directly
+            weather_data = weather_main.get_weather_data()
+            current_weather = weather_data.get('current', {}) if weather_data else {}
+            logger.info(f"Direct weather data: {current_weather}")
+            return current_weather
+        else:
+            logger.error(f"Weather plugin path not found: {weather_plugin_path}")
             return {}
     except Exception as e:
-        logger.error(f"Error fetching weather data for summary: {e}")
+        logger.error(f"Error fetching weather data directly: {e}")
         return {}
 
 def api_data():
@@ -641,11 +663,19 @@ def init(config):
             logger.error(f"Error getting events: {data['error']}")
             return {'data': data, 'error': data['error']}
         
-        # Add weather data to the initialization
-        logger.info("Fetching weather data for initialization")
-        weather_now = get_weather_now()
-        data['weather_now'] = weather_now
-        logger.debug(f"Added weather data: {weather_now}")
+        # Try to add weather data to the initialization (but don't fail if it's not available)
+        logger.info("Attempting to fetch weather data for initialization")
+        try:
+            weather_now = get_weather_now()
+            if weather_now:
+                data['weather_now'] = weather_now
+                logger.info(f"Successfully added weather data during initialization")
+            else:
+                logger.warning("No weather data available during initialization, will be fetched later")
+                data['weather_now'] = {}
+        except Exception as e:
+            logger.warning(f"Could not fetch weather data during initialization: {e}")
+            data['weather_now'] = {}
         
         # Debug view template variables
         try:
@@ -665,7 +695,10 @@ def init(config):
         except Exception as e:
             logger.debug(f"Error analyzing template: {e}")
             
-        logger.info(f"Google Calendar Summary plugin initialized successfully with {len(data.get('today_events', [])) + len(data.get('tomorrow_events', []))} events and weather data")
+        event_count = len(data.get('today_events', [])) + len(data.get('tomorrow_events', []))
+        weather_status = "with weather data" if data.get('weather_now') else "without weather data"
+        logger.info(f"Google Calendar Summary plugin initialized successfully with {event_count} events {weather_status}")
+        
         init_result = {'data': data}
         logger.debug(f"Returning init result with keys: {list(init_result.keys())}")
         logger.debug(f"Data keys: {list(init_result['data'].keys())}")
