@@ -10,7 +10,7 @@
     "oauth": {
       "scopes": [
         "https://www.googleapis.com/auth/calendar.readonly",
-        "https://www.googleapis.com/auth/photoslibrary"
+        "https://www.googleapis.com/auth/photoslibrary.readonly"
       ]
     }
   },
