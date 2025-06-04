@@ -6,6 +6,10 @@
     "logging": "WARNING",
     "fontFamily": "'Courier Prime', 'Courier New', monospace"
   },
+  "scopes": [
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/photoslibrary.readonly"
+  ],
   "enabledPlugins": [
     "google-photos",
     "weather-forecast",

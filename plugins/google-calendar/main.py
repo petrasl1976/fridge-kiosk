@@ -87,7 +87,11 @@ TOKEN_FILE = PROJECT_ROOT / "config" / "token.json"
 dotenv.load_dotenv(ENV_FILE)
 
 # If modifying these scopes, delete the token.json file.
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+config = load_config()
+SCOPES = config.get('scopes', [
+    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/photoslibrary.readonly'
+])
 
 def event_color_filter(event_summary):
     """Template filter to get event color based on summary"""

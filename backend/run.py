@@ -48,11 +48,6 @@ template_env.filters['datetime_fromtimestamp'] = datetime_fromtimestamp
 template_env.filters['strftime'] = strftime
 
 # Google OAuth configuration
-SCOPES = [
-    'https://www.googleapis.com/auth/calendar.readonly',
-    'https://www.googleapis.com/auth/photoslibrary.readonly'
-]
-
 def credentials_to_dict(credentials):
     """Convert Google Credentials object to a dictionary."""
     return {
