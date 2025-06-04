@@ -31,6 +31,14 @@ project_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(project_root))
 from backend.utils.config import load_config, get_plugin_path, get_env, setup_logging
 
+# --- SCOPES DEFINITION (must be before any class/function uses it) ---
+config = load_config()
+SCOPES = config.get('scopes', [
+    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/photoslibrary.readonly'
+])
+# --- END SCOPES DEFINITION ---
+
 # Initialize Jinja2 template environment
 template_loader = jinja2.FileSystemLoader(searchpath=str(project_root / "backend/templates"))
 template_env = jinja2.Environment(loader=template_loader)
