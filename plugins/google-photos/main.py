@@ -68,13 +68,28 @@ def get_credentials():
                     logger.warning("Credentials are expired")
                     if credentials.refresh_token:
                         logger.info("Attempting to refresh credentials")
-                        credentials.refresh(None)
+                        from google.auth.transport.requests import Request
+                        credentials.refresh(Request())
                         logger.info("Credentials refreshed successfully")
+                        
+                        # Save refreshed credentials back to token.json
+                        refreshed_token_data = {
+                            'token': credentials.token,
+                            'refresh_token': credentials.refresh_token,
+                            'token_uri': credentials.token_uri,
+                            'client_id': credentials.client_id,
+                            'client_secret': credentials.client_secret,
+                            'scopes': credentials.scopes
+                        }
+                        with open(token_path, 'w') as token_file:
+                            json.dump(refreshed_token_data, token_file, indent=2)
+                        logger.info("Refreshed credentials saved to token.json")
                     else:
                         logger.error("No refresh token available")
                         return None
                 
                 logger.info("Credentials loaded and validated successfully")
+                logger.debug(f"Credential scopes: {credentials.scopes}")
                 return credentials
         except Exception as e:
             logger.error(f"Error loading credentials: {e}")

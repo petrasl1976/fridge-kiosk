@@ -82,8 +82,8 @@ TOKEN_FILE = PROJECT_ROOT / "config" / "token.json"
 # Load environment variables from the project-wide .env file
 dotenv.load_dotenv(ENV_FILE)
 
-# If modifying these scopes, delete the token.json file.
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+# Note: Authentication is handled centrally by the main backend system
+# See backend/run.py and config/main.json for OAuth scope configuration
 
 def event_color_filter(event_summary):
     """Template filter to get event color based on summary"""
