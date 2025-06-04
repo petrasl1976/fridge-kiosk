@@ -21,26 +21,13 @@
 
 /* Weather Section Styles */
 .summary-weather-detailed {
-    border: 1px solid #444;
-    padding: 12px;
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-}
-
-.summary-weather-detailed:hover {
-    background: rgba(0, 0, 0, 0.4);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    /* Completely transparent - no borders, background, or shadows */
 }
 
 .weather-header {
     font-weight: bold;
     color: #87CEEB;
-    border-bottom: 1px solid #444;
-    padding-bottom: 4px;
-    margin-bottom: 8px;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);
 }
 
 .weather-main {
@@ -54,7 +41,7 @@
     font-size: 1.8em;
     font-weight: bold;
     color: #fff;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    text-shadow: 3px 3px 8px rgba(0, 0, 0, 1);
 }
 
 .weather-condition {
