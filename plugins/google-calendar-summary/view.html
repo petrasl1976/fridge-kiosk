@@ -12,31 +12,31 @@
       {% if w and w.temperature is defined and w.temperature is not none %}
         <div class="summary-weather-detailed" style="margin-bottom: 20px; text-align: right; width: 100%; box-sizing: border-box;">
           {% if w.forecastTimeUtc %}
-          <div style="font-size: 0.8em; color: #888; margin-bottom: 4px;">{{ w.forecastTimeUtc }}</div>
+          <div style="font-size: 0.8em; color: #888; margin-bottom: 4px; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">{{ w.forecastTimeUtc }}</div>
           {% endif %}
-          <div style="font-size: 0.9em; color: #ccc; margin-bottom: 6px;">{{ w.conditionCode or 'N/A' }}</div>
-          <div class="weather-temp" style="font-size: 1.8em; font-weight: bold; color: #fff; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); margin-bottom: 6px;">
+          <div style="font-size: 0.9em; color: #ccc; margin-bottom: 6px; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">{{ w.conditionCode or 'N/A' }}</div>
+          <div class="weather-temp" style="font-size: 1.8em; font-weight: bold; color: #fff; text-shadow: 3px 3px 8px rgba(0, 0, 0, 1); margin-bottom: 6px;">
             {{ w.temperature }}°C
           </div>
-          <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px;">Jaučiasi: {{ w.feelsLike or 'N/A' }}°C</div>
-          <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px;">Vėjas: {{ w.windSpeed or 'N/A' }} m/s</div>
+          <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">Jaučiasi: {{ w.feelsLike or 'N/A' }}°C</div>
+          <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">Vėjas: {{ w.windSpeed or 'N/A' }} m/s</div>
           {% if w.precipitation and w.precipitation > 0 %}
-          <div style="font-size: 0.85em; color: #87CEEB; margin-bottom: 3px;">kritulių kiekis: {{ w.precipitation }} mm</div>
+          <div style="font-size: 0.85em; color: #87CEEB; margin-bottom: 3px; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">kritulių kiekis: {{ w.precipitation }} mm</div>
           {% endif %}
-          <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px;">Spaudimas: {{ w.pressure or 'N/A' }} hPa</div>
-          <div style="font-size: 0.85em; color: #ddd;">Drėgmė: {{ w.humidity or 'N/A' }}%</div>
+          <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">Spaudimas: {{ w.pressure or 'N/A' }} hPa</div>
+          <div style="font-size: 0.85em; color: #ddd; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">Drėgmė: {{ w.humidity or 'N/A' }}%</div>
         </div>
       {% elif w %}
         <!-- Weather data exists but is incomplete -->
         <div class="summary-weather-detailed" style="margin-bottom: 20px; text-align: right; width: 100%; box-sizing: border-box;">
-          <div style="font-size: 0.9em; color: #888;">
+          <div style="font-size: 0.9em; color: #888; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">
             Kraunama orų prognozė...
           </div>
         </div>
       {% else %}
         <!-- No weather data available -->
         <div class="summary-weather-detailed" style="margin-bottom: 20px; text-align: right; width: 100%; box-sizing: border-box;">
-          <div style="font-size: 0.9em; color: #888;">
+          <div style="font-size: 0.9em; color: #888; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">
             Orų duomenys nepasiekiami
           </div>
         </div>
