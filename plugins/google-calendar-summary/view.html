@@ -21,7 +21,7 @@
           <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px;">Jaučiasi: {{ w.feelsLike or 'N/A' }}°C</div>
           <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px;">Vėjas: {{ w.windSpeed or 'N/A' }} m/s</div>
           {% if w.precipitation and w.precipitation > 0 %}
-          <div style="font-size: 0.85em; color: #87CEEB; margin-bottom: 3px;">Krituliai: {{ w.precipitation }} mm</div>
+          <div style="font-size: 0.85em; color: #87CEEB; margin-bottom: 3px;">kritulių kiekis: {{ w.precipitation }} mm</div>
           {% endif %}
           <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px;">Spaudimas: {{ w.pressure or 'N/A' }} hPa</div>
           <div style="font-size: 0.85em; color: #ddd;">Drėgmė: {{ w.humidity or 'N/A' }}%</div>
