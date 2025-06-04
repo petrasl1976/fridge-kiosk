@@ -202,6 +202,11 @@ def api_day(timestamp):
             return day
     return {'error': 'No forecast for this day'}
 
+def api_current():
+    """API endpoint for getting detailed current weather data"""
+    data = get_weather_data()
+    return data.get('current', {}) if data else {}
+
 def get_refresh_interval():
     """Get the refresh interval from config"""
     config = load_config()
