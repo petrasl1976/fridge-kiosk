@@ -10,6 +10,7 @@ import logging
 import traceback  # Added for detailed stack traces
 import dateutil.parser
 import requests
+from backend.utils.config import load_config
 
 # Get the project root directory (two levels up from this file)
 PROJECT_ROOT = Path(__file__).parent.parent.parent
