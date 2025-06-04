@@ -298,4 +298,19 @@ def init(config):
     except Exception as e:
         logger.error(f"Error initializing plugin: {e}")
         logger.debug(f"Init error traceback: {traceback.format_exc()}")
-        return {'data': {}, 'error': str(e)} 
+        return {'data': {}, 'error': str(e)}
+
+def load_main_config():
+    PROJECT_ROOT = Path(__file__).parent.parent.parent
+    main_config_path = PROJECT_ROOT / 'config' / 'main.json'
+    try:
+        with open(main_config_path) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+MAIN_CONFIG = load_main_config()
+SCOPES = MAIN_CONFIG.get('scopes', [
+    'https://www.googleapis.com/auth/calendar.readonly',
+    'https://www.googleapis.com/auth/photoslibrary.readonly'
+]) 
