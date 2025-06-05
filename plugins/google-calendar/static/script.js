@@ -41,9 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Create weather display: min (blue, large), max (red, large), icon below
                     container.innerHTML = `
                         <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
-                            <span><img src="/plugins/weather-forecast/icons/${condition}.png" alt="${condition}" style="width: 28px; height: 28px; display: block;"></span>
-                            <span style="color: #2196f3; font-size: 1.3em;">${tempMin}°</span>
-                            <span style="color: #e53935; font-size: 1.3em;">${tempMax}°</span>
+                            <span><img src="/plugins/weather-forecast/icons/${condition}.png" style="width: 30px; height: 30px; display: block;"></span>
+                            <span style="color: #2196f3; font-size: 1em;">${tempMin}°</span>
+                            <span style="color: #e53935; font-size: 1em;">${tempMax}°</span>
                         </div>
                     `;
                 }
