@@ -16,10 +16,13 @@
           {% endif %}
           <div class="weather-condition">{{ w.conditionCode or 'N/A' }}</div>
           <div class="weather-temp {% if w.temperature > 0 %}above-zero{% else %}zero-or-below{% endif %}">
-            {{ w.temperature }}°C - {{ w.feelsLike or 'N/A' }}°C
+            {{ w.temperature }}°C
           </div>
-          <div class="weather-detail">{{ w.windSpeed or 'N/A' }} m/s {{ w.precipitation or '0.0' }} mm</div>
-          <div class="weather-detail">{{ w.pressure or 'N/A' }} hPa {{ w.humidity or 'N/A' }}%</div>
+          <div class="weather-detail">{{ w.feelsLike or 'N/A' }} °C</div>
+          <div class="weather-detail">{{ w.windSpeed or 'N/A' }} m/s</div>
+          <div class="weather-detail">{{ w.precipitation or 'N/A' }} mm</div>
+          <div class="weather-detail">{{ w.pressure or 'N/A' }} hPa</div>
+          <div class="weather-detail">{{ w.humidity or 'N/A' }} %</div>
         </div>
       {% elif w %}
         <!-- Weather data exists but is incomplete -->
