@@ -8,8 +8,8 @@
     "position": {
         "portrait": {
             "top": "0%",
-            "left": "60%",
-            "width": "40%",
+            "left": "50%",
+            "width": "50%",
             "height": "auto"
         },
         "landscape": {
