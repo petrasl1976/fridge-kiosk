@@ -211,7 +211,7 @@
 }
 
 .today {
-    background: #000000 !important;
-    color: #808080 !important;
+    background: #888 !important;
+    color: #fff !important;
     box-shadow: 0 2px 12px #0008;
 } 
