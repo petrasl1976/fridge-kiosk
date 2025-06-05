@@ -45,7 +45,7 @@
                   <div class="cell-inner" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
                     <!-- Day Number + Weather Forecast on same line -->
                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 1.2em;">
-                      <span class="calendar-date-number">{% if day.day == 1 %}{{ plugin['config'].month_names[day.date[5:7]|int - 1] }}{% else %}{{ day.day }}{% endif %}</span>
+                      <span class="calendar-date-number" style="font-size: 1.4em; font-weight: bold;">{% if day.day == 1 %}{{ plugin['config'].month_names[day.date[5:7]|int - 1] }}{% else %}{{ day.day }}{% endif %}</span>
                       <div class="weather-forecast-container" data-timestamp="{{ day.timestamp }}"></div>
                     </div>
                     <!-- Holiday (if exists) -->
@@ -73,7 +73,7 @@
                   <div class="cell-inner" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
                     <!-- Day Number + Weather Forecast on same line -->
                     <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 1.2em;">
-                      <span class="calendar-date-number">{% if day.day == 1 %}{{ plugin['config'].month_names[day.date[5:7]|int - 1] }}{% else %}{{ day.day }}{% endif %}</span>
+                      <span class="calendar-date-number" style="font-size: 1.4em; font-weight: bold;">{% if day.day == 1 %}{{ plugin['config'].month_names[day.date[5:7]|int - 1] }}{% else %}{{ day.day }}{% endif %}</span>
                       <div class="weather-forecast-container" data-timestamp="{{ day.timestamp }}"></div>
                     </div>
                     <!-- Holiday (if exists) -->
