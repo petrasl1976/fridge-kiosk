@@ -20,6 +20,13 @@ CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
 CACHE_FILE = os.path.join(CACHE_DIR, 'photos_cache.json')
 CACHE_EXPIRY = 90 * 24 * 3600  # 90 days cache expiry
 
+# Error handling and backoff configuration
+ERROR_STATE_FILE = os.path.join(CACHE_DIR, 'error_state.json')
+DEFAULT_REFRESH_INTERVAL = 300  # 5 minutes default
+MAX_REFRESH_INTERVAL = 3600     # 1 hour maximum
+ERROR_BACKOFF_MULTIPLIER = 2    # Double the interval each failure
+MAX_CONSECUTIVE_ERRORS = 10     # Stop trying after 10 consecutive errors
+
 def ensure_cache_dir():
     if not os.path.exists(CACHE_DIR):
         os.makedirs(CACHE_DIR)
@@ -167,8 +174,18 @@ def list_albums():
         save_cache({'albums': albums})
         return albums
     except HttpError as error:
+        error_message = str(error)
         logger.error(f"Error listing albums: {error}")
         logger.debug(f"Error traceback: {traceback.format_exc()}")
+        
+        # Record error for backoff handling
+        if "quota exceeded" in error_message.lower() or "rate limit" in error_message.lower() or error.resp.status == 429:
+            record_api_error("quota_exceeded", error_message)
+        elif error.resp.status == 403:
+            record_api_error("permission_denied", error_message)
+        else:
+            record_api_error("http_error", error_message)
+        
         return []
 
 def list_media_items_in_album(album_id):
@@ -191,8 +208,18 @@ def list_media_items_in_album(album_id):
         logger.debug(f"Media items response: {json.dumps(results, indent=2)}")
         return media_items
     except HttpError as error:
+        error_message = str(error)
         logger.error(f"Error listing media items: {error}")
         logger.debug(f"Error traceback: {traceback.format_exc()}")
+        
+        # Record error for backoff handling
+        if "quota exceeded" in error_message.lower() or "rate limit" in error_message.lower() or error.resp.status == 429:
+            record_api_error("quota_exceeded", error_message)
+        elif error.resp.status == 403:
+            record_api_error("permission_denied", error_message)
+        else:
+            record_api_error("http_error", error_message)
+        
         return []
 
 def get_random_photo_batch():
@@ -289,11 +316,25 @@ def get_random_photo_batch():
 def api_data():
     """API endpoint for getting photo data."""
     logger.debug("Starting api_data endpoint")
+    
+    # Check if we should skip due to recent errors
+    should_skip, error_state = should_skip_due_to_errors()
+    if should_skip:
+        return {
+            'error': f'Skipping request due to {error_state["consecutive_errors"]} consecutive errors. '
+                    f'Next retry in {error_state["current_interval"] - (time.time() - error_state["last_error_time"]):.0f} seconds.',
+            'retry_after': error_state['current_interval'] - (time.time() - error_state['last_error_time'])
+        }
+    
     try:
         photos = get_random_photo_batch()
         if not photos:
             logger.warning("No photos returned from get_random_photo_batch")
+            # This might be due to an error in get_random_photo_batch, check if we should record it
             return {'error': 'No photos available'}
+        
+        # Success! Reset error state
+        record_api_success()
         
         # Log kiekvieną perduodamą media failą kaip WARNING
         for item in photos:
@@ -309,6 +350,14 @@ def api_data():
     except Exception as e:
         logger.error(f"Error in api_data: {e}")
         logger.debug(f"API error traceback: {traceback.format_exc()}")
+        
+        # Record the error for backoff handling
+        error_message = str(e)
+        if "quota exceeded" in error_message.lower() or "rate limit" in error_message.lower():
+            record_api_error("quota_exceeded", error_message)
+        else:
+            record_api_error("api_error", error_message)
+        
         return {'error': str(e)}
 
 def init(config):
@@ -338,4 +387,105 @@ def init(config):
     except Exception as e:
         logger.error(f"Error initializing plugin: {e}")
         logger.debug(f"Init error traceback: {traceback.format_exc()}")
-        return {'data': {}, 'error': str(e)} 
+        return {'data': {}, 'error': str(e)}
+
+def load_error_state():
+    """Load error state from file."""
+    if os.path.exists(ERROR_STATE_FILE):
+        try:
+            with open(ERROR_STATE_FILE, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Error loading error state: {e}")
+    
+    return {
+        'consecutive_errors': 0,
+        'last_error_time': 0,
+        'current_interval': DEFAULT_REFRESH_INTERVAL,
+        'last_error_type': None
+    }
+
+def save_error_state(error_state):
+    """Save error state to file."""
+    ensure_cache_dir()
+    try:
+        with open(ERROR_STATE_FILE, 'w') as f:
+            json.dump(error_state, f, indent=2)
+    except Exception as e:
+        logger.error(f"Error saving error state: {e}")
+
+def should_skip_due_to_errors():
+    """Check if we should skip this request due to recent errors."""
+    error_state = load_error_state()
+    
+    # If we haven't had recent errors, proceed
+    if error_state['consecutive_errors'] == 0:
+        return False, error_state
+    
+    # If we've had max errors, check if enough time has passed
+    if error_state['consecutive_errors'] >= MAX_CONSECUTIVE_ERRORS:
+        time_since_error = time.time() - error_state['last_error_time']
+        if time_since_error < error_state['current_interval']:
+            logger.warning(f"Skipping API request due to {error_state['consecutive_errors']} consecutive errors. "
+                         f"Will retry in {error_state['current_interval'] - time_since_error:.0f} seconds.")
+            return True, error_state
+    
+    return False, error_state
+
+def record_api_success():
+    """Record a successful API call - reset error state."""
+    error_state = {
+        'consecutive_errors': 0,
+        'last_error_time': 0,
+        'current_interval': DEFAULT_REFRESH_INTERVAL,
+        'last_error_type': None
+    }
+    save_error_state(error_state)
+    logger.info("API success - reset error state to normal refresh interval")
+
+def record_api_error(error_type, error_message):
+    """Record an API error and implement exponential backoff."""
+    error_state = load_error_state()
+    
+    error_state['consecutive_errors'] += 1
+    error_state['last_error_time'] = time.time()
+    error_state['last_error_type'] = error_type
+    
+    # Exponential backoff: double the interval each time, up to maximum
+    if error_state['consecutive_errors'] <= MAX_CONSECUTIVE_ERRORS:
+        error_state['current_interval'] = min(
+            DEFAULT_REFRESH_INTERVAL * (ERROR_BACKOFF_MULTIPLIER ** error_state['consecutive_errors']),
+            MAX_REFRESH_INTERVAL
+        )
+    
+    save_error_state(error_state)
+    
+    if error_type == "quota_exceeded":
+        logger.error(f"Quota exceeded! Will retry in {error_state['current_interval']} seconds. "
+                    f"Consecutive errors: {error_state['consecutive_errors']}")
+    else:
+        logger.warning(f"API error ({error_type}): {error_message}. "
+                      f"Will retry in {error_state['current_interval']} seconds. "
+                      f"Consecutive errors: {error_state['consecutive_errors']}")
+
+def get_current_refresh_interval():
+    """Get the current refresh interval based on error state."""
+    error_state = load_error_state()
+    return error_state['current_interval']
+
+def api_refresh_interval():
+    """API endpoint to get the current refresh interval based on error state."""
+    interval = get_current_refresh_interval()
+    error_state = load_error_state()
+    
+    return {
+        'refresh_interval': interval,
+        'consecutive_errors': error_state['consecutive_errors'],
+        'last_error_type': error_state['last_error_type'],
+        'status': 'backing_off' if error_state['consecutive_errors'] > 0 else 'normal'
+    }
+
+def api_reset_errors():
+    """API endpoint to manually reset the error state (for debugging/admin use)."""
+    record_api_success()
+    return {'message': 'Error state reset to normal', 'refresh_interval': DEFAULT_REFRESH_INTERVAL} 
