@@ -59,7 +59,7 @@
                       {% if events %}
                         <ul>
                           {% for event in events %}
-                            <li style="background: {{ event.color }}; color: #fff; margin: 2px 0; padding: 2px 4px; border-radius: 8px; font-size: 0.9em; display: block; width: 100%; text-align: left; box-sizing: border-box;">
+                            <li style="background: {{ event.color }}; color: #fff; margin: 2px 0; padding: 2px 4px; border-radius: 15px; font-size: 0.9em; display: block; width: 100%; text-align: left; box-sizing: border-box;">
                               {{ event.formatted_time if event.formatted_time }} {{ event.summary }}
                             </li>
                           {% endfor %}
@@ -87,7 +87,7 @@
                       {% if events %}
                         <ul>
                           {% for event in events %}
-                            <li style="background: {{ event.color }}; color: #fff; margin: 2px 0; padding: 2px 4px; border-radius: 8px; font-size: 0.9em; display: block; width: 100%; text-align: left; box-sizing: border-box;">
+                            <li style="background: {{ event.color }}; color: #fff; margin: 2px 0; padding: 2px 4px; border-radius: 15px; font-size: 0.9em; display: block; width: 100%; text-align: left; box-sizing: border-box;">
                               {{ event.formatted_time if event.formatted_time }} {{ event.summary }}
                             </li>
                           {% endfor %}
