@@ -43,9 +43,10 @@
               {% if day_str == today %}
                 <td class="today" style="text-align: left; font-weight: bold; vertical-align: top; box-shadow: 0 2px 8px #0001;">
                   <div class="cell-inner" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                    <!-- Day Number -->
-                    <div style="font-size: 1.2em;">
+                    <!-- Day Number + Weather Forecast on same line -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 1.2em;">
                       <span class="calendar-date-number">{% if day.day == 1 %}{{ plugin['config'].month_names[day.date[5:7]|int - 1] }}{% else %}{{ day.day }}{% endif %}</span>
+                      <div class="weather-forecast-container" data-timestamp="{{ day.timestamp }}"></div>
                     </div>
                     <!-- Holiday (if exists) -->
                     {% if is_holiday %}
@@ -53,8 +54,6 @@
                         <span class="holiday" style="background: #000; color: #fff; font-weight: bold; border-radius: 4px; padding: 2px 8px; margin: 0; display: inline-block;">{{ holidays[day_str] }}</span>
                       </div>
                     {% endif %}
-                    <!-- Weather Forecast -->
-                    <div class="weather-forecast-container" data-timestamp="{{ day.timestamp }}"></div>
                     <!-- Events -->
                     <div class="events">
                       {% if events %}
@@ -72,9 +71,10 @@
               {% else %}
                 <td style="background: {{ cell_bg }}; color: {{ cell_color }}; text-align: left; vertical-align: top; box-shadow: 0 1px 4px #0002;">
                   <div class="cell-inner" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                    <!-- Day Number -->
-                    <div style="font-size: 1.2em;">
+                    <!-- Day Number + Weather Forecast on same line -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 1.2em;">
                       <span class="calendar-date-number">{% if day.day == 1 %}{{ plugin['config'].month_names[day.date[5:7]|int - 1] }}{% else %}{{ day.day }}{% endif %}</span>
+                      <div class="weather-forecast-container" data-timestamp="{{ day.timestamp }}"></div>
                     </div>
                     <!-- Holiday (if exists) -->
                     {% if is_holiday %}
@@ -82,8 +82,6 @@
                         <span class="holiday" style="background: #000; color: #fff; font-weight: bold; border-radius: 4px; padding: 2px 8px; margin: 0; display: inline-block;">{{ holidays[day_str] }}</span>
                       </div>
                     {% endif %}
-                    <!-- Weather Forecast -->
-                    <div class="weather-forecast-container" data-timestamp="{{ day.timestamp }}"></div>
                     <!-- Events -->
                     <div class="events">
                       {% if events %}
