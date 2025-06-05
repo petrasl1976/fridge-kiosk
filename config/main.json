@@ -4,7 +4,7 @@
     "theme": "dark",
     "orientation": "portrait",
     "logging": "WARNING",
-    "fontFamily": "'Courier Prime', 'Courier New', monospace"
+    "fontFamily": "'Courier New', monospace"
   },
   "google": {
     "oauth": {

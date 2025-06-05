@@ -11,30 +11,45 @@
     overflow: hidden;
 }
 
+.calendar-widget.error {
+    color: red;
+    padding: 20px;
+}
+
+.calendar-widget.no-data {
+    color: red;
+    padding: 20px;
+}
+
 /* Summary Layout Styles */
 .summary-list {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 15px;
+    text-align: right;
 }
 
 /* Weather Section Styles */
 .summary-weather-detailed {
-    /* Completely transparent - no borders, background, or shadows */
+    margin-bottom: 20px;
+    text-align: right;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.weather-header {
-    font-weight: bold;
-    color: #87CEEB;
+.weather-timestamp {
+    font-size: 0.8em;
+    color: #888;
+    margin-bottom: 4px;
     text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);
 }
 
-.weather-main {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
+.weather-condition {
+    font-size: 0.9em;
+    color: #ccc;
+    margin-bottom: 6px;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);
 }
 
 .weather-temp {
@@ -42,31 +57,55 @@
     font-weight: bold;
     color: #fff;
     text-shadow: 3px 3px 8px rgba(0, 0, 0, 1);
+    margin-bottom: 6px;
 }
 
-.weather-condition {
-    text-align: right;
+/* Temperature color based on value */
+.weather-temp.above-zero {
+    color: #ff4444; /* Red for above 0°C */
 }
 
-.weather-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
+.weather-temp.zero-or-below {
+    color: #4488ff; /* Blue for 0°C or below */
+}
+
+.weather-detail {
     font-size: 0.85em;
     color: #ddd;
+    margin-bottom: 3px;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);
+}
+
+.weather-detail.precipitation {
+    color: #87CEEB;
+}
+
+.weather-loading {
+    font-size: 0.9em;
+    color: #888;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);
+}
+
+.weather-unavailable {
+    font-size: 0.9em;
+    color: #888;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);
 }
 
 /* Events Section Styles */
 .summary-section {
     width: 100%;
+    margin-bottom: 15px;
+}
+
+.summary-section.tomorrow {
+    margin-bottom: 0;
 }
 
 .section-header {
     font-size: 0.9em;
     color: #87CEEB;
     font-weight: bold;
-    border-bottom: 1px solid #444;
-    padding-bottom: 2px;
     margin-bottom: 8px;
     text-align: right;
 }
@@ -75,14 +114,14 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 4px;
 }
 
 .summary-event {
+    color: #fff;
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: 8px;
+    margin-bottom: 6px;
     transition: all 0.2s ease;
 }
 
@@ -91,18 +130,24 @@
 }
 
 .summary-title {
+    margin-right: 8px;
     color: #fff;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .summary-time {
-    padding: 3px 8px;
+    color: #fff;
+    padding: 2px 8px;
     border-radius: 4px;
-    font-size: 0.9em;
-    font-weight: bold;
     min-width: 3em;
     text-align: center;
+    font-size: 0.9em;
+    font-weight: bold;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.no-events {
+    color: #888;
 }
 
 /* Legacy Calendar Table Styles (kept for compatibility) */

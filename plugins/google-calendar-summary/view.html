@@ -1,42 +1,40 @@
 {% if plugin['data'] %}
   {% if plugin['data'].error %}
-    <div class="calendar-widget" style="font-size: {{ plugin['config'].format.font_size }}; color: red; padding: {{ plugin['config'].format.padding }};">
+    <div class="calendar-widget error" style="font-size: {{ plugin['config'].format.font_size }}; padding: {{ plugin['config'].format.padding }};">
       <h3>Google Calendar Error</h3>
       <p>{{ plugin['data'].error }}</p>
     </div>
   {% else %}
-    <div class="calendar-widget summary-list" style="font-size: {{ plugin['config'].format.font_size }}; color: {{ plugin['config'].format.color }}; padding: {{ plugin['config'].format.padding }}; text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
+    <div class="calendar-widget summary-list" style="font-size: {{ plugin['config'].format.font_size }}; color: {{ plugin['config'].format.color }}; padding: {{ plugin['config'].format.padding }};">
       
       <!-- Detailed Weather Forecast Section -->
       {% set w = plugin['data'].weather_now %}
       {% if w and w.temperature is defined and w.temperature is not none %}
-        <div class="summary-weather-detailed" style="margin-bottom: 20px; text-align: right; width: 100%; box-sizing: border-box;">
+        <div class="summary-weather-detailed">
           {% if w.forecastTimeUtc %}
-          <div style="font-size: 0.8em; color: #888; margin-bottom: 4px; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">{{ w.forecastTimeUtc }}</div>
+          <div class="weather-timestamp">{{ w.forecastTimeUtc }}</div>
           {% endif %}
-          <div style="font-size: 0.9em; color: #ccc; margin-bottom: 6px; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">{{ w.conditionCode or 'N/A' }}</div>
-          <div class="weather-temp" style="font-size: 1.8em; font-weight: bold; color: #fff; text-shadow: 3px 3px 8px rgba(0, 0, 0, 1); margin-bottom: 6px;">
+          <div class="weather-condition">{{ w.conditionCode or 'N/A' }}</div>
+          <div class="weather-temp {% if w.temperature > 0 %}above-zero{% else %}zero-or-below{% endif %}">
             {{ w.temperature }}°C
           </div>
-          <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">Jaučiasi: {{ w.feelsLike or 'N/A' }}°C</div>
-          <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">Vėjas: {{ w.windSpeed or 'N/A' }} m/s</div>
-          {% if w.precipitation and w.precipitation > 0 %}
-          <div style="font-size: 0.85em; color: #87CEEB; margin-bottom: 3px; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">kritulių kiekis: {{ w.precipitation }} mm</div>
-          {% endif %}
-          <div style="font-size: 0.85em; color: #ddd; margin-bottom: 3px; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">Spaudimas: {{ w.pressure or 'N/A' }} hPa</div>
-          <div style="font-size: 0.85em; color: #ddd; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">Drėgmė: {{ w.humidity or 'N/A' }}%</div>
+          <div class="weather-detail">Feels like: {{ w.feelsLike or 'N/A' }}°C</div>
+          <div class="weather-detail">Wind: {{ w.windSpeed or 'N/A' }} m/s</div>
+          <div class="weather-detail">Precipitation: {{ w.precipitation or 'N/A' }} mm</div>
+          <div class="weather-detail">Spaudimas: {{ w.pressure or 'N/A' }} hPa</div>
+          <div class="weather-detail">Drėgmė: {{ w.humidity or 'N/A' }}%</div>
         </div>
       {% elif w %}
         <!-- Weather data exists but is incomplete -->
-        <div class="summary-weather-detailed" style="margin-bottom: 20px; text-align: right; width: 100%; box-sizing: border-box;">
-          <div style="font-size: 0.9em; color: #888; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">
+        <div class="summary-weather-detailed">
+          <div class="weather-loading">
             Kraunama orų prognozė...
           </div>
         </div>
       {% else %}
         <!-- No weather data available -->
-        <div class="summary-weather-detailed" style="margin-bottom: 20px; text-align: right; width: 100%; box-sizing: border-box;">
-          <div style="font-size: 0.9em; color: #888; text-shadow: 2px 2px 6px rgba(0, 0, 0, 1);">
+        <div class="summary-weather-detailed">
+          <div class="weather-unavailable">
             Orų duomenys nepasiekiami
           </div>
         </div>
@@ -44,15 +42,15 @@
       
       <!-- Today's Events Section -->
       {% if plugin['data'].today_events %}
-        <div class="summary-section" style="width: 100%; margin-bottom: 15px;">
-          <div class="section-header" style="font-size: 0.9em; color: #87CEEB; margin-bottom: 8px; text-align: right;">
+        <div class="summary-section">
+          <div class="section-header">
             Šiandien
           </div>
-          <div class="summary-events-col" style="display: flex; flex-direction: column; align-items: flex-end;">
+          <div class="summary-events-col">
             {% for event in plugin['data'].today_events %}
-              <div class="summary-event" style="color: #fff; display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px;">
-                <span class="summary-title" style="margin-right: 8px;">{{ event.summary }}</span>
-                <span class="summary-time" style="background: {{ event.color }}; color: #fff; padding: 2px 8px; border-radius: 4px; min-width: 3em;">{{ event.formatted_time }}</span>
+              <div class="summary-event">
+                <span class="summary-title">{{ event.summary }}</span>
+                <span class="summary-time" style="background: {{ event.color }};">{{ event.formatted_time }}</span>
               </div>
             {% endfor %}
           </div>
@@ -61,15 +59,15 @@
       
       <!-- Tomorrow's Events Section -->
       {% if plugin['data'].tomorrow_events %}
-        <div class="summary-section" style="width: 100%;">
-          <div class="section-header" style="font-size: 0.9em; color: #87CEEB; margin-bottom: 8px; text-align: right;">
+        <div class="summary-section tomorrow">
+          <div class="section-header">
             Rytoj
           </div>
-          <div class="summary-events-col" style="display: flex; flex-direction: column; align-items: flex-end;">
+          <div class="summary-events-col">
             {% for event in plugin['data'].tomorrow_events %}
-              <div class="summary-event" style="color: #fff; display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px;">
-                <span class="summary-title" style="margin-right: 8px;">{{ event.summary }}</span>
-                <span class="summary-time" style="background: {{ event.color }}; color: #fff; padding: 2px 8px; border-radius: 4px; min-width: 3em;">{{ event.formatted_time }}</span>
+              <div class="summary-event">
+                <span class="summary-title">{{ event.summary }}</span>
+                <span class="summary-time" style="background: {{ event.color }};">{{ event.formatted_time }}</span>
               </div>
             {% endfor %}
           </div>
@@ -77,10 +75,10 @@
       {% endif %}
       
       {% if not plugin['data'].today_events and not plugin['data'].tomorrow_events %}
-        <div style="color: #888;">Nėra artimiausių įvykių</div>
+        <div class="no-events">Nėra artimiausių įvykių</div>
       {% endif %}
     </div>
   {% endif %}
 {% else %}
-  <div class="calendar-widget" style="color: red; padding: 20px;">Duomenų nėra</div>
+  <div class="calendar-widget no-data">Duomenų nėra</div>
 {% endif %} 
