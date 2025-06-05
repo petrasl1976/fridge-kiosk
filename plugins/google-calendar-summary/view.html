@@ -20,8 +20,8 @@
           </div>
           <div class="weather-detail">{{ w.feelsLike or 'N/A' }} °C</div>
           <div class="weather-detail">{{ w.windSpeed or 'N/A' }} m/s</div>
-          <div class="weather-detail">{{ w.precipitation or 'N/A' }} mm</div>
           <div class="weather-detail">{{ w.pressure or 'N/A' }} hPa</div>
+          <div class="weather-detail">{{ w.precipitation or 'N/A' }} mm</div>
           <div class="weather-detail">{{ w.humidity or 'N/A' }} %</div>
         </div>
       {% elif w %}
