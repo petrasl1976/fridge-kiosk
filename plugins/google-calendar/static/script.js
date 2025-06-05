@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div style="margin-top: 2px;">
                             <img src="/plugins/weather-forecast/icons/${condition}.png" 
                                  alt="${condition}" 
-                                 style="width: 28px; height: 28px; display: block;">
+                                 style="width: 50px; height: 50px; display: block;">
                         </div>
                     `;
                 }
