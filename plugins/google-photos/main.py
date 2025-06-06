@@ -70,33 +70,19 @@ def get_credentials():
                 logger.debug(f"Successfully loaded token.json with keys: {list(token_data.keys())}")
                 credentials = Credentials(**token_data)
                 
-                # Check if credentials are valid
-                if credentials.expired:
-                    logger.warning("Credentials are expired")
-                    if credentials.refresh_token:
-                        logger.info("Attempting to refresh credentials")
-                        from google.auth.transport.requests import Request
-                        credentials.refresh(Request())
-                        logger.info("Credentials refreshed successfully")
-                        
-                        # Save refreshed credentials back to token.json
-                        refreshed_token_data = {
-                            'token': credentials.token,
-                            'refresh_token': credentials.refresh_token,
-                            'token_uri': credentials.token_uri,
-                            'client_id': credentials.client_id,
-                            'client_secret': credentials.client_secret,
-                            'scopes': credentials.scopes
-                        }
-                        with open(token_path, 'w') as token_file:
-                            json.dump(refreshed_token_data, token_file, indent=2)
-                        logger.info("Refreshed credentials saved to token.json")
-                    else:
-                        logger.error("No refresh token available")
-                        return None
+                # DISABLED: Don't refresh tokens automatically - this might strip Photos scope
+                # if credentials.expired:
+                #     logger.warning("Credentials are expired")
+                #     if credentials.refresh_token:
+                #         logger.info("Attempting to refresh credentials")
+                #         from google.auth.transport.requests import Request
+                #         credentials.refresh(Request())
+                #         logger.info("Credentials refreshed successfully")
+                #         ...
                 
-                logger.info("Credentials loaded and validated successfully")
+                logger.info("Credentials loaded successfully (refresh disabled)")
                 logger.debug(f"Credential scopes: {credentials.scopes}")
+                logger.info(f"Token expired status: {credentials.expired}")
                 return credentials
         except Exception as e:
             logger.error(f"Error loading credentials: {e}")
