@@ -300,7 +300,8 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         flow.redirect_uri = f'http://localhost:{self.server.server_port}/oauth2callback'
         authorization_url, state = flow.authorization_url(
             access_type='offline',
-            prompt='consent'
+            prompt='consent',  # Force consent screen every time
+            include_granted_scopes='false'  # Don't use incremental auth
         )
         
         # Store state in a temporary file since we don't have sessions
