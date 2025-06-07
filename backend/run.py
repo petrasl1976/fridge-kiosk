@@ -293,16 +293,23 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             self.send_error(500, "client_secret.json not found")
             return
 
+        logging.getLogger().info("Starting OAuth flow...")
+        logging.getLogger().debug(f"Client secret path: {client_secret_path}")
+        logging.getLogger().debug(f"Scopes: {SCOPES}")
+
         flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
             str(client_secret_path), 
             scopes=SCOPES
         )
-        flow.redirect_uri = f'http://localhost:{self.server.server_port}/authorize'
+        flow.redirect_uri = f'http://localhost:{self.server.server_port}/oauth2callback'
         authorization_url, state = flow.authorization_url(
             access_type='offline',
             prompt='consent',  # Force consent screen every time
             include_granted_scopes='false'  # Don't use incremental auth
         )
+        
+        logging.getLogger().debug(f"Generated authorization URL: {authorization_url}")
+        logging.getLogger().debug(f"State: {state}")
         
         # Store state in a temporary file since we don't have sessions
         with open(Path(project_root / 'config' / '.oauth_state'), 'w') as f:
@@ -311,18 +318,25 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         self.send_response(302)
         self.send_header('Location', authorization_url)
         self.end_headers()
+        logging.getLogger().info("Redirecting to Google authorization URL")
 
     def handle_oauth2callback(self):
-        """Handle /authorize route for Google OAuth."""
+        """Handle /oauth2callback route for Google OAuth."""
         try:
+            logging.getLogger().info("Received OAuth callback")
+            logging.getLogger().debug(f"Full callback path: {self.path}")
+            logging.getLogger().debug(f"Query parameters: {urlparse(self.path).query}")
+            
             # Get state from temporary file
             state_path = Path(project_root / 'config' / '.oauth_state')
             if not state_path.exists():
+                logging.getLogger().error("No state file found")
                 self.send_error(400, "No state found")
                 return
 
             with open(state_path, 'r') as f:
                 state = f.read().strip()
+            logging.getLogger().debug(f"Stored state: {state}")
             state_path.unlink()  # Clean up
 
             client_secret_path = Path(project_root / 'config' / 'client_secret.json')
@@ -335,31 +349,40 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             
             # Get authorization response URL
             authorization_response = f'http://localhost:{self.server.server_port}{self.path}'
+            logging.getLogger().debug(f"Authorization response: {authorization_response}")
+            
             flow.fetch_token(authorization_response=authorization_response)
+            logging.getLogger().info("Successfully fetched token")
             
             credentials = flow.credentials
             if not credentials.refresh_token:
+                logging.getLogger().error("No refresh token received")
                 self.send_error(400, "No refresh token received")
                 return
 
             # Save credentials
             token_path = Path(project_root / 'config' / 'token.json')
             token_path.parent.mkdir(exist_ok=True)
+            token_data = credentials_to_dict(credentials)
+            logging.getLogger().debug(f"Token data to save: {json.dumps(token_data, indent=2)}")
             with open(token_path, 'w') as f:
-                json.dump(credentials_to_dict(credentials), f)
+                json.dump(token_data, f)
+            logging.getLogger().info("Credentials saved to token.json")
 
             # --- RELOAD PLUGINS HERE ---
             self.server.plugins = load_plugins(self.config)
-            logging.getLogger().info("Plugins reloaded after OAuth2 callback.")
+            logging.getLogger().info("Plugins reloaded after OAuth2 callback")
             # --- END RELOAD ---
 
             # Redirect to success page
             self.send_response(302)
             self.send_header('Location', '/')
             self.end_headers()
+            logging.getLogger().info("Redirecting back to home page")
 
         except Exception as e:
             logging.getLogger().error(f"OAuth callback error: {e}")
+            logging.getLogger().error(f"Error traceback: {traceback.format_exc()}")
             self.send_error(500, str(e))
 
 
