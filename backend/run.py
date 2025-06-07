@@ -126,7 +126,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 logging.getLogger().info("Handling OAuth authorization request")
                 self.handle_authorize()
                 return
-            elif path == '/authorize':
+            elif path == '/oauth2callback':
                 logging.getLogger().info("Handling OAuth callback")
                 self.handle_oauth2callback()
                 return
@@ -331,7 +331,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 scopes=SCOPES,
                 state=state
             )
-            flow.redirect_uri = f'http://localhost:{self.server.server_port}/authorize'
+            flow.redirect_uri = f'http://localhost:{self.server.server_port}/oauth2callback'
             
             # Get authorization response URL
             authorization_response = f'http://localhost:{self.server.server_port}{self.path}'
