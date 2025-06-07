@@ -126,7 +126,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 logging.getLogger().info("Handling OAuth authorization request")
                 self.handle_authorize()
                 return
-            elif path == '/oauth/callback':
+            elif path == '/authorize':
                 logging.getLogger().info("Handling OAuth callback")
                 self.handle_oauth2callback()
                 return
@@ -297,7 +297,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             str(client_secret_path), 
             scopes=SCOPES
         )
-        flow.redirect_uri = f'http://localhost:{self.server.server_port}/oauth/callback'
+        flow.redirect_uri = f'http://localhost:{self.server.server_port}/authorize'
         authorization_url, state = flow.authorization_url(
             access_type='offline',
             prompt='consent',  # Force consent screen every time
@@ -313,7 +313,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def handle_oauth2callback(self):
-        """Handle /oauth/callback route for Google OAuth."""
+        """Handle /authorize route for Google OAuth."""
         try:
             # Get state from temporary file
             state_path = Path(project_root / 'config' / '.oauth_state')
@@ -331,7 +331,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 scopes=SCOPES,
                 state=state
             )
-            flow.redirect_uri = f'http://localhost:{self.server.server_port}/oauth/callback'
+            flow.redirect_uri = f'http://localhost:{self.server.server_port}/authorize'
             
             # Get authorization response URL
             authorization_response = f'http://localhost:{self.server.server_port}{self.path}'
