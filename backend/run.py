@@ -122,11 +122,11 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             logging.getLogger().debug(f"Received GET request: {path} with query params: {query}")
 
             # OAuth routes
-            if path == '/authorize':
+            if path == '/authorize' and 'code' not in query:
                 logging.getLogger().info("Handling OAuth authorization request")
                 self.handle_authorize()
                 return
-            elif path == '/oauth2callback':
+            elif path == '/authorize' and 'code' in query:
                 logging.getLogger().info("Handling OAuth callback")
                 self.handle_oauth2callback()
                 return
@@ -301,7 +301,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
             str(client_secret_path), 
             scopes=SCOPES
         )
-        flow.redirect_uri = f'http://localhost:{self.server.server_port}/oauth2callback'
+        flow.redirect_uri = f'http://localhost:{self.server.server_port}/authorize'
         authorization_url, state = flow.authorization_url(
             access_type='offline',
             prompt='consent',  # Force consent screen every time
@@ -321,7 +321,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         logging.getLogger().info("Redirecting to Google authorization URL")
 
     def handle_oauth2callback(self):
-        """Handle /oauth2callback route for Google OAuth."""
+        """Handle /authorize route for Google OAuth."""
         try:
             logging.getLogger().info("Received OAuth callback")
             logging.getLogger().debug(f"Full callback path: {self.path}")
@@ -361,7 +361,7 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 scopes=SCOPES,
                 state=stored_state
             )
-            flow.redirect_uri = f'http://localhost:{self.server.server_port}/oauth2callback'
+            flow.redirect_uri = f'http://localhost:{self.server.server_port}/authorize'
             
             # Get authorization response URL
             authorization_response = f'http://localhost:{self.server.server_port}{self.path}'
