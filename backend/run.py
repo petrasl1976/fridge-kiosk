@@ -325,7 +325,16 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             logging.getLogger().info("Received OAuth callback")
             logging.getLogger().debug(f"Full callback path: {self.path}")
-            logging.getLogger().debug(f"Query parameters: {urlparse(self.path).query}")
+            
+            # Parse query parameters from the callback URL
+            parsed_url = urlparse(self.path)
+            query_params = parse_qs(parsed_url.query)
+            
+            logging.getLogger().debug(f"Query parameters: {query_params}")
+            
+            # Get state from callback URL
+            callback_state = query_params.get('state', [None])[0]
+            logging.getLogger().debug(f"Callback state: {callback_state}")
             
             # Get state from temporary file
             state_path = Path(project_root / 'config' / '.oauth_state')
@@ -335,15 +344,22 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                 return
 
             with open(state_path, 'r') as f:
-                state = f.read().strip()
-            logging.getLogger().debug(f"Stored state: {state}")
+                stored_state = f.read().strip()
+            logging.getLogger().debug(f"Stored state: {stored_state}")
+            
+            # Compare states
+            if callback_state != stored_state:
+                logging.getLogger().error(f"State mismatch! Callback: {callback_state}, Stored: {stored_state}")
+                self.send_error(400, "State mismatch - possible CSRF attack")
+                return
+            
             state_path.unlink()  # Clean up
 
             client_secret_path = Path(project_root / 'config' / 'client_secret.json')
             flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
                 str(client_secret_path),
                 scopes=SCOPES,
-                state=state
+                state=stored_state
             )
             flow.redirect_uri = f'http://localhost:{self.server.server_port}/oauth2callback'
             
