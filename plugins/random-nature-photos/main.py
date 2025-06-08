@@ -81,12 +81,18 @@ def get_unsplash_photos(config):
     categories = unsplash_config.get('categories', ['nature'])
     photos_per_batch = unsplash_config.get('photosPerBatch', 20)
     orientation = unsplash_config.get('orientation', 'landscape')
+    api_key = unsplash_config.get('apiKey', '')
     
     all_photos = []
     
+    # If no API key, return fallback photos
+    if not api_key:
+        logging.warning("No Unsplash API key configured, using fallback photos")
+        return get_fallback_photos()
+    
     for category in categories:
         try:
-            # Unsplash API endpoint - no auth needed for basic usage
+            # Unsplash API endpoint with proper authentication
             url = "https://api.unsplash.com/search/photos"
             params = {
                 'query': category,
@@ -95,9 +101,12 @@ def get_unsplash_photos(config):
                 'order_by': 'relevant'
             }
             
-            # Note: For production, you should get a free API key from Unsplash
-            # For now, using their demo endpoint with rate limits
-            response = requests.get(url, params=params, timeout=10)
+            headers = {
+                'Authorization': f'Client-ID {api_key}',
+                'Accept-Version': 'v1'
+            }
+            
+            response = requests.get(url, params=params, headers=headers, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -119,17 +128,96 @@ def get_unsplash_photos(config):
                     
                 logging.info(f"Fetched {len(photos)} photos for category: {category}")
                 
+            elif response.status_code == 401:
+                logging.error(f"Unauthorized access to Unsplash API. Check your API key.")
+                return get_fallback_photos()
+            elif response.status_code == 403:
+                logging.error(f"Rate limit exceeded for Unsplash API")
+                return get_fallback_photos() 
             else:
                 logging.warning(f"Failed to fetch photos for {category}: {response.status_code}")
                 
         except Exception as e:
             logging.error(f"Error fetching photos for {category}: {e}")
     
+    if not all_photos:
+        logging.warning("No photos fetched from Unsplash, using fallback photos")
+        return get_fallback_photos()
+    
     # Shuffle for variety
     random.shuffle(all_photos)
     logging.info(f"Total photos fetched: {len(all_photos)}")
     
     return all_photos
+
+def get_fallback_photos():
+    """Provide beautiful fallback photos when API is unavailable"""
+    # High quality nature photos that work without API
+    fallback_photos = [
+        {
+            'id': 'fallback_1',
+            'url': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80',
+            'description': 'Mountain landscape with clouds',
+            'photographer': 'Unsplash',
+            'category': 'nature',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_2', 
+            'url': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80',
+            'description': 'Forest path in autumn',
+            'photographer': 'Unsplash',
+            'category': 'forest',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_3',
+            'url': 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=400&q=80',
+            'description': 'Lake with mountain reflections',
+            'photographer': 'Unsplash',
+            'category': 'landscape',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_4',
+            'url': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400&q=80',
+            'description': 'Ocean waves on sandy beach',
+            'photographer': 'Unsplash',
+            'category': 'ocean',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_5',
+            'url': 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=400&q=80',
+            'description': 'Sunset over mountain peaks',
+            'photographer': 'Unsplash',
+            'category': 'mountains',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_6',
+            'url': 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400&q=80',
+            'description': 'Dramatic sky with clouds',
+            'photographer': 'Unsplash',
+            'category': 'sky',
+            'width': 1920,
+            'height': 1080
+        }
+    ]
+    
+    logging.info(f"Using {len(fallback_photos)} fallback photos")
+    return fallback_photos
 
 def get_current_photo(config):
     """Get the current photo to display"""

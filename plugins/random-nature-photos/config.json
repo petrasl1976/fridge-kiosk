@@ -19,6 +19,8 @@
   "updateInterval": 15,
   "logging": "INFO",
   "unsplash": {
+    "apiKey": "",
+    "_apiKeyInstructions": "Get free API key from https://unsplash.com/developers - Leave empty to use fallback photos",
     "categories": ["nature", "landscape", "mountains", "forest", "ocean", "sky"],
     "photosPerBatch": 20,
     "refreshInterval": 3600,
