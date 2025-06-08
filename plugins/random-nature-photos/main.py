@@ -154,48 +154,19 @@ def get_fallback_photos():
     """Provide beautiful fallback photos when API is unavailable"""
     # High quality nature photos that work without API
     fallback_photos = [
+        # Mountains
         {
             'id': 'fallback_1',
             'url': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
             'thumb_url': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80',
             'description': 'Mountain landscape with clouds',
             'photographer': 'Unsplash',
-            'category': 'nature',
+            'category': 'mountains',
             'width': 1920,
             'height': 1080
         },
         {
-            'id': 'fallback_2', 
-            'url': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80',
-            'thumb_url': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80',
-            'description': 'Forest path in autumn',
-            'photographer': 'Unsplash',
-            'category': 'forest',
-            'width': 1920,
-            'height': 1080
-        },
-        {
-            'id': 'fallback_3',
-            'url': 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1920&q=80',
-            'thumb_url': 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=400&q=80',
-            'description': 'Lake with mountain reflections',
-            'photographer': 'Unsplash',
-            'category': 'landscape',
-            'width': 1920,
-            'height': 1080
-        },
-        {
-            'id': 'fallback_4',
-            'url': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&q=80',
-            'thumb_url': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400&q=80',
-            'description': 'Ocean waves on sandy beach',
-            'photographer': 'Unsplash',
-            'category': 'ocean',
-            'width': 1920,
-            'height': 1080
-        },
-        {
-            'id': 'fallback_5',
+            'id': 'fallback_2',
             'url': 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1920&q=80',
             'thumb_url': 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=400&q=80',
             'description': 'Sunset over mountain peaks',
@@ -205,12 +176,167 @@ def get_fallback_photos():
             'height': 1080
         },
         {
+            'id': 'fallback_3',
+            'url': 'https://images.unsplash.com/photo-1464822759844-d150baec3829?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1464822759844-d150baec3829?w=400&q=80',
+            'description': 'Snowy mountain range',
+            'photographer': 'Unsplash',
+            'category': 'mountains',
+            'width': 1920,
+            'height': 1080
+        },
+        # Forests
+        {
+            'id': 'fallback_4', 
+            'url': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80',
+            'description': 'Forest path in autumn',
+            'photographer': 'Unsplash',
+            'category': 'forest',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_5',
+            'url': 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&q=80',
+            'description': 'Misty forest morning',
+            'photographer': 'Unsplash',
+            'category': 'forest',
+            'width': 1920,
+            'height': 1080
+        },
+        {
             'id': 'fallback_6',
+            'url': 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=400&q=80',
+            'description': 'Sunlight through trees',
+            'photographer': 'Unsplash',
+            'category': 'forest',
+            'width': 1920,
+            'height': 1080
+        },
+        # Lakes and landscapes
+        {
+            'id': 'fallback_7',
+            'url': 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=400&q=80',
+            'description': 'Lake with mountain reflections',
+            'photographer': 'Unsplash',
+            'category': 'landscape',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_8',
+            'url': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80',
+            'description': 'Crystal clear mountain lake',
+            'photographer': 'Unsplash',
+            'category': 'landscape',
+            'width': 1920,
+            'height': 1080
+        },
+        # Ocean
+        {
+            'id': 'fallback_9',
+            'url': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400&q=80',
+            'description': 'Ocean waves on sandy beach',
+            'photographer': 'Unsplash',
+            'category': 'ocean',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_10',
+            'url': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&q=80',
+            'description': 'Peaceful ocean horizon',
+            'photographer': 'Unsplash',
+            'category': 'ocean',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_11',
+            'url': 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=400&q=80',
+            'description': 'Rocky coastline',
+            'photographer': 'Unsplash',
+            'category': 'ocean',
+            'width': 1920,
+            'height': 1080
+        },
+        # Sky and sunsets
+        {
+            'id': 'fallback_12',
             'url': 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1920&q=80',
             'thumb_url': 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400&q=80',
             'description': 'Dramatic sky with clouds',
             'photographer': 'Unsplash',
             'category': 'sky',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_13',
+            'url': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80',
+            'description': 'Golden hour sunset',
+            'photographer': 'Unsplash',
+            'category': 'sunset',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_14',
+            'url': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80',
+            'description': 'Tropical beach sunset',
+            'photographer': 'Unsplash',
+            'category': 'sunset',
+            'width': 1920,
+            'height': 1080
+        },
+        # Wildlife and nature
+        {
+            'id': 'fallback_15',
+            'url': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80',
+            'description': 'Deer in forest clearing',
+            'photographer': 'Unsplash',
+            'category': 'wildlife',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_16',
+            'url': 'https://images.unsplash.com/photo-1574482620131-8b3d8b4f2833?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1574482620131-8b3d8b4f2833?w=400&q=80',
+            'description': 'Wildflower meadow',
+            'photographer': 'Unsplash',
+            'category': 'flowers',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_17',
+            'url': 'https://images.unsplash.com/photo-1517233925479-c6de2058c39a?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1517233925479-c6de2058c39a?w=400&q=80',
+            'description': 'Ancient oak tree',
+            'photographer': 'Unsplash',
+            'category': 'trees',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_18',
+            'url': 'https://images.unsplash.com/photo-1476242906366-d8eb64c2f661?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1476242906366-d8eb64c2f661?w=400&q=80',
+            'description': 'Alpine meadow with flowers',
+            'photographer': 'Unsplash',
+            'category': 'nature',
             'width': 1920,
             'height': 1080
         }
