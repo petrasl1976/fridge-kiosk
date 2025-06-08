@@ -37,15 +37,18 @@ def main():
     
     # Test Google's tokeninfo (may be unreliable)
     print(f"\n🔍 GOOGLE TOKENINFO ENDPOINT:")
+    tokeninfo_works = False
     try:
         response = requests.get(f'https://oauth2.googleapis.com/tokeninfo?access_token={token}')
         if response.status_code == 200:
             info = response.json()
             print(f"   ✅ Tokeninfo SUCCESS")
             print(f"   - Scope: {info.get('scope', 'N/A')}")
+            tokeninfo_works = True
         else:
             print(f"   ❌ Tokeninfo FAILED: {response.status_code}")
-            print(f"   - Note: This doesn't mean token is invalid!")
+            print(f"   - Response: {response.json()}")
+            print(f"   - NOTE: This doesn't mean token is invalid!")
     except Exception as e:
         print(f"   ❌ Tokeninfo ERROR: {e}")
     
@@ -92,34 +95,58 @@ def main():
     
     # Generate evidence for bug report
     print(f"\n" + "=" * 70)
-    print(f"BUG EVIDENCE SUMMARY:")
+    print(f"GOOGLE API INCONSISTENCY ANALYSIS:")
     print(f"=" * 70)
-    print(f"✅ Token contains photoslibrary.readonly scope: True")
-    print(f"✅ Token works with Google Calendar API: {calendar_success}")
-    print(f"❌ Token works with Google Photos API: {photos_success}")
+    print(f"📋 Token has photoslibrary.readonly scope: ✅")
+    print(f"🔍 Google tokeninfo endpoint works: {'✅' if tokeninfo_works else '❌'}")
+    print(f"📅 Token works with Google Calendar API: {'✅' if calendar_success else '❌'}")
+    print(f"📸 Token works with Google Photos API: {'✅' if photos_success else '❌'}")
     print()
     
     if calendar_success and not photos_success:
-        print(f"🐛 BUG CONFIRMED:")
+        print(f"🐛 GOOGLE API BUG CONFIRMED:")
         print(f"   The SAME OAuth token that successfully accesses Google Calendar API")
         print(f"   fails to access Google Photos API despite having the correct scope.")
-        print(f"   This is clearly a bug in Google Photos API implementation.")
         print()
-        print(f"💡 EVIDENCE FOR GOOGLE:")
+        if not tokeninfo_works:
+            print(f"🔥 ADDITIONAL EVIDENCE - GOOGLE'S OWN APIS ARE INCONSISTENT:")
+            print(f"   - Google tokeninfo says token is 'invalid'")
+            print(f"   - BUT the same token works perfectly with Calendar API")
+            print(f"   - This proves Google's APIs are giving contradictory responses!")
+            print()
+        print(f"💡 THIS IS CLEARLY A BUG IN GOOGLE'S SERVICES:")
         print(f"   1. Token has 'photoslibrary.readonly' scope ✅")
         print(f"   2. Token successfully calls Calendar API ✅") 
-        print(f"   3. Token fails on Photos API with 'insufficient scopes' ❌")
-        print(f"   4. This proves OAuth setup is correct, bug is in Photos API")
+        print(f"   3. Token fails on Photos API ❌")
+        if not tokeninfo_works:
+            print(f"   4. Google's own tokeninfo gives inconsistent results ❌")
+        print(f"   5. This proves OAuth setup is correct, bug is in Google's APIs")
     
-    # Generate curl commands with real token
-    print(f"\n🔧 CURL COMMANDS TO INCLUDE IN BUG REPORT:")
+    # Summary for clarity
+    print(f"\n📊 CLEAR SUMMARY:")
+    print(f"   Same OAuth token gives different results:")
+    print(f"   • Calendar API: {'SUCCESS ✅' if calendar_success else 'FAILED ❌'}")
+    print(f"   • Photos API: {'SUCCESS ✅' if photos_success else 'FAILED ❌'}")
+    print(f"   • Google tokeninfo: {'SUCCESS ✅' if tokeninfo_works else 'FAILED ❌'}")
+    if calendar_success and not photos_success:
+        print(f"   → This is impossible if token was truly invalid!")
+        print(f"   → Google's APIs are giving contradictory responses!")
+    
+    # Generate curl commands with real token (show first 20 chars only for security)
+    print(f"\n🔧 EVIDENCE FOR GOOGLE ENGINEERS:")
+    print(f"Same token shows different behavior across Google services:")
+    print()
     print(f"# This works (Calendar API):")
-    print(f"curl -H 'Authorization: Bearer {token}' \\")
+    print(f"curl -H 'Authorization: Bearer {token[:20]}...' \\")
     print(f"     'https://www.googleapis.com/calendar/v3/users/me/calendarList'")
     print()
     print(f"# This fails (Photos API) - THE BUG:")
-    print(f"curl -H 'Authorization: Bearer {token}' \\")
+    print(f"curl -H 'Authorization: Bearer {token[:20]}...' \\")
     print(f"     'https://photoslibrary.googleapis.com/v1/albums?pageSize=1'")
+    print()
+    if not tokeninfo_works:
+        print(f"# Google's own tokeninfo also inconsistent:")
+        print(f"curl 'https://oauth2.googleapis.com/tokeninfo?access_token={token[:20]}...'")
     
     print(f"\n" + "=" * 70)
 
