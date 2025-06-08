@@ -19,26 +19,34 @@ function naturePhotosInit(container) {
     
     let currentPhoto = null;
     let slideInterval = null;
+    let isLoading = false;
+    let lastPhotoTime = 0;
     
     // Configuration (should match config.json)
     const config = {
         displayDuration: 15000, // 15 seconds
         transitionDuration: 2000, // 2 seconds
-        updateInterval: 15000 // Check for new photos every 15 seconds
+        minDisplayTime: 5000 // Minimum time to show a photo before allowing next
     };
     
     function showLoading() {
+        if (isLoading) return; // Prevent multiple loading states
+        isLoading = true;
         loading.style.display = 'block';
         errorDiv.style.display = 'none';
         img.style.opacity = '0';
+        console.log('Showing loading indicator');
     }
     
     function hideLoading() {
+        isLoading = false;
         loading.style.display = 'none';
+        console.log('Hiding loading indicator');
     }
     
     function showError(message, detail = '') {
         console.error('Nature Photos Error:', message, detail);
+        isLoading = false;
         errorDiv.style.display = 'block';
         loading.style.display = 'none';
         img.style.opacity = '0';
@@ -48,6 +56,14 @@ function naturePhotosInit(container) {
         
         if (errorText) errorText.textContent = message;
         if (errorDetail) errorDetail.textContent = detail;
+        
+        // Try again after 30 seconds if error
+        setTimeout(() => {
+            if (errorDiv.style.display !== 'none') {
+                console.log('Retrying after error...');
+                fetchPhoto();
+            }
+        }, 30000);
     }
     
     function updatePhotoInfo(photo) {
@@ -88,6 +104,8 @@ function naturePhotosInit(container) {
         const newImg = new Image();
         
         newImg.onload = function() {
+            console.log('Photo loaded successfully, starting transition');
+            
             // Fade out current image
             img.classList.add('fade-out');
             
@@ -103,7 +121,13 @@ function naturePhotosInit(container) {
                 hideLoading();
                 errorDiv.style.display = 'none';
                 
-                console.log('Photo loaded successfully:', photo.id);
+                // Record when photo was displayed
+                lastPhotoTime = Date.now();
+                currentPhoto = photo;
+                
+                console.log('Photo displayed successfully:', photo.id);
+                console.log(`Photo will be shown for ${config.displayDuration/1000} seconds`);
+                
             }, config.transitionDuration / 2);
         };
         
@@ -113,10 +137,21 @@ function naturePhotosInit(container) {
         };
         
         newImg.src = photo.url;
-        currentPhoto = photo;
     }
     
     function fetchPhoto() {
+        // Prevent fetching too frequently
+        const timeSinceLastPhoto = Date.now() - lastPhotoTime;
+        if (timeSinceLastPhoto < config.minDisplayTime && currentPhoto) {
+            console.log('Skipping fetch - too soon since last photo');
+            return;
+        }
+        
+        if (isLoading) {
+            console.log('Already loading, skipping fetch');
+            return;
+        }
+        
         console.log('Fetching new photo...');
         showLoading();
         
@@ -140,15 +175,18 @@ function naturePhotosInit(container) {
     function startSlideshow() {
         console.log('Starting nature photos slideshow');
         
-        // Initial load
-        fetchPhoto();
-        
-        // Set interval for photo changes
+        // Clear any existing interval
         if (slideInterval) {
             clearInterval(slideInterval);
+            slideInterval = null;
         }
         
+        // Load first photo immediately
+        fetchPhoto();
+        
+        // Set interval for subsequent photos - longer interval to ensure photos display fully
         slideInterval = setInterval(() => {
+            console.log('Slideshow interval triggered');
             fetchPhoto();
         }, config.displayDuration);
         
@@ -161,6 +199,7 @@ function naturePhotosInit(container) {
             slideInterval = null;
             console.log('Slideshow stopped');
         }
+        isLoading = false;
     }
     
     // Handle visibility changes (pause when hidden)
@@ -170,15 +209,15 @@ function naturePhotosInit(container) {
             stopSlideshow();
         } else {
             console.log('Page visible - resuming slideshow');
-            startSlideshow();
+            setTimeout(startSlideshow, 1000); // Small delay to avoid conflicts
         }
     });
     
     // Handle window focus changes
     window.addEventListener('focus', function() {
-        console.log('Window focused - ensuring slideshow is running');
-        if (!slideInterval) {
-            startSlideshow();
+        console.log('Window focused');
+        if (!slideInterval && !document.hidden) {
+            setTimeout(startSlideshow, 1000);
         }
     });
     
@@ -187,25 +226,28 @@ function naturePhotosInit(container) {
         stopSlideshow();
     });
     
-    // Error recovery - restart slideshow if it stops
+    // Error recovery - restart slideshow if it stops unexpectedly
     function checkSlideshow() {
-        if (!slideInterval && !document.hidden) {
-            console.log('Slideshow appears to have stopped - restarting');
+        if (!slideInterval && !document.hidden && !isLoading) {
+            console.log('Slideshow appears to have stopped unexpectedly - restarting');
             startSlideshow();
         }
     }
     
-    // Check slideshow health every minute
-    setInterval(checkSlideshow, 60000);
+    // Check slideshow health every 2 minutes (less aggressive)
+    setInterval(checkSlideshow, 120000);
     
-    // Start the slideshow
-    startSlideshow();
+    // Start the slideshow after a small delay
+    setTimeout(startSlideshow, 1000);
     
     // Make functions available for debugging
     window.naturePhotos = {
         fetchPhoto,
         startSlideshow,
         stopSlideshow,
-        getCurrentPhoto: () => currentPhoto
+        getCurrentPhoto: () => currentPhoto,
+        getConfig: () => config,
+        isLoading: () => isLoading,
+        timeSinceLastPhoto: () => Date.now() - lastPhotoTime
     };
 } 
