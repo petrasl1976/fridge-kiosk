@@ -21,6 +21,7 @@ function naturePhotosInit(container) {
     let slideInterval = null;
     let isLoading = false;
     let lastPhotoTime = 0;
+    let isInitialized = false;
     
     // Configuration (should match config.json)
     const config = {
@@ -126,7 +127,7 @@ function naturePhotosInit(container) {
                 currentPhoto = photo;
                 
                 console.log('Photo displayed successfully:', photo.id);
-                console.log(`Photo will be shown for ${config.displayDuration/1000} seconds`);
+                console.log(`Next photo in ${config.displayDuration/1000} seconds`);
                 
             }, config.transitionDuration / 2);
         };
@@ -183,20 +184,21 @@ function naturePhotosInit(container) {
     }
     
     function startSlideshow() {
-        console.log('Starting nature photos slideshow');
-        
-        // Clear any existing interval
         if (slideInterval) {
-            clearInterval(slideInterval);
-            slideInterval = null;
+            console.log('Slideshow already running, stopping old one first');
+            stopSlideshow();
         }
         
-        // Load first photo immediately
-        fetchPhoto();
+        console.log('Starting nature photos slideshow');
         
-        // Set interval for subsequent photos - longer interval to ensure photos display fully
+        // Load first photo immediately if we don't have one
+        if (!currentPhoto) {
+            fetchPhoto();
+        }
+        
+        // Set interval for subsequent photos
         slideInterval = setInterval(() => {
-            console.log('Slideshow interval triggered');
+            console.log('Slideshow interval triggered - requesting next photo');
             fetchPhoto();
         }, config.displayDuration);
         
@@ -209,46 +211,51 @@ function naturePhotosInit(container) {
             slideInterval = null;
             console.log('Slideshow stopped');
         }
-        isLoading = false;
     }
     
-    // Handle visibility changes (pause when hidden)
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            console.log('Page hidden - pausing slideshow');
-            stopSlideshow();
-        } else {
-            console.log('Page visible - resuming slideshow');
-            setTimeout(startSlideshow, 1000); // Small delay to avoid conflicts
-        }
-    });
-    
-    // Handle window focus changes
-    window.addEventListener('focus', function() {
-        console.log('Window focused');
-        if (!slideInterval && !document.hidden) {
-            setTimeout(startSlideshow, 1000);
-        }
-    });
-    
-    window.addEventListener('blur', function() {
-        console.log('Window blurred - pausing slideshow');
-        stopSlideshow();
-    });
-    
-    // Error recovery - restart slideshow if it stops unexpectedly
-    function checkSlideshow() {
-        if (!slideInterval && !document.hidden && !isLoading) {
-            console.log('Slideshow appears to have stopped unexpectedly - restarting');
-            startSlideshow();
-        }
+    // Only set up event listeners once
+    if (!isInitialized) {
+        console.log('Setting up event listeners');
+        
+        // Handle visibility changes (pause when hidden)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                console.log('Page hidden - pausing slideshow');
+                stopSlideshow();
+            } else {
+                console.log('Page visible - resuming slideshow');
+                setTimeout(() => {
+                    if (!slideInterval) {
+                        startSlideshow();
+                    }
+                }, 1000);
+            }
+        });
+        
+        // Handle window focus changes
+        window.addEventListener('focus', function() {
+            console.log('Window focused');
+            setTimeout(() => {
+                if (!slideInterval && !document.hidden) {
+                    startSlideshow();
+                }
+            }, 1000);
+        });
+        
+        window.addEventListener('blur', function() {
+            console.log('Window blurred');
+            // Don't stop slideshow on blur, only on visibility change
+        });
+        
+        isInitialized = true;
     }
-    
-    // Check slideshow health every 2 minutes (less aggressive)
-    setInterval(checkSlideshow, 120000);
     
     // Start the slideshow after a small delay
-    setTimeout(startSlideshow, 1000);
+    setTimeout(() => {
+        if (!slideInterval) {
+            startSlideshow();
+        }
+    }, 2000);
     
     // Make functions available for debugging
     window.naturePhotos = {
@@ -258,6 +265,7 @@ function naturePhotosInit(container) {
         getCurrentPhoto: () => currentPhoto,
         getConfig: () => config,
         isLoading: () => isLoading,
-        timeSinceLastPhoto: () => Date.now() - lastPhotoTime
+        timeSinceLastPhoto: () => Date.now() - lastPhotoTime,
+        hasInterval: () => !!slideInterval
     };
 } 
