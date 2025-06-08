@@ -232,6 +232,7 @@ def get_current_photo(config):
                 cache_data['photos'] = new_photos
                 cache_data['last_updated'] = time.time()
                 cache_data['current_index'] = 0
+                cache_data['last_photo_change'] = 0  # Reset photo change timer
                 save_cache(cache_data)
                 logging.info(f"Cache updated with {len(new_photos)} photos")
         except Exception as e:
@@ -246,11 +247,27 @@ def get_current_photo(config):
         }
     
     current_index = cache_data.get('current_index', 0)
+    last_photo_change = cache_data.get('last_photo_change', 0)
     
-    # Move to next photo
-    next_index = (current_index + 1) % len(photos)
-    cache_data['current_index'] = next_index
-    save_cache(cache_data)
+    # Only advance to next photo if enough time has passed
+    slideshow_config = config.get('slideshow', {})
+    display_duration = slideshow_config.get('displayDuration', 15)  # seconds
+    
+    current_time = time.time()
+    
+    # Check if it's time to change photo
+    if current_time - last_photo_change >= display_duration:
+        # Move to next photo
+        next_index = (current_index + 1) % len(photos)
+        cache_data['current_index'] = next_index
+        cache_data['last_photo_change'] = current_time
+        save_cache(cache_data)
+        current_index = next_index
+        logging.info(f"Advanced to photo {current_index + 1}/{len(photos)} after {display_duration}s")
+    else:
+        # Still showing the same photo
+        time_remaining = display_duration - (current_time - last_photo_change)
+        logging.debug(f"Still showing photo {current_index + 1}/{len(photos)}, {time_remaining:.1f}s remaining")
     
     current_photo = photos[current_index]
     
@@ -258,7 +275,8 @@ def get_current_photo(config):
         'photo': current_photo,
         'current_index': current_index + 1,
         'total_photos': len(photos),
-        'next_refresh': cache_data['last_updated'] + config.get('unsplash', {}).get('refreshInterval', 3600)
+        'next_refresh': cache_data['last_updated'] + config.get('unsplash', {}).get('refreshInterval', 3600),
+        'time_remaining': display_duration - (current_time - last_photo_change)
     }
 
 def api_data():
