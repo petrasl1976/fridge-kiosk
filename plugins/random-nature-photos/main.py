@@ -85,10 +85,10 @@ def get_unsplash_photos(config):
     
     all_photos = []
     
-    # If no API key, return fallback photos
+    # If no API key, use Lorem Picsum as primary source
     if not api_key:
-        logging.warning("No Unsplash API key configured, using fallback photos")
-        return get_fallback_photos()
+        logging.info("No Unsplash API key configured, using Lorem Picsum as primary source")
+        return get_lorem_picsum_photos()
     
     for category in categories:
         try:
@@ -130,10 +130,10 @@ def get_unsplash_photos(config):
                 
             elif response.status_code == 401:
                 logging.error(f"Unauthorized access to Unsplash API. Check your API key.")
-                return get_fallback_photos()
+                return get_lorem_picsum_photos()
             elif response.status_code == 403:
                 logging.error(f"Rate limit exceeded for Unsplash API")
-                return get_fallback_photos() 
+                return get_lorem_picsum_photos() 
             else:
                 logging.warning(f"Failed to fetch photos for {category}: {response.status_code}")
                 
@@ -141,8 +141,8 @@ def get_unsplash_photos(config):
             logging.error(f"Error fetching photos for {category}: {e}")
     
     if not all_photos:
-        logging.warning("No photos fetched from Unsplash, using fallback photos")
-        return get_fallback_photos()
+        logging.warning("No photos fetched from Unsplash, using Lorem Picsum")
+        return get_lorem_picsum_photos()
     
     # Shuffle for variety
     random.shuffle(all_photos)
