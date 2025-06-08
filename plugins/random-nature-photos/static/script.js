@@ -35,7 +35,6 @@ function naturePhotosInit(container) {
         isLoading = true;
         loading.style.display = 'block';
         errorDiv.style.display = 'none';
-        img.style.opacity = '0';
         console.log('Showing loading indicator');
     }
     
@@ -50,7 +49,6 @@ function naturePhotosInit(container) {
         isLoading = false;
         errorDiv.style.display = 'block';
         loading.style.display = 'none';
-        img.style.opacity = '0';
         
         const errorText = errorDiv.querySelector('.error-text');
         const errorDetail = errorDiv.querySelector('.error-detail');
@@ -105,31 +103,22 @@ function naturePhotosInit(container) {
         const newImg = new Image();
         
         newImg.onload = function() {
-            console.log('Photo loaded successfully, starting transition');
+            console.log('Photo loaded successfully, displaying immediately');
             
-            // Fade out current image
-            img.classList.add('fade-out');
+            // Set new image immediately - no transitions
+            img.src = newImg.src;
+            img.alt = photo.description || 'Nature photo';
+            img.style.opacity = '1';
             
-            setTimeout(() => {
-                // Set new image
-                img.src = newImg.src;
-                img.alt = photo.description || 'Nature photo';
-                
-                // Fade in new image
-                img.classList.remove('fade-out');
-                img.classList.add('loaded');
-                
-                hideLoading();
-                errorDiv.style.display = 'none';
-                
-                // Record when photo was displayed
-                lastPhotoTime = Date.now();
-                currentPhoto = photo;
-                
-                console.log('Photo displayed successfully:', photo.id);
-                console.log(`Next photo in ${config.displayDuration/1000} seconds`);
-                
-            }, config.transitionDuration / 2);
+            hideLoading();
+            errorDiv.style.display = 'none';
+            
+            // Record when photo was displayed
+            lastPhotoTime = Date.now();
+            currentPhoto = photo;
+            
+            console.log('Photo displayed successfully:', photo.id);
+            console.log(`Next photo in ${config.displayDuration/1000} seconds`);
         };
         
         newImg.onerror = function() {
