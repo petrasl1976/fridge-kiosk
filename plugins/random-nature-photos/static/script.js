@@ -143,7 +143,7 @@ function naturePhotosInit(container) {
         // Prevent fetching too frequently
         const timeSinceLastPhoto = Date.now() - lastPhotoTime;
         if (timeSinceLastPhoto < config.minDisplayTime && currentPhoto) {
-            console.log('Skipping fetch - too soon since last photo');
+            console.log(`Skipping fetch - too soon since last photo (${timeSinceLastPhoto}ms < ${config.minDisplayTime}ms)`);
             return;
         }
         
@@ -155,8 +155,14 @@ function naturePhotosInit(container) {
         console.log('Fetching new photo...');
         showLoading();
         
-        fetch('/api/plugins/random-nature-photos/data')
+        fetch('/api/plugins/random-nature-photos/data', {
+            method: 'GET',
+            headers: {
+                'Cache-Control': 'no-cache'
+            }
+        })
             .then(response => {
+                console.log('Response received:', response.status);
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
@@ -164,7 +170,11 @@ function naturePhotosInit(container) {
             })
             .then(data => {
                 console.log('Photo data received:', data);
-                displayPhoto(data);
+                if (data.error) {
+                    showError(data.message || 'API returned error', data.error);
+                } else {
+                    displayPhoto(data);
+                }
             })
             .catch(error => {
                 console.error('Error fetching photo:', error);
