@@ -1,0 +1,190 @@
+/* Random Nature Photos Plugin Styles */
+
+.nature-photos-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.photo-display {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nature-photo {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.nature-photo.loaded {
+    opacity: 1;
+}
+
+.nature-photo.fade-out {
+    opacity: 0;
+}
+
+.photo-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    padding: 30px 20px 20px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.nature-photos-container:hover .photo-overlay {
+    opacity: 1;
+}
+
+.photo-info {
+    flex: 1;
+}
+
+.photo-description {
+    font-size: 1.2em;
+    font-weight: 300;
+    margin-bottom: 5px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.photo-credits {
+    font-size: 0.9em;
+    opacity: 0.8;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.photo-credits::before {
+    content: "📸 ";
+}
+
+.photo-counter {
+    font-size: 0.8em;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 10px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Loading indicator */
+.loading-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    z-index: 10;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 1.1em;
+    font-weight: 300;
+    opacity: 0.9;
+}
+
+/* Error message */
+.error-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    background: rgba(255, 0, 0, 0.1);
+    padding: 30px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.error-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+.error-text {
+    font-size: 1.3em;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.error-detail {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .photo-overlay {
+        padding: 20px 15px 15px;
+    }
+    
+    .photo-description {
+        font-size: 1em;
+    }
+    
+    .photo-credits {
+        font-size: 0.8em;
+    }
+    
+    .photo-counter {
+        font-size: 0.7em;
+        padding: 3px 8px;
+    }
+}
+
+/* Animation for photo transitions */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(1.05); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.95); }
+}
+
+.nature-photo.animate-in {
+    animation: fadeIn 2s ease-out;
+}
+
+.nature-photo.animate-out {
+    animation: fadeOut 2s ease-out;
+} 

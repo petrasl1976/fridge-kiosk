@@ -1,0 +1,23 @@
+<div class="nature-photos-container" id="nature-photos-{{ plugin.name }}">
+  <div class="photo-display">
+    <img id="nature-photo-img" src="" alt="Loading..." class="nature-photo" />
+    <div class="photo-overlay">
+      <div class="photo-info">
+        <div class="photo-description" id="photo-description"></div>
+        <div class="photo-credits" id="photo-credits"></div>
+      </div>
+      <div class="photo-counter" id="photo-counter"></div>
+    </div>
+  </div>
+  
+  <div class="loading-indicator" id="nature-loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading beautiful nature photos...</div>
+  </div>
+  
+  <div class="error-message" id="nature-error" style="display: none;">
+    <div class="error-icon">📸</div>
+    <div class="error-text">Unable to load photos</div>
+    <div class="error-detail" id="error-detail"></div>
+  </div>
+</div> 

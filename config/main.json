@@ -15,6 +15,7 @@
     }
   },
   "enabledPlugins": [
+    "random-nature-photos",
     "weather-forecast",
     "sensors",
     "date-time",

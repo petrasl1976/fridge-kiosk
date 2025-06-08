@@ -1,0 +1,35 @@
+{
+  "name": "Random Nature Photos",
+  "description": "Displays beautiful nature photos from Unsplash API",
+  "version": "1.0.0",
+  "position": {
+    "landscape": {
+      "top": "0",
+      "left": "0", 
+      "width": "100%",
+      "height": "100%"
+    },
+    "portrait": {
+      "top": "0",
+      "left": "0",
+      "width": "100%", 
+      "height": "100%"
+    }
+  },
+  "updateInterval": 15,
+  "logging": "INFO",
+  "unsplash": {
+    "categories": ["nature", "landscape", "mountains", "forest", "ocean", "sky"],
+    "photosPerBatch": 20,
+    "refreshInterval": 3600,
+    "cacheForHours": 24,
+    "orientation": "landscape",
+    "minWidth": 1920,
+    "minHeight": 1080
+  },
+  "slideshow": {
+    "displayDuration": 15,
+    "transitionDuration": 2,
+    "transitionType": "fade"
+  }
+} 
