@@ -150,9 +150,41 @@ def get_unsplash_photos(config):
     
     return all_photos
 
+def get_lorem_picsum_photos():
+    """Generate Lorem Picsum photo URLs - no API key needed"""
+    # Lorem Picsum provides random photos via simple URLs
+    lorem_photos = []
+    
+    # Generate 50 random photos
+    for i in range(1, 51):
+        photo_id = 100 + i  # Start from ID 100 to get different photos
+        photo_info = {
+            'id': f'lorem_{photo_id}',
+            'url': f'https://picsum.photos/1920/1080?random={photo_id}',
+            'thumb_url': f'https://picsum.photos/400/300?random={photo_id}',
+            'description': f'Beautiful random photo #{photo_id}',
+            'photographer': 'Lorem Picsum Community',
+            'category': 'random',
+            'width': 1920,
+            'height': 1080
+        }
+        lorem_photos.append(photo_info)
+    
+    logging.info(f"Generated {len(lorem_photos)} Lorem Picsum photos")
+    return lorem_photos
+
 def get_fallback_photos():
     """Provide beautiful fallback photos when API is unavailable"""
-    # High quality nature photos that work without API
+    
+    # First try Lorem Picsum (no API key needed)
+    try:
+        lorem_photos = get_lorem_picsum_photos()
+        if lorem_photos:
+            return lorem_photos
+    except Exception as e:
+        logging.warning(f"Lorem Picsum not available: {e}")
+    
+    # Fallback to static Unsplash URLs
     fallback_photos = [
         # Mountains
         {
@@ -342,7 +374,7 @@ def get_fallback_photos():
         }
     ]
     
-    logging.info(f"Using {len(fallback_photos)} fallback photos")
+    logging.info(f"Using {len(fallback_photos)} static fallback photos")
     return fallback_photos
 
 def get_current_photo(config):
