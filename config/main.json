@@ -15,7 +15,6 @@
     }
   },
   "enabledPlugins": [
-    "google-photos",
     "weather-forecast",
     "sensors",
     "date-time",

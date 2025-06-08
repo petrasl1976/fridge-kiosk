@@ -1,0 +1,6 @@
+# Alternative approach using different libraries
+google-photos-api==0.7.1
+google-auth>=2.29.0
+google-auth-oauthlib>=1.2.0
+requests>=2.31.0
+httpx>=0.24.0 
