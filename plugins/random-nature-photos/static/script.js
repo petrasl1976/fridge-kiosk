@@ -129,10 +129,10 @@ function naturePhotosInit(container) {
         newImg.src = photo.url;
     }
     
-    function fetchPhoto(isInitial = false) {
+    function fetchPhoto() {
         // Prevent fetching too frequently
         const timeSinceLastPhoto = Date.now() - lastPhotoTime;
-        if (timeSinceLastPhoto < config.minDisplayTime && currentPhoto && !isInitial) {
+        if (timeSinceLastPhoto < config.minDisplayTime && currentPhoto) {
             console.log(`Skipping fetch - too soon since last photo (${timeSinceLastPhoto}ms < ${config.minDisplayTime}ms)`);
             return;
         }
@@ -142,12 +142,10 @@ function naturePhotosInit(container) {
             return;
         }
         
-        // Use /data for initial photo, /next for slideshow
-        const endpoint = isInitial ? '/api/plugins/random-nature-photos/data' : '/api/plugins/random-nature-photos/next';
-        console.log(`Fetching ${isInitial ? 'initial' : 'next'} photo from ${endpoint}...`);
+        console.log('Fetching new photo...');
         showLoading();
         
-        fetch(endpoint, {
+        fetch('/api/plugins/random-nature-photos/data', {
             method: 'GET',
             headers: {
                 'Cache-Control': 'no-cache'
@@ -184,13 +182,13 @@ function naturePhotosInit(container) {
         
         // Load first photo immediately if we don't have one
         if (!currentPhoto) {
-            fetchPhoto(true); // Initial photo
+            fetchPhoto();
         }
         
         // Set interval for subsequent photos
         slideInterval = setInterval(() => {
             console.log('Slideshow interval triggered - requesting next photo');
-            fetchPhoto(false); // Next photo
+            fetchPhoto();
         }, config.displayDuration);
         
         console.log(`Slideshow started - photos will change every ${config.displayDuration/1000} seconds`);

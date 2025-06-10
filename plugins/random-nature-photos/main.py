@@ -133,7 +133,7 @@ def get_unsplash_photos(config):
                 return get_lorem_picsum_photos()
             elif response.status_code == 403:
                 logging.error(f"Rate limit exceeded for Unsplash API")
-                return get_lorem_picsum_photos()
+                return get_lorem_picsum_photos() 
             else:
                 logging.warning(f"Failed to fetch photos for {category}: {response.status_code}")
                 
@@ -141,7 +141,7 @@ def get_unsplash_photos(config):
             logging.error(f"Error fetching photos for {category}: {e}")
     
     if not all_photos:
-        logging.warning("No photos fetched from Unsplash, using Lorem Picsum or fallback")
+        logging.warning("No photos fetched from Unsplash, using Lorem Picsum")
         return get_lorem_picsum_photos()
     
     # Shuffle for variety
@@ -152,35 +152,39 @@ def get_unsplash_photos(config):
 
 def get_lorem_picsum_photos():
     """Generate Lorem Picsum photo URLs - no API key needed"""
-    try:
-        # Lorem Picsum provides random photos via simple URLs
-        lorem_photos = []
-        
-        # Generate 50 random photos
-        for i in range(1, 51):
-            photo_id = 100 + i  # Start from ID 100 to get different photos
-            photo_info = {
-                'id': f'lorem_{photo_id}',
-                'url': f'https://picsum.photos/1920/1080?random={photo_id}',
-                'thumb_url': f'https://picsum.photos/400/300?random={photo_id}',
-                'description': f'Beautiful random photo #{photo_id}',
-                'photographer': 'Lorem Picsum Community',
-                'category': 'random',
-                'width': 1920,
-                'height': 1080
-            }
-            lorem_photos.append(photo_info)
-        
-        logging.info(f"Generated {len(lorem_photos)} Lorem Picsum photos")
-        return lorem_photos
-    except Exception as e:
-        logging.warning(f"Lorem Picsum failed: {e}, using static fallback photos")
-        return get_fallback_photos()
+    # Lorem Picsum provides random photos via simple URLs
+    lorem_photos = []
+    
+    # Generate 50 random photos
+    for i in range(1, 51):
+        photo_id = 100 + i  # Start from ID 100 to get different photos
+        photo_info = {
+            'id': f'lorem_{photo_id}',
+            'url': f'https://picsum.photos/1920/1080?random={photo_id}',
+            'thumb_url': f'https://picsum.photos/400/300?random={photo_id}',
+            'description': f'Beautiful random photo #{photo_id}',
+            'photographer': 'Lorem Picsum Community',
+            'category': 'random',
+            'width': 1920,
+            'height': 1080
+        }
+        lorem_photos.append(photo_info)
+    
+    logging.info(f"Generated {len(lorem_photos)} Lorem Picsum photos")
+    return lorem_photos
 
 def get_fallback_photos():
-    """Provide static Unsplash photos as ultimate fallback when Lorem Picsum fails"""
+    """Provide beautiful fallback photos when API is unavailable"""
     
-    # Static Unsplash URLs as ultimate fallback
+    # First try Lorem Picsum (no API key needed)
+    try:
+        lorem_photos = get_lorem_picsum_photos()
+        if lorem_photos:
+            return lorem_photos
+    except Exception as e:
+        logging.warning(f"Lorem Picsum not available: {e}")
+    
+    # Fallback to static Unsplash URLs
     fallback_photos = [
         # Mountains
         {
@@ -306,10 +310,71 @@ def get_fallback_photos():
             'category': 'sky',
             'width': 1920,
             'height': 1080
+        },
+        {
+            'id': 'fallback_13',
+            'url': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80',
+            'description': 'Golden hour sunset',
+            'photographer': 'Unsplash',
+            'category': 'sunset',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_14',
+            'url': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80',
+            'description': 'Tropical beach sunset',
+            'photographer': 'Unsplash',
+            'category': 'sunset',
+            'width': 1920,
+            'height': 1080
+        },
+        # Wildlife and nature
+        {
+            'id': 'fallback_15',
+            'url': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80',
+            'description': 'Deer in forest clearing',
+            'photographer': 'Unsplash',
+            'category': 'wildlife',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_16',
+            'url': 'https://images.unsplash.com/photo-1574482620131-8b3d8b4f2833?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1574482620131-8b3d8b4f2833?w=400&q=80',
+            'description': 'Wildflower meadow',
+            'photographer': 'Unsplash',
+            'category': 'flowers',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_17',
+            'url': 'https://images.unsplash.com/photo-1517233925479-c6de2058c39a?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1517233925479-c6de2058c39a?w=400&q=80',
+            'description': 'Ancient oak tree',
+            'photographer': 'Unsplash',
+            'category': 'trees',
+            'width': 1920,
+            'height': 1080
+        },
+        {
+            'id': 'fallback_18',
+            'url': 'https://images.unsplash.com/photo-1476242906366-d8eb64c2f661?w=1920&q=80',
+            'thumb_url': 'https://images.unsplash.com/photo-1476242906366-d8eb64c2f661?w=400&q=80',
+            'description': 'Alpine meadow with flowers',
+            'photographer': 'Unsplash',
+            'category': 'nature',
+            'width': 1920,
+            'height': 1080
         }
     ]
     
-    logging.info(f"Using {len(fallback_photos)} static fallback photos as ultimate fallback")
+    logging.info(f"Using {len(fallback_photos)} static fallback photos")
     return fallback_photos
 
 def get_current_photo(config):
@@ -325,6 +390,7 @@ def get_current_photo(config):
                 cache_data['photos'] = new_photos
                 cache_data['last_updated'] = time.time()
                 cache_data['current_index'] = 0
+                cache_data['last_photo_change'] = 0  # Reset photo change timer
                 save_cache(cache_data)
                 logging.info(f"Cache updated with {len(new_photos)} photos")
         except Exception as e:
@@ -339,56 +405,36 @@ def get_current_photo(config):
         }
     
     current_index = cache_data.get('current_index', 0)
+    last_photo_change = cache_data.get('last_photo_change', 0)
+    
+    # Only advance to next photo if enough time has passed
+    slideshow_config = config.get('slideshow', {})
+    display_duration = slideshow_config.get('displayDuration', 15)  # seconds
+    
+    current_time = time.time()
+    
+    # Check if it's time to change photo
+    if current_time - last_photo_change >= display_duration:
+        # Move to next photo
+        next_index = (current_index + 1) % len(photos)
+        cache_data['current_index'] = next_index
+        cache_data['last_photo_change'] = current_time
+        save_cache(cache_data)
+        current_index = next_index
+        logging.info(f"Advanced to photo {current_index + 1}/{len(photos)} after {display_duration}s")
+    else:
+        # Still showing the same photo
+        time_remaining = display_duration - (current_time - last_photo_change)
+        logging.debug(f"Still showing photo {current_index + 1}/{len(photos)}, {time_remaining:.1f}s remaining")
+    
     current_photo = photos[current_index]
     
     return {
         'photo': current_photo,
         'current_index': current_index + 1,
         'total_photos': len(photos),
-        'next_refresh': cache_data['last_updated'] + config.get('unsplash', {}).get('refreshInterval', 3600)
-    }
-
-def get_next_photo(config):
-    """Get the next photo in sequence"""
-    cache_data = load_cache()
-    
-    # Check if we need to refresh photos
-    if should_refresh_photos(config, cache_data):
-        logging.info("Refreshing photos from Unsplash...")
-        try:
-            new_photos = get_unsplash_photos(config)
-            if new_photos:
-                cache_data['photos'] = new_photos
-                cache_data['last_updated'] = time.time()
-                cache_data['current_index'] = 0
-                save_cache(cache_data)
-                logging.info(f"Cache updated with {len(new_photos)} photos")
-        except Exception as e:
-            logging.error(f"Failed to refresh photos: {e}")
-    
-    # Get photos
-    photos = cache_data.get('photos', [])
-    if not photos:
-        return {
-            'error': 'No photos available',
-            'message': 'Failed to load photos'
-        }
-    
-    # Advance to next photo
-    current_index = cache_data.get('current_index', 0)
-    next_index = (current_index + 1) % len(photos)
-    cache_data['current_index'] = next_index
-    save_cache(cache_data)
-    
-    logging.info(f"Advanced to photo {next_index + 1}/{len(photos)}")
-    
-    current_photo = photos[next_index]
-    
-    return {
-        'photo': current_photo,
-        'current_index': next_index + 1,
-        'total_photos': len(photos),
-        'next_refresh': cache_data['last_updated'] + config.get('unsplash', {}).get('refreshInterval', 3600)
+        'next_refresh': cache_data['last_updated'] + config.get('unsplash', {}).get('refreshInterval', 3600),
+        'time_remaining': display_duration - (current_time - last_photo_change)
     }
 
 def api_data():
@@ -399,7 +445,7 @@ def api_data():
 def api_next():
     """API endpoint to manually get next photo"""
     config = load_config()
-    return get_next_photo(config)
+    return get_current_photo(config)
 
 def api_refresh():
     """API endpoint to force refresh photos from API"""
