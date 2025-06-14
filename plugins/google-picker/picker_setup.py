@@ -144,12 +144,12 @@ def poll_session(session_info):
     else:
         poll_interval = int(poll_interval_raw)
     
-    # Parse timeout (might be "1800s" or just "1800")
+    # Parse timeout (might be "1800s", "1799.895084s", or just "1800")
     timeout_raw = polling_config.get('timeoutIn', 1800)
     if isinstance(timeout_raw, str) and timeout_raw.endswith('s'):
-        timeout_in = int(timeout_raw[:-1])  # Remove 's' suffix
+        timeout_in = int(float(timeout_raw[:-1]))  # Remove 's' suffix and handle decimals
     else:
-        timeout_in = int(timeout_raw)
+        timeout_in = int(float(timeout_raw))
     
     logger.info(f"⏳ Waiting for photo selection...")
     logger.info(f"   Poll interval: {poll_interval} seconds")
