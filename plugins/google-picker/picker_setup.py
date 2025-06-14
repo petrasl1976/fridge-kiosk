@@ -180,9 +180,9 @@ def poll_session(session_info):
             if new_polling_config:
                 poll_interval_raw = new_polling_config.get('pollInterval', poll_interval)
                 if isinstance(poll_interval_raw, str) and poll_interval_raw.endswith('s'):
-                    poll_interval = int(poll_interval_raw[:-1])  # Remove 's' suffix
+                    poll_interval = int(float(poll_interval_raw[:-1]))  # Remove 's' suffix and handle decimals
                 else:
-                    poll_interval = int(poll_interval_raw)
+                    poll_interval = int(float(poll_interval_raw))
             
             # Wait before next poll
             print(f"   ⏳ Still waiting... ({elapsed:.0f}/{timeout_in}s)")
