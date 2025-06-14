@@ -230,6 +230,15 @@ def api_data():
             logger.warning("No photos returned from get_random_photo_batch")
             return {'media': [], 'error': 'No photos available. Run picker setup first.'}
         
+        # Convert Google Photos URLs to proxied URLs that include auth
+        for photo in photos:
+            if photo.get('baseUrl'):
+                # Replace the direct Google URL with our proxy URL
+                original_url = photo['baseUrl']
+                # Create a proxy URL that our backend will handle with proper auth
+                photo['baseUrl'] = f"/api/plugins/google-picker/proxy-image?url={requests.utils.quote(original_url, safe='')}"
+                logger.debug(f"Proxied URL: {original_url} -> {photo['baseUrl']}")
+        
         # Log each displayed media item
         for item in photos:
             filename = item.get('filename', 'Unknown File')
@@ -244,6 +253,58 @@ def api_data():
         logger.error(f"Error in api_data: {e}")
         logger.debug(f"API error traceback: {traceback.format_exc()}")
         return {'error': str(e)}
+
+def api_proxy_image():
+    """Proxy endpoint to serve Google Photos images with proper OAuth headers."""
+    from flask import request, Response
+    import urllib.parse
+    
+    try:
+        # Get the original Google Photos URL from query params
+        original_url = request.args.get('url')
+        if not original_url:
+            return Response('Missing url parameter', status=400)
+        
+        # Decode the URL
+        original_url = urllib.parse.unquote(original_url)
+        logger.debug(f"Proxying image request: {original_url}")
+        
+        # Get credentials for authorization
+        credentials = get_credentials()
+        if not credentials:
+            logger.error("No credentials available for image proxy")
+            return Response('Authentication required', status=401)
+        
+        # Make request to Google Photos with proper auth headers
+        headers = {
+            'Authorization': f'Bearer {credentials.token}',
+            'User-Agent': 'Fridge-Kiosk-Picker/1.0'
+        }
+        
+        response = requests.get(original_url, headers=headers, stream=True)
+        
+        if response.status_code == 200:
+            # Stream the image back to the client
+            def generate():
+                for chunk in response.iter_content(chunk_size=8192):
+                    yield chunk
+            
+            return Response(
+                generate(),
+                content_type=response.headers.get('content-type', 'image/jpeg'),
+                headers={
+                    'Cache-Control': 'public, max-age=3600',  # Cache for 1 hour
+                    'Content-Length': response.headers.get('content-length', '')
+                }
+            )
+        else:
+            logger.error(f"Google Photos API returned {response.status_code}: {response.text}")
+            return Response(f'Error fetching image: {response.status_code}', status=response.status_code)
+            
+    except Exception as e:
+        logger.error(f"Error in image proxy: {e}")
+        logger.debug(f"Proxy error traceback: {traceback.format_exc()}")
+        return Response(f'Proxy error: {str(e)}', status=500)
 
 def init(config):
     """Initialize the plugin with configuration."""
