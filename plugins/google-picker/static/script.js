@@ -68,16 +68,17 @@ function showMedia(mediaItem) {
     }
 
     // --- Add photo info above the photo ---
-    // Photo source info
-    let photoSource = 'Google Photos (Picker)';
-    if (mediaItem.description) {
-        photoSource = mediaItem.description;
+    // Album name (top line) - use album.title if available
+    let albumName = 'Google Photos (Picker)';
+    if (mediaItem.album && mediaItem.album.title) {
+        albumName = mediaItem.album.title;
+    } else if (mediaItem.description) {
+        albumName = mediaItem.description;
     }
 
-    // Album name (top line)
     const albumDiv = document.createElement('div');
     albumDiv.className = 'picker-photo-album';
-    albumDiv.textContent = photoSource;
+    albumDiv.textContent = albumName;
     albumDiv.style.fontSize = fontSize;
     container.appendChild(albumDiv);
 
@@ -132,7 +133,9 @@ function showMedia(mediaItem) {
     console.log('[Google Picker] Processing media item:', {
         filename: mediaItem.filename,
         mimeType: mediaItem.mimeType,
-        baseUrl: mediaItem.baseUrl
+        album: mediaItem.album,
+        mediaMetadata: mediaItem.mediaMetadata,
+        baseUrl: mediaItem.baseUrl ? 'data URL present' : 'no baseUrl'
     });
 
     // Create progress bar

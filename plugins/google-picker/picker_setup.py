@@ -229,7 +229,7 @@ def retrieve_selected_photos(session_info):
         # Log photo details
         for i, photo in enumerate(photos[:5]):  # Show first 5
             # Debug: log the actual structure
-            logger.debug(f"Photo {i+1} structure: {json.dumps(photo, indent=2)}")
+            logger.info(f"Photo {i+1} structure: {json.dumps(photo, indent=2)}")
             
             # Try different possible field names
             filename = photo.get('filename') or photo.get('name') or f"Photo_{i+1}"

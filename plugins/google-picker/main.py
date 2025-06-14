@@ -212,12 +212,18 @@ def normalize_picker_photo(photo):
             'height': photo.get('height', '')
         }
     
+    # Add album info for Picker photos (they don't have albums, so create a virtual one)
+    normalized['album'] = {
+        'title': 'Google Photos (Picker Selection)',
+        'id': 'picker_selection'
+    }
+    
     # Copy any other fields that might be useful
     for key in ['description', 'productUrl']:
         if key in photo:
             normalized[key] = photo[key]
     
-    logger.debug(f"Normalized photo: {normalized['filename']} -> {normalized['baseUrl'][:50]}...")
+    logger.debug(f"Normalized photo: {normalized['filename']} -> album: {normalized['album']['title']}")
     return normalized
 
 def api_data():
