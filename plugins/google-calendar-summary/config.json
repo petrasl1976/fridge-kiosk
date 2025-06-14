@@ -2,15 +2,15 @@
     "logging": "WARNING",
     "position": {
         "portrait": {
-            "top": "15%",
-            "left": "60%",
-            "width": "40%",
+            "top": "0%",
+            "right": "0%",
+            "width": "35%",
             "height": "auto"
         },
         "landscape": {
-            "top": "38%",
-            "left": "60%",
-            "width": "40%",
+            "top": "0%",
+            "right": "0%",
+            "width": "30%",
             "height": "auto"
         }
     },
