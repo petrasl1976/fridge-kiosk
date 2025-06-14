@@ -5,6 +5,7 @@ import random
 import requests
 import time
 import traceback
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -274,13 +275,22 @@ def api_data():
             return {'media': [], 'error': 'No photos available. Run picker setup first.'}
         
         # Convert Google Photos URLs to data URLs with proper auth
-        for photo in photos:
+        for i, photo in enumerate(photos):
+            logger.debug(f"Processing photo {i+1}/{len(photos)}: {photo.get('filename', 'unknown')}")
+            logger.debug(f"Photo has baseUrl: {bool(photo.get('baseUrl'))}")
+            
             if photo.get('baseUrl'):
                 original_url = photo['baseUrl']
+                logger.info(f"Fetching image for {photo.get('filename', 'unknown')}: {original_url[:50]}...")
                 try:
                     # Fetch the image with proper OAuth headers and convert to data URL
                     credentials = get_credentials()
                     if credentials:
+                        # Check if credentials are still valid
+                        if credentials.expired:
+                            logger.warning("Credentials expired, attempting refresh...")
+                            credentials.refresh(Request())
+                        
                         headers = {
                             'Authorization': f'Bearer {credentials.token}',
                             'User-Agent': 'Fridge-Kiosk-Picker/1.0'
@@ -290,7 +300,9 @@ def api_data():
                         image_url = f"{original_url}=w1920-h1080"
                         logger.debug(f"Fetching image: {image_url}")
                         
-                        response = requests.get(image_url, headers=headers, timeout=10)
+                        response = requests.get(image_url, headers=headers, timeout=15)
+                        logger.debug(f"Response status: {response.status_code}")
+                        
                         if response.status_code == 200:
                             # Convert to data URL
                             import base64
@@ -298,16 +310,19 @@ def api_data():
                             image_data = base64.b64encode(response.content).decode('utf-8')
                             data_url = f"data:{content_type};base64,{image_data}"
                             photo['baseUrl'] = data_url
-                            logger.debug(f"Converted to data URL: {len(image_data)} bytes")
+                            logger.info(f"✅ Successfully converted to data URL: {len(image_data)} bytes")
                         else:
-                            logger.error(f"Failed to fetch image: {response.status_code}")
+                            logger.error(f"❌ Failed to fetch image: {response.status_code} - {response.text[:100]}")
                             photo['baseUrl'] = ''  # Will trigger error handling in frontend
                     else:
-                        logger.error("No credentials available for image fetching")
+                        logger.error("❌ No credentials available for image fetching")
                         photo['baseUrl'] = ''
                 except Exception as e:
-                    logger.error(f"Error fetching image {original_url}: {e}")
+                    logger.error(f"❌ Error fetching image {original_url}: {e}")
+                    logger.debug(f"Full error: {traceback.format_exc()}")
                     photo['baseUrl'] = ''
+            else:
+                logger.warning(f"⚠️ Photo {photo.get('filename', 'unknown')} has no baseUrl in cache")
         
         # Log each displayed media item
         for item in photos:
