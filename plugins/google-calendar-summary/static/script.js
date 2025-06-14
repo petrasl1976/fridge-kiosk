@@ -3,7 +3,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    const container = document.querySelector('.calendar-widget');
+    const container = document.querySelector('.calendar-summary-widget');
     if (!container) return;
     
     // Initialize

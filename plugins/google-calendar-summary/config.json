@@ -2,10 +2,10 @@
     "logging": "WARNING",
     "position": {
         "portrait": {
-            "top": "15%",
+            "top": "70%",
             "left": "60%",
             "width": "40%",
-            "height": "auto"
+            "height": "30%"
         },
         "landscape": {
             "top": "38%",

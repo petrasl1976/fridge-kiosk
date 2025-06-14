@@ -2,7 +2,8 @@
  * Google Calendar Summary Plugin Styles
  */
 
-.calendar-widget {
+.calendar-widget,
+.calendar-summary-widget {
     width: 100%;
     min-height: 300px;
     display: flex;
@@ -11,12 +12,14 @@
     overflow: hidden;
 }
 
-.calendar-widget.error {
+.calendar-widget.error,
+.calendar-summary-widget.error {
     color: red;
     padding: 20px;
 }
 
-.calendar-widget.no-data {
+.calendar-widget.no-data,
+.calendar-summary-widget.no-data {
     color: red;
     padding: 20px;
 }

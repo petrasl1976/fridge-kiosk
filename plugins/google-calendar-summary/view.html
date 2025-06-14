@@ -1,11 +1,11 @@
 {% if plugin['data'] %}
   {% if plugin['data'].error %}
-    <div class="calendar-widget error" style="font-size: {{ plugin['config'].format.font_size }}; padding: {{ plugin['config'].format.padding }};">
+    <div class="calendar-summary-widget error" style="font-size: {{ plugin['config'].format.font_size }}; padding: {{ plugin['config'].format.padding }};">
       <h3>Google Calendar Error</h3>
       <p>{{ plugin['data'].error }}</p>
     </div>
   {% else %}
-    <div class="calendar-widget summary-list" style="font-size: {{ plugin['config'].format.font_size }}; color: {{ plugin['config'].format.color }}; padding: {{ plugin['config'].format.padding }};">
+    <div class="calendar-summary-widget summary-list" style="font-size: {{ plugin['config'].format.font_size }}; color: {{ plugin['config'].format.color }}; padding: {{ plugin['config'].format.padding }};">
       
       <!-- Detailed Weather Forecast Section -->
       {% set w = plugin['data'].weather_now %}
@@ -80,5 +80,5 @@
     </div>
   {% endif %}
 {% else %}
-  <div class="calendar-widget no-data">Duomenų nėra</div>
+  <div class="calendar-summary-widget no-data">Duomenų nėra</div>
 {% endif %} 
