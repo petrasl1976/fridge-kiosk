@@ -136,8 +136,8 @@ def poll_session(session_info):
     
     session_id = session_info['session_id']
     polling_config = session_info.get('polling_config', {})
-    poll_interval = polling_config.get('pollInterval', 5)  # Default 5 seconds
-    timeout_in = polling_config.get('timeoutIn', 1800)  # Default 30 minutes
+    poll_interval = int(polling_config.get('pollInterval', 5))  # Default 5 seconds
+    timeout_in = int(polling_config.get('timeoutIn', 1800))  # Default 30 minutes
     
     logger.info(f"⏳ Waiting for photo selection...")
     logger.info(f"   Poll interval: {poll_interval} seconds")
@@ -166,7 +166,7 @@ def poll_session(session_info):
             # Update polling config if provided
             new_polling_config = response.get('pollingConfig', {})
             if new_polling_config:
-                poll_interval = new_polling_config.get('pollInterval', poll_interval)
+                poll_interval = int(new_polling_config.get('pollInterval', poll_interval))
             
             # Wait before next poll
             print(f"   ⏳ Still waiting... ({elapsed:.0f}/{timeout_in}s)")
