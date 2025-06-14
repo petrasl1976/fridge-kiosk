@@ -136,8 +136,20 @@ def poll_session(session_info):
     
     session_id = session_info['session_id']
     polling_config = session_info.get('polling_config', {})
-    poll_interval = int(polling_config.get('pollInterval', 5))  # Default 5 seconds
-    timeout_in = int(polling_config.get('timeoutIn', 1800))  # Default 30 minutes
+    
+    # Parse poll interval (might be "5s" or just "5")
+    poll_interval_raw = polling_config.get('pollInterval', 5)
+    if isinstance(poll_interval_raw, str) and poll_interval_raw.endswith('s'):
+        poll_interval = int(poll_interval_raw[:-1])  # Remove 's' suffix
+    else:
+        poll_interval = int(poll_interval_raw)
+    
+    # Parse timeout (might be "1800s" or just "1800")
+    timeout_raw = polling_config.get('timeoutIn', 1800)
+    if isinstance(timeout_raw, str) and timeout_raw.endswith('s'):
+        timeout_in = int(timeout_raw[:-1])  # Remove 's' suffix
+    else:
+        timeout_in = int(timeout_raw)
     
     logger.info(f"⏳ Waiting for photo selection...")
     logger.info(f"   Poll interval: {poll_interval} seconds")
@@ -166,7 +178,11 @@ def poll_session(session_info):
             # Update polling config if provided
             new_polling_config = response.get('pollingConfig', {})
             if new_polling_config:
-                poll_interval = int(new_polling_config.get('pollInterval', poll_interval))
+                poll_interval_raw = new_polling_config.get('pollInterval', poll_interval)
+                if isinstance(poll_interval_raw, str) and poll_interval_raw.endswith('s'):
+                    poll_interval = int(poll_interval_raw[:-1])  # Remove 's' suffix
+                else:
+                    poll_interval = int(poll_interval_raw)
             
             # Wait before next poll
             print(f"   ⏳ Still waiting... ({elapsed:.0f}/{timeout_in}s)")
