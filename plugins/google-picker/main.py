@@ -133,7 +133,9 @@ def get_random_photo_batch():
 
     filtered_photos = []
     for photo in selected_photos:
-        mime_type = photo.get('mimeType', '')
+        # Handle different possible structures for mimeType
+        mime_type = photo.get('mimeType') or photo.get('mediaFile', {}).get('mimeType', '')
+        
         if media_types == 'all':
             filtered_photos.append(photo)
         elif media_types == 'photo' and mime_type.startswith('image/'):
@@ -158,15 +160,65 @@ def get_random_photo_batch():
         idx = (start_index + i) % total_photos
         photo = filtered_photos[idx].copy()
         
-        # Add sequence info
-        photo['sequence_remaining'] = sequence_count - i
-        photo['total_count'] = total_photos
-        photo['photo_index'] = idx + 1  # 1-based index
+        # Normalize the photo structure for frontend consumption
+        normalized_photo = normalize_picker_photo(photo)
         
-        sequence.append(photo)
+        # Add sequence info
+        normalized_photo['sequence_remaining'] = sequence_count - i
+        normalized_photo['total_count'] = total_photos
+        normalized_photo['photo_index'] = idx + 1  # 1-based index
+        
+        sequence.append(normalized_photo)
 
     logger.info(f"Returning sequence of {len(sequence)} photos from {total_photos} available")
     return sequence
+
+def normalize_picker_photo(photo):
+    """Normalize a Picker API photo to match expected frontend structure."""
+    # Handle different possible structures from Picker API
+    normalized = {}
+    
+    # ID
+    normalized['id'] = photo.get('id', '')
+    
+    # Filename - try different possible fields
+    normalized['filename'] = (
+        photo.get('filename') or 
+        photo.get('name') or 
+        f"picker_photo_{photo.get('id', 'unknown')}"
+    )
+    
+    # MIME type - could be at root level or in mediaFile
+    normalized['mimeType'] = (
+        photo.get('mimeType') or 
+        photo.get('mediaFile', {}).get('mimeType', 'image/jpeg')
+    )
+    
+    # Base URL - could be at root level or in mediaFile
+    normalized['baseUrl'] = (
+        photo.get('baseUrl') or 
+        photo.get('mediaFile', {}).get('baseUrl', '')
+    )
+    
+    # Media metadata - try to extract creation time and dimensions
+    media_metadata = photo.get('mediaMetadata', {})
+    if media_metadata:
+        normalized['mediaMetadata'] = media_metadata
+    else:
+        # Create basic metadata structure
+        normalized['mediaMetadata'] = {
+            'creationTime': photo.get('creationTime', ''),
+            'width': photo.get('width', ''),
+            'height': photo.get('height', '')
+        }
+    
+    # Copy any other fields that might be useful
+    for key in ['description', 'productUrl']:
+        if key in photo:
+            normalized[key] = photo[key]
+    
+    logger.debug(f"Normalized photo: {normalized['filename']} -> {normalized['baseUrl'][:50]}...")
+    return normalized
 
 def api_data():
     """API endpoint for getting photo data."""
