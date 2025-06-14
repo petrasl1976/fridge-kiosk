@@ -140,9 +140,9 @@ def poll_session(session_info):
     # Parse poll interval (might be "5s" or just "5")
     poll_interval_raw = polling_config.get('pollInterval', 5)
     if isinstance(poll_interval_raw, str) and poll_interval_raw.endswith('s'):
-        poll_interval = int(poll_interval_raw[:-1])  # Remove 's' suffix
+        poll_interval = int(float(poll_interval_raw[:-1]))  # Remove 's' suffix and handle decimals
     else:
-        poll_interval = int(poll_interval_raw)
+        poll_interval = int(float(poll_interval_raw))
     
     # Parse timeout (might be "1800s", "1799.895084s", or just "1800")
     timeout_raw = polling_config.get('timeoutIn', 1800)
