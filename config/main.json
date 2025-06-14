@@ -10,12 +10,13 @@
     "oauth": {
       "scopes": [
         "https://www.googleapis.com/auth/calendar.readonly",
-        "https://www.googleapis.com/auth/photoslibrary.readonly"
+        "https://www.googleapis.com/auth/photoslibrary.readonly",
+        "https://www.googleapis.com/auth/photospicker.mediaitems.readonly"
       ]
     }
   },
   "enabledPlugins": [
-    "google-photos",
+    "google-picker",
     "weather-forecast",
     "sensors",
     "date-time",
