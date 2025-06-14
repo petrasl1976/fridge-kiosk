@@ -226,15 +226,21 @@ def retrieve_selected_photos(session_info):
         
         logger.info(f"📸 Retrieved {len(photos)} selected photos")
         
-        # Log photo details
-        for i, photo in enumerate(photos[:5]):  # Show first 5
-            # Debug: log the actual structure
-            logger.info(f"Photo {i+1} structure: {json.dumps(photo, indent=2)}")
+        # Log photo details and structure
+        logger.info("=== PICKER API RESPONSE STRUCTURE ===")
+        for i, photo in enumerate(photos[:3]):  # Show first 3 with full structure
+            logger.info(f"Photo {i+1} FULL structure:")
+            logger.info(json.dumps(photo, indent=2))
+            logger.info("=" * 50)
             
             # Try different possible field names
             filename = photo.get('filename') or photo.get('name') or f"Photo_{i+1}"
             mime_type = photo.get('mimeType') or photo.get('mediaFile', {}).get('mimeType') or 'Unknown'
             logger.info(f"   {i+1}. {filename} ({mime_type})")
+        
+        if len(photos) > 3:
+            logger.info(f"... and {len(photos) - 3} more photos")
+        logger.info("=== END STRUCTURE DEBUG ===")
         
         if len(photos) > 5:
             logger.info(f"   ... and {len(photos) - 5} more photos")

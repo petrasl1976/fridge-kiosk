@@ -176,6 +176,15 @@ def get_random_photo_batch():
 def normalize_picker_photo(photo):
     """Normalize a Picker API photo to match expected frontend structure."""
     # Handle different possible structures from Picker API
+    photo_id = photo.get('id', 'unknown')
+    logger.debug(f"Normalizing picker photo: {photo_id}")
+    
+    # Debug: Log the structure of this photo for troubleshooting
+    logger.debug(f"Photo {photo_id} raw data keys: {list(photo.keys())}")
+    if 'mediaMetadata' in photo:
+        logger.debug(f"Photo {photo_id} mediaMetadata keys: {list(photo['mediaMetadata'].keys())}")
+        logger.debug(f"Photo {photo_id} mediaMetadata content: {json.dumps(photo['mediaMetadata'], indent=2)}")
+    
     normalized = {}
     
     # ID
@@ -200,17 +209,45 @@ def normalize_picker_photo(photo):
         photo.get('mediaFile', {}).get('baseUrl', '')
     )
     
-    # Media metadata - try to extract creation time and dimensions
+    # Media metadata - try to extract creation time and dimensions from various possible locations
     media_metadata = photo.get('mediaMetadata', {})
+    
+    # Try to find creation time in different possible locations
+    creation_time = (
+        media_metadata.get('creationTime') or
+        photo.get('creationTime') or
+        photo.get('mediaFile', {}).get('creationTime') or
+        photo.get('timestamp') or
+        ''
+    )
+    
+    # Try to find dimensions
+    width = (
+        media_metadata.get('width') or
+        photo.get('width') or
+        photo.get('mediaFile', {}).get('width') or
+        ''
+    )
+    
+    height = (
+        media_metadata.get('height') or
+        photo.get('height') or
+        photo.get('mediaFile', {}).get('height') or
+        ''
+    )
+    
+    # Create normalized metadata structure
+    normalized['mediaMetadata'] = {
+        'creationTime': creation_time,
+        'width': str(width) if width else '',
+        'height': str(height) if height else ''
+    }
+    
+    # Copy any additional metadata that might be useful
     if media_metadata:
-        normalized['mediaMetadata'] = media_metadata
-    else:
-        # Create basic metadata structure
-        normalized['mediaMetadata'] = {
-            'creationTime': photo.get('creationTime', ''),
-            'width': photo.get('width', ''),
-            'height': photo.get('height', '')
-        }
+        for key in ['photo', 'video']:
+            if key in media_metadata:
+                normalized['mediaMetadata'][key] = media_metadata[key]
     
     # Add album info for Picker photos (they don't have albums, so create a virtual one)
     normalized['album'] = {
