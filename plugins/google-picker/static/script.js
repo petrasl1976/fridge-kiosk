@@ -153,17 +153,10 @@ function showMedia(mediaItem) {
         console.log('[Google Picker] Video URL:', mediaElement.src);
     } else {
         mediaElement = document.createElement('img');
-        // Use the baseUrl directly (it's now a proxy URL with auth)
-        let imageUrl = mediaItem.baseUrl;
-        
-        // If it's still a direct Google URL, add parameters
-        if (imageUrl.includes('googleusercontent.com')) {
-            imageUrl = `${imageUrl}=w1920-h1080`;
-        }
-        
-        mediaElement.src = imageUrl;
+        // Use the baseUrl directly (it's now a data URL with embedded image data)
+        mediaElement.src = mediaItem.baseUrl;
         mediaElement.alt = mediaItem.filename || '';
-        console.log('[Google Picker] Image URL:', imageUrl);
+        console.log('[Google Picker] Image URL type:', mediaItem.baseUrl.substring(0, 20) + '...');
         
         // Add loading state
         mediaElement.style.opacity = '0';
