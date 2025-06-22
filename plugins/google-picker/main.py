@@ -180,23 +180,10 @@ def normalize_picker_photo(photo):
     photo_id = photo.get('id', 'unknown')
     logger.debug(f"Normalizing picker photo: {photo_id}")
     
-    # Debug: Log the structure of this photo for troubleshooting
-    logger.debug(f"Photo {photo_id} raw data keys: {list(photo.keys())}")
-    if 'mediaMetadata' in photo:
-        logger.debug(f"Photo {photo_id} mediaMetadata keys: {list(photo['mediaMetadata'].keys())}")
-        logger.debug(f"Photo {photo_id} mediaMetadata content: {json.dumps(photo['mediaMetadata'], indent=2)}")
-    
     normalized = {}
     
     # ID
     normalized['id'] = photo.get('id', '')
-    
-    # Filename - try different possible fields
-    normalized['filename'] = (
-        photo.get('filename') or 
-        photo.get('name') or 
-        f"picker_photo_{photo.get('id', 'unknown')}"
-    )
     
     # MIME type - could be at root level or in mediaFile
     normalized['mimeType'] = (
@@ -210,17 +197,8 @@ def normalize_picker_photo(photo):
         photo.get('mediaFile', {}).get('baseUrl', '')
     )
     
-    # Media metadata - try to extract creation time and dimensions from various possible locations
+    # Media metadata - try to extract dimensions from various possible locations
     media_metadata = photo.get('mediaMetadata', {})
-    
-    # Try to find creation time in different possible locations
-    creation_time = (
-        media_metadata.get('creationTime') or
-        photo.get('creationTime') or
-        photo.get('mediaFile', {}).get('creationTime') or
-        photo.get('timestamp') or
-        ''
-    )
     
     # Try to find dimensions
     width = (
@@ -239,7 +217,6 @@ def normalize_picker_photo(photo):
     
     # Create normalized metadata structure
     normalized['mediaMetadata'] = {
-        'creationTime': creation_time,
         'width': str(width) if width else '',
         'height': str(height) if height else ''
     }
@@ -250,18 +227,6 @@ def normalize_picker_photo(photo):
             if key in media_metadata:
                 normalized['mediaMetadata'][key] = media_metadata[key]
     
-    # Add album info for Picker photos (they don't have albums, so create a virtual one)
-    normalized['album'] = {
-        'title': 'Google Photos (Picker Selection)',
-        'id': 'picker_selection'
-    }
-    
-    # Copy any other fields that might be useful
-    for key in ['description', 'productUrl']:
-        if key in photo:
-            normalized[key] = photo[key]
-    
-    logger.debug(f"Normalized photo: {normalized['filename']} -> album: {normalized['album']['title']}")
     return normalized
 
 def api_data():
