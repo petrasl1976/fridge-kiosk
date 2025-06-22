@@ -74,25 +74,38 @@ function calendarInit(container) {
             padding: ${pluginConfig.format.padding} !important;
         `;
     }
+
+    // Store current day when we start
+    let currentDay = new Date().getDate();
     
-    // Function to fetch calendar data from the API
+    // Function to fetch calendar data and check for day change
     function fetchCalendarData() {
-        fetch('/api/plugins/google-calendar/data')
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.weeks) {
-                    // The plugin will handle rendering with the updated data
-                    location.reload();
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching calendar data:', error);
-            });
+        const now = new Date();
+        const newDay = now.getDate();
+        
+        // If day has changed or this is a regular refresh
+        if (newDay !== currentDay) {
+            console.log('Day changed, refreshing calendar...');
+            currentDay = newDay;
+            fetch('/api/plugins/google-calendar/data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.weeks) {
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching calendar data:', error);
+                });
+        }
     }
     
-    // Set up automatic refresh from API
+    // Set up refresh interval from config (default 15 minutes)
     const refreshInterval = parseInt(pluginConfig.updateInterval) || 900;
-    setInterval(fetchCalendarData, refreshInterval * 1000);
+    setInterval(fetchCalendarData, 60 * 1000); // Check every minute
+    
+    // Do an initial fetch
+    fetchCalendarData();
 }
 
 // Helper function to convert event summary to a color
