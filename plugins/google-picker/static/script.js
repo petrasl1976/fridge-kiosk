@@ -152,10 +152,9 @@ function nextMedia() {
     }
 
     if (currentIndex + 1 >= currentBatch.length) {
-        // End of sequence: start over with the same batch (cycle through)
-        console.log('[Google Picker] End of sequence, cycling back to start...');
-        currentIndex = 0;
-        showMedia(currentBatch[currentIndex]);
+        // End of sequence: get a new batch with a new random starting point
+        console.log('[Google Picker] End of sequence, fetching new batch...');
+        updatePhotoBatch();
         return;
     }
 

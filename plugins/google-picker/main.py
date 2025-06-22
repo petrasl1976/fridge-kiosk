@@ -148,18 +148,18 @@ def get_random_photo_batch():
         logger.warning(f"No photos match media_types filter: {media_types}")
         return []
 
-    # Pick a random start index
+    # Shuffle all photos and take first sequence_count
     total_photos = len(filtered_photos)
     if total_photos == 0:
         return []
     
-    start_index = random.randint(0, total_photos - 1)
-
-    # Build the sequence, wrapping around if needed
+    # Randomly shuffle the entire list
+    random.shuffle(filtered_photos)
+    
+    # Take first sequence_count photos
     sequence = []
     for i in range(min(sequence_count, total_photos)):
-        idx = (start_index + i) % total_photos
-        photo = filtered_photos[idx].copy()
+        photo = filtered_photos[i].copy()
         
         # Normalize the photo structure for frontend consumption
         normalized_photo = normalize_picker_photo(photo)
@@ -167,7 +167,7 @@ def get_random_photo_batch():
         # Add sequence info
         normalized_photo['sequence_remaining'] = sequence_count - i
         normalized_photo['total_count'] = total_photos
-        normalized_photo['photo_index'] = idx + 1  # 1-based index
+        normalized_photo['photo_index'] = i + 1  # 1-based index
         
         sequence.append(normalized_photo)
 
