@@ -45,12 +45,6 @@ function startProgressBar(mediaItem) {
 }
 
 function showMedia(mediaItem) {
-    // Always define fontSize at the start
-    let fontSize = '1.3em';
-    try {
-        fontSize = window.PLUGINS?.['google-picker']?.config?.settings?.label_font_size || fontSize;
-    } catch (e) { /* fallback to default */ }
-
     console.log('[Google Picker] Starting showMedia function');
     const container = document.getElementById('picker-photo-container');
     if (!container) {
@@ -67,73 +61,8 @@ function showMedia(mediaItem) {
         return;
     }
 
-    // --- Add photo info above the photo ---
-    // Album name (top line) - use album.title if available
-    let albumName = 'Google Photos (Picker)';
-    if (mediaItem.album && mediaItem.album.title) {
-        albumName = mediaItem.album.title;
-    } else if (mediaItem.description) {
-        albumName = mediaItem.description;
-    }
-
-    const albumDiv = document.createElement('div');
-    albumDiv.className = 'picker-photo-album';
-    albumDiv.textContent = albumName;
-    albumDiv.style.fontSize = fontSize;
-    container.appendChild(albumDiv);
-
-    // File info line
-    let takenTime = '';
-    if (mediaItem.mediaMetadata && mediaItem.mediaMetadata.creationTime) {
-        // Format as YYYY-MM-DD HH:mm:ss
-        const date = new Date(mediaItem.mediaMetadata.creationTime);
-        const yyyy = date.getFullYear();
-        const mm = String(date.getMonth() + 1).padStart(2, '0');
-        const dd = String(date.getDate()).padStart(2, '0');
-        const hh = String(date.getHours()).padStart(2, '0');
-        const min = String(date.getMinutes()).padStart(2, '0');
-        const ss = String(date.getSeconds()).padStart(2, '0');
-        takenTime = `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
-    } else if (mediaItem.filename) {
-        takenTime = mediaItem.filename.replace(/\.[^/.]+$/, '');
-    }
-
-    // Series id (current index in batch, from end to start)
-    let seriesId = '';
-    if (typeof currentIndex === 'number' && Array.isArray(currentBatch)) {
-        seriesId = (currentBatch.length - currentIndex);
-    }
-
-    // Orientation: P (portrait) or L (landscape)
-    let orientation = '';
-    if (mediaItem.mediaMetadata && mediaItem.mediaMetadata.width && mediaItem.mediaMetadata.height) {
-        orientation = (parseInt(mediaItem.mediaMetadata.height) > parseInt(mediaItem.mediaMetadata.width)) ? 'P' : 'L';
-    }
-
-    // Info line: Timestamp seriesId Orientation
-    let infoLine = '';
-    if (takenTime) {
-        infoLine += takenTime;
-    }
-    if (seriesId) {
-        infoLine += ` ${seriesId}`;
-    }
-    if (orientation) {
-        infoLine += ` ${orientation}`;
-    }
-
-    // File time (second line, when it was taken)
-    const fileDiv = document.createElement('div');
-    fileDiv.className = 'picker-photo-filename';
-    fileDiv.textContent = infoLine;
-    fileDiv.style.fontSize = fontSize;
-    container.appendChild(fileDiv);
-    // --- End info lines ---
-
     console.log('[Google Picker] Processing media item:', {
-        filename: mediaItem.filename,
         mimeType: mediaItem.mimeType,
-        album: mediaItem.album,
         mediaMetadata: mediaItem.mediaMetadata,
         baseUrl: mediaItem.baseUrl ? 'data URL present' : 'no baseUrl'
     });
@@ -158,7 +87,7 @@ function showMedia(mediaItem) {
         mediaElement = document.createElement('img');
         // Use the baseUrl directly (it's now a data URL with embedded image data)
         mediaElement.src = mediaItem.baseUrl;
-        mediaElement.alt = mediaItem.filename || '';
+        mediaElement.alt = '';
         console.log('[Google Picker] Image URL type:', mediaItem.baseUrl.substring(0, 20) + '...');
         
         // Add loading state
