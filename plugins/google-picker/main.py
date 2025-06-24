@@ -487,9 +487,10 @@ def api_data():
                     'Authorization': f'Bearer {credentials.token}',
                     'User-Agent': 'Fridge-Kiosk-Picker/1.0'
                 }
-                resp = requests.get(burl, headers=headers, timeout=15)
+                resp = requests.get(burl, headers=headers, timeout=15, allow_redirects=True)
+                logger.debug(f"Fetched image HTTP {resp.status_code} for {photo.get('id','')} len={len(resp.content)}")
                 if resp.status_code != 200:
-                    logger.warning(f"Image fetch failed {resp.status_code}; using remote URL")
+                    logger.warning(f"Image fetch failed {resp.status_code}; body: {resp.text[:120]}")
                     photo['baseUrl'] = burl
                     continue
 
