@@ -456,19 +456,56 @@ def api_data():
             logger.warning("No photos returned from get_random_photo_batch")
             return {'media': [], 'error': 'No photos available. Run picker setup first.'}
         
-        # Append render parameters so browser can fetch directly
+        # Prepare media URLs
         for photo in photos:
             burl = photo.get('baseUrl', '')
             if not burl:
                 continue
-            if '=' in burl:
-                continue  # already has params
+
             if photo.get('mimeType', '').startswith('video/'):
-                photo['baseUrl'] = f"{burl}=dv"
-            else:
-                photo['baseUrl'] = f"{burl}=w1920-h1080"
+                # Videos: leave remote URL with =dv param (might stream without auth)
+                if '=' not in burl:
+                    photo['baseUrl'] = f"{burl}=dv"
+                continue
+
+            # Images: fetch with OAuth and convert to data URL to avoid CORS/auth issues
+            try:
+                # Add resize param for efficient size if not already present
+                if '=' not in burl:
+                    burl = f"{burl}=w1920-h1080"
+
+                credentials = get_credentials()
+                if not credentials:
+                    logger.warning("No credentials for image fetch; leaving original URL")
+                    photo['baseUrl'] = burl
+                    continue
+
+                if credentials.expired and credentials.refresh_token:
+                    credentials.refresh(Request())
+
+                headers = {
+                    'Authorization': f'Bearer {credentials.token}',
+                    'User-Agent': 'Fridge-Kiosk-Picker/1.0'
+                }
+                resp = requests.get(burl, headers=headers, timeout=15)
+                if resp.status_code != 200:
+                    logger.warning(f"Image fetch failed {resp.status_code}; using remote URL")
+                    photo['baseUrl'] = burl
+                    continue
+
+                content_type = resp.headers.get('content-type', 'image/jpeg')
+                if content_type in ('image/heif', 'image/heic'):
+                    content_type = 'image/jpeg'
+
+                import base64
+                img_b64 = base64.b64encode(resp.content).decode('utf-8')
+                photo['baseUrl'] = f"data:{content_type};base64,{img_b64}"
+                logger.debug(f"Converted image {photo.get('id','')} to data URL ({len(img_b64)} bytes)")
+            except Exception as fe:
+                logger.error(f"Failed to fetch/convert image: {fe}")
+                photo['baseUrl'] = burl  # fallback
         
-        logger.info(f"Returning {len(photos)} photos (no server-side conversion)")
+        logger.info(f"Returning {len(photos)} prepared photos")
         return {'media': photos}
     except Exception as e:
         logger.error(f"Error in api_data: {e}")
