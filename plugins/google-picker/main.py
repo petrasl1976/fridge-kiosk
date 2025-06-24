@@ -461,7 +461,7 @@ def api_data():
             logger.debug(f"Processing photo {i+1}/{len(photos)}: {photo.get('filename', 'unknown')}")
             logger.debug(f"Photo has baseUrl: {bool(photo.get('baseUrl'))}")
             
-            if photo.get('baseUrl'):
+            if photo.get('baseUrl') and photo.get('mimeType', '').startswith('image/'):
                 original_url = photo['baseUrl']
                 logger.info(f"Fetching image for {photo.get('filename', 'unknown')}: {original_url[:50]}...")
                 try:
@@ -489,6 +489,9 @@ def api_data():
                             # Convert to data URL
                             import base64
                             content_type = response.headers.get('content-type', 'image/jpeg')
+                            # Some HEIF images are served with image/heif; browsers can't render.  Use image/jpeg.
+                            if content_type == 'image/heif' or content_type == 'image/heic':
+                                content_type = 'image/jpeg'
                             image_data = base64.b64encode(response.content).decode('utf-8')
                             data_url = f"data:{content_type};base64,{image_data}"
                             photo['baseUrl'] = data_url
@@ -504,12 +507,12 @@ def api_data():
                     logger.debug(f"Full error: {traceback.format_exc()}")
                     photo['baseUrl'] = ''
             else:
-                logger.warning(f"⚠️ Photo {photo.get('filename', 'unknown')} has no baseUrl in cache")
-        
-        # Log each displayed media item
-        for item in photos:
-            filename = item.get('filename', 'Unknown File')
-            media_type = item.get('mimeType', 'unknown')
+                # For videos or when baseUrl missing, leave as is (frontend will append parameters if needed)
+                logger.debug("Skipping conversion for non-image or missing baseUrl")
+            
+            # Log each displayed media item
+            filename = photo.get('filename', 'Unknown File')
+            media_type = photo.get('mimeType', 'unknown')
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             logger.warning(f"[DISPLAYED] {now} [Picker] {filename} ({media_type})")
         
