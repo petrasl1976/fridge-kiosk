@@ -233,4 +233,145 @@ document.addEventListener('DOMContentLoaded', () => {
         height: container.offsetHeight
     });
     updatePhotoBatch();
-}); 
+});
+
+// ------------------------------------------------------------
+// NEW: Simple Manage Albums overlay
+// ------------------------------------------------------------
+
+function createManageUI() {
+    // Floating settings button
+    const btn = document.createElement('button');
+    btn.id = 'picker-manage-btn';
+    btn.textContent = '⚙️';
+    Object.assign(btn.style, {
+        position: 'fixed',
+        right: '10px',
+        bottom: '10px',
+        zIndex: 9999,
+        fontSize: '1.5em',
+        background: '#ffffffaa',
+        border: '1px solid #888',
+        borderRadius: '4px',
+        cursor: 'pointer'
+    });
+    btn.addEventListener('click', openManageModal);
+    document.body.appendChild(btn);
+
+    // Modal container (hidden by default)
+    const modal = document.createElement('div');
+    modal.id = 'picker-manage-modal';
+    Object.assign(modal.style, {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: 'rgba(0,0,0,0.7)',
+        display: 'none',
+        zIndex: 9998,
+        color: '#fff',
+        overflow: 'auto',
+        padding: '40px'
+    });
+    modal.innerHTML = `
+        <div id="picker-manage-content" style="max-width:600px;margin:0 auto;background:#222;padding:20px;border-radius:8px;">
+            <h2>Google Photos Albums</h2>
+            <div id="picker-album-list">Loading...</div>
+            <hr/>
+            <h3>Create new album</h3>
+            <input id="picker-new-album-title" type="text" placeholder="Album title" style="width:80%;padding:6px;" />
+            <button id="picker-create-album-btn" style="padding:6px 12px;margin-left:6px;">Create</button>
+            <button id="picker-manage-close" style="float:right;padding:6px 12px;">Close</button>
+        </div>`;
+    document.body.appendChild(modal);
+
+    // Close button handler
+    modal.querySelector('#picker-manage-close').addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    // Create album handler
+    modal.querySelector('#picker-create-album-btn').addEventListener('click', () => {
+        const title = modal.querySelector('#picker-new-album-title').value.trim();
+        if (!title) return alert('Enter album title');
+        fetch(`/api/plugins/google-picker/create_album?title=${encodeURIComponent(title)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) return alert('Error: ' + data.error);
+                alert('Album created');
+                loadAlbumList();
+            });
+    });
+}
+
+function openManageModal() {
+    const modal = document.getElementById('picker-manage-modal');
+    if (!modal) return;
+    modal.style.display = 'block';
+    loadAlbumList();
+}
+
+function loadAlbumList() {
+    const listDiv = document.getElementById('picker-album-list');
+    listDiv.innerHTML = 'Loading...';
+    fetch('/api/plugins/google-picker/albums')
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                listDiv.innerHTML = `<div style="color:red;">Error: ${data.error}</div>`;
+                return;
+            }
+            if (!data.albums || data.albums.length === 0) {
+                listDiv.innerHTML = '<p>No albums yet.</p>';
+                return;
+            }
+            listDiv.innerHTML = '';
+            data.albums.forEach(alb => {
+                const row = document.createElement('div');
+                row.style.marginBottom = '8px';
+                row.innerHTML = `<strong>${alb.title}</strong> (${alb.mediaItemsCount || 0}) `;
+                const btn = document.createElement('button');
+                btn.textContent = 'Add photos';
+                btn.style.marginLeft = '8px';
+                btn.addEventListener('click', () => startImportFlow(alb.id));
+                row.appendChild(btn);
+                listDiv.appendChild(row);
+            });
+        });
+}
+
+function startImportFlow(albumId) {
+    fetch(`/api/plugins/google-picker/start_import?albumId=${encodeURIComponent(albumId)}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) return alert('Error: ' + data.error);
+            const pickerUri = data.pickerUri;
+            const sessionId = data.sessionId;
+            window.open(pickerUri, '_blank');
+            pollImportStatus(sessionId, albumId);
+        });
+}
+
+function pollImportStatus(sessionId, albumId) {
+    const interval = setInterval(() => {
+        fetch(`/api/plugins/google-picker/poll_import?sessionId=${encodeURIComponent(sessionId)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'waiting') {
+                    console.log('Import waiting...');
+                    return;
+                }
+                clearInterval(interval);
+                if (data.error) {
+                    alert('Import error: ' + data.error);
+                } else {
+                    alert(`Added ${data.added} items to album.`);
+                    loadAlbumList();
+                }
+            });
+    }, 5000);
+}
+
+// Initialize manage UI once DOM ready
+document.addEventListener('DOMContentLoaded', createManageUI); 

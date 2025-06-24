@@ -22,6 +22,7 @@ import google_auth_oauthlib.flow
 import urllib.parse
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+import inspect
 
 # Allow OAuth2 over HTTP for development
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
@@ -185,7 +186,16 @@ class KioskHTTPRequestHandler(BaseHTTPRequestHandler):
                             if hasattr(plugin_module, handler_name):
                                 logging.getLogger().debug(f"Found handler: {handler_name}")
                                 handler = getattr(plugin_module, handler_name)
-                                result = handler()
+                                # Pass query parameters to handler if it expects them
+                                try:
+                                    sig = inspect.signature(handler)
+                                    if len(sig.parameters) == 0:
+                                        result = handler()
+                                    else:
+                                        result = handler(query)
+                                except (ValueError, TypeError):
+                                    # Fallback in case signature cannot be inspected
+                                    result = handler()
                                 
                                 self.send_response(200)
                                 self.send_header('Content-type', 'application/json')

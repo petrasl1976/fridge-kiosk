@@ -5,6 +5,7 @@ import random
 import requests
 import time
 import traceback
+import inspect
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from pathlib import Path
@@ -19,6 +20,222 @@ logger = logging.getLogger('plugins.google-picker')
 CACHE_DIR = os.path.join(os.path.dirname(__file__), 'cache')
 SELECTED_PHOTOS_FILE = os.path.join(CACHE_DIR, 'selected_photos.json')
 CACHE_EXPIRY = 7 * 24 * 3600  # 7 days cache expiry for photos
+
+# ------------------------------------------------------------
+# NEW: Google Photos Library API helpers (for app-created albums)
+# ------------------------------------------------------------
+
+# Required scopes according to 2025 policy changes
+# - photoslibrary.appendonly
+# - photoslibrary.edit.appcreateddata  (for batchAdd/Remove)
+# - photoslibrary.readonly.appcreateddata (listing)
+
+def get_photos_service():
+    """Return Google Photos Library API service (app-created data only)."""
+    logger.debug("Creating Photos Library API service")
+    credentials = get_credentials()
+    if not credentials:
+        logger.error("No credentials available for Photos service")
+        return None
+
+    try:
+        # Refresh if needed (safe, does not alter scopes)
+        if credentials.expired and credentials.refresh_token:
+            logger.info("Refreshing expired credentials for Photos service")
+            credentials.refresh(Request())
+
+        service = build(
+            'photoslibrary', 'v1', credentials=credentials,
+            discoveryServiceUrl='https://photoslibrary.googleapis.com/$discovery/rest?version=v1'
+        )
+        logger.debug("Photos service created successfully")
+        return service
+    except Exception as e:
+        logger.error(f"Error creating Photos service: {e}")
+        logger.debug(f"Traceback: {traceback.format_exc()}")
+        return None
+
+def list_app_albums():
+    """Return list of albums created by this app."""
+    service = get_photos_service()
+    if not service:
+        return []
+
+    albums = []
+    page_token = None
+    try:
+        while True:
+            results = service.albums().list(
+                pageSize=50,
+                pageToken=page_token
+            ).execute()
+            albums.extend(results.get('albums', []))
+            page_token = results.get('nextPageToken')
+            if not page_token:
+                break
+        logger.info(f"Fetched {len(albums)} app-created albums")
+    except HttpError as error:
+        logger.error(f"Error listing app albums: {error}")
+    return albums
+
+def create_app_album(title):
+    """Create a new album with given title."""
+    service = get_photos_service()
+    if not service:
+        return None, 'No valid photoslibrary service'
+    try:
+        body = {"album": {"title": title}}
+        result = service.albums().create(body=body).execute()
+        logger.info(f"Created album '{title}' (id={result.get('id')})")
+        return result, None
+    except HttpError as error:
+        logger.error(f"Error creating album: {error}")
+        return None, str(error)
+
+def add_media_items_to_album(album_id, media_item_ids):
+    """Add up to many media items to album, chunking by 50."""
+    service = get_photos_service()
+    if not service:
+        return 'No valid photoslibrary service'
+
+    # Ensure list
+    if isinstance(media_item_ids, str):
+        media_item_ids = [mid.strip() for mid in media_item_ids.split(',') if mid.strip()]
+
+    try:
+        for i in range(0, len(media_item_ids), 50):
+            chunk = media_item_ids[i:i+50]
+            body = {
+                "albumId": album_id,
+                "mediaItemIds": chunk
+            }
+            service.albums().batchAddMediaItems(body=body).execute()
+            logger.debug(f"Added chunk of {len(chunk)} items to album {album_id}")
+        logger.info(f"Added total {len(media_item_ids)} items to album {album_id}")
+        return None  # No error
+    except HttpError as error:
+        logger.error(f"Error adding media items: {error}")
+        return str(error)
+
+# ------------------------------------------------------------
+# NEW: API endpoints exposed to frontend
+# ------------------------------------------------------------
+
+_import_sessions = {}
+
+def _create_picker_session():
+    """Helper to create Picker session via API."""
+    service = get_picker_service()
+    if not service:
+        return None, 'No picker service'
+    try:
+        response = service.sessions().create().execute()
+        return response, None
+    except HttpError as e:
+        logger.error(f"Error creating picker session: {e}")
+        return None, str(e)
+
+def api_start_import(query):
+    """Start import flow for given albumId; returns pickerUri, sessionId."""
+    if not query or 'albumId' not in query:
+        return {'error': 'albumId parameter required'}
+    album_id = query['albumId'][0]
+    session_info, err = _create_picker_session()
+    if err or not session_info:
+        return {'error': err or 'Failed to create session'}
+    session_id = session_info['id']
+    _import_sessions[session_id] = {
+        'albumId': album_id,
+        'created': time.time()
+    }
+    return {
+        'sessionId': session_id,
+        'pickerUri': session_info['pickerUri'],
+        'pollInterval': session_info.get('pollingConfig', {}).get('pollInterval', 5)
+    }
+
+def api_poll_import(query):
+    """Poll picker session; if finished, transfer items to album."""
+    if not query or 'sessionId' not in query:
+        return {'error': 'sessionId is required'}
+    session_id = query['sessionId'][0]
+    if session_id not in _import_sessions:
+        return {'error': 'Unknown sessionId'}
+    album_id = _import_sessions[session_id]['albumId']
+
+    service = get_picker_service()
+    if not service:
+        return {'error': 'No picker service'}
+    try:
+        response = service.sessions().get(sessionId=session_id).execute()
+        if not response.get('mediaItemsSet', False):
+            return {'status': 'waiting'}
+
+        # Retrieve selected media items (IDs only)
+        ids = []
+        page_token = None
+        while True:
+            if page_token:
+                res = service.mediaItems().list(sessionId=session_id, pageToken=page_token).execute()
+            else:
+                res = service.mediaItems().list(sessionId=session_id).execute()
+            batch = res.get('mediaItems', [])
+            for item in batch:
+                mid = item.get('id') or item.get('mediaItemId') or ''
+                if mid:
+                    ids.append(mid)
+            page_token = res.get('nextPageToken')
+            if not page_token:
+                break
+
+        err = add_media_items_to_album(album_id, ids)
+        if err:
+            return {'error': err}
+
+        # Cleanup session reference
+        _import_sessions.pop(session_id, None)
+        return {'status': 'completed', 'added': len(ids)}
+    except HttpError as e:
+        logger.error(f"Error polling session: {e}")
+        return {'error': str(e)}
+
+def api_albums(query=None):
+    """Return list of app albums."""
+    albums = list_app_albums()
+    # Simplify structure for frontend
+    simple = [{
+        'id': a.get('id'),
+        'title': a.get('title'),
+        'mediaItemsCount': a.get('mediaItemsCount', '0')
+    } for a in albums]
+    return {'albums': simple}
+
+def api_create_album(query):
+    """Create album. Expected query param 'title'."""
+    if not query or 'title' not in query:
+        return {'error': 'Title parameter is required'}
+    title = query['title'][0]
+    album, err = create_app_album(title)
+    if err:
+        return {'error': err}
+    return {'album': {
+        'id': album.get('id'),
+        'title': album.get('title')
+    }}
+
+def api_add_media_items(query):
+    """Add media items to album. Requires 'albumId' & 'ids' (comma-separated)."""
+    if not query or 'albumId' not in query or 'ids' not in query:
+        return {'error': 'albumId and ids parameters are required'}
+    album_id = query['albumId'][0]
+    ids_raw = query['ids'][0]
+    ids_list = [s.strip() for s in ids_raw.split(',') if s.strip()]
+    if not ids_list:
+        return {'error': 'No media item IDs provided'}
+    err = add_media_items_to_album(album_id, ids_list)
+    if err:
+        return {'error': err}
+    return {'status': 'ok', 'added': len(ids_list)}
 
 def ensure_cache_dir():
     if not os.path.exists(CACHE_DIR):
@@ -303,8 +520,6 @@ def api_data():
         logger.error(f"Error in api_data: {e}")
         logger.debug(f"API error traceback: {traceback.format_exc()}")
         return {'error': str(e)}
-
-
 
 def init(config):
     """Initialize the plugin with configuration."""
