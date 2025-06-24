@@ -456,68 +456,19 @@ def api_data():
             logger.warning("No photos returned from get_random_photo_batch")
             return {'media': [], 'error': 'No photos available. Run picker setup first.'}
         
-        # Convert Google Photos URLs to data URLs with proper auth
-        for i, photo in enumerate(photos):
-            logger.debug(f"Processing photo {i+1}/{len(photos)}: {photo.get('filename', 'unknown')}")
-            logger.debug(f"Photo has baseUrl: {bool(photo.get('baseUrl'))}")
-            
-            if photo.get('baseUrl') and photo.get('mimeType', '').startswith('image/'):
-                original_url = photo['baseUrl']
-                logger.info(f"Fetching image for {photo.get('filename', 'unknown')}: {original_url[:50]}...")
-                try:
-                    # Fetch the image with proper OAuth headers and convert to data URL
-                    credentials = get_credentials()
-                    if credentials:
-                        # Check if credentials are still valid
-                        if credentials.expired:
-                            logger.warning("Credentials expired, attempting refresh...")
-                            credentials.refresh(Request())
-                        
-                        headers = {
-                            'Authorization': f'Bearer {credentials.token}',
-                            'User-Agent': 'Fridge-Kiosk-Picker/1.0'
-                        }
-                        
-                        # Add image parameters to the URL
-                        image_url = f"{original_url}=w1920-h1080"
-                        logger.debug(f"Fetching image: {image_url}")
-                        
-                        response = requests.get(image_url, headers=headers, timeout=15)
-                        logger.debug(f"Response status: {response.status_code}")
-                        
-                        if response.status_code == 200:
-                            # Convert to data URL
-                            import base64
-                            content_type = response.headers.get('content-type', 'image/jpeg')
-                            # Some HEIF images are served with image/heif; browsers can't render.  Use image/jpeg.
-                            if content_type == 'image/heif' or content_type == 'image/heic':
-                                content_type = 'image/jpeg'
-                            image_data = base64.b64encode(response.content).decode('utf-8')
-                            data_url = f"data:{content_type};base64,{image_data}"
-                            photo['baseUrl'] = data_url
-                            logger.info(f"✅ Successfully converted to data URL: {len(image_data)} bytes")
-                        else:
-                            logger.error(f"❌ Failed to fetch image: {response.status_code} - {response.text[:100]}")
-                            photo['baseUrl'] = ''  # Will trigger error handling in frontend
-                    else:
-                        logger.error("❌ No credentials available for image fetching")
-                        photo['baseUrl'] = ''
-                except Exception as e:
-                    logger.error(f"❌ Error fetching image {original_url}: {e}")
-                    logger.debug(f"Full error: {traceback.format_exc()}")
-                    photo['baseUrl'] = ''
+        # Append render parameters so browser can fetch directly
+        for photo in photos:
+            burl = photo.get('baseUrl', '')
+            if not burl:
+                continue
+            if '=' in burl:
+                continue  # already has params
+            if photo.get('mimeType', '').startswith('video/'):
+                photo['baseUrl'] = f"{burl}=dv"
             else:
-                # For videos or when baseUrl missing, leave as is (frontend will append parameters if needed)
-                logger.debug("Skipping conversion for non-image or missing baseUrl")
-            
-            # Log each displayed media item
-            filename = photo.get('filename', 'Unknown File')
-            media_type = photo.get('mimeType', 'unknown')
-            now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            logger.warning(f"[DISPLAYED] {now} [Picker] {filename} ({media_type})")
+                photo['baseUrl'] = f"{burl}=w1920-h1080"
         
-        logger.info(f"Returning {len(photos)} photos")
-        logger.debug(f"Returning photos: {json.dumps(photos, indent=2)}")
+        logger.info(f"Returning {len(photos)} photos (no server-side conversion)")
         return {'media': photos}
     except Exception as e:
         logger.error(f"Error in api_data: {e}")
