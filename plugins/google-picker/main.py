@@ -488,9 +488,15 @@ def api_data():
                     'User-Agent': 'Fridge-Kiosk-Picker/1.0'
                 }
                 resp = requests.get(burl, headers=headers, timeout=15, allow_redirects=True)
-                logger.debug(f"Fetched image HTTP {resp.status_code} for {photo.get('id','')} len={len(resp.content)}")
+                logger.warning(f"Fetch attempt 1 -> HTTP {resp.status_code} (len={len(resp.content)}) for {photo.get('id','')}")
                 if resp.status_code != 200:
-                    logger.warning(f"Image fetch failed {resp.status_code}; body: {resp.text[:120]}")
+                    # try with ?access_token param (Google sometimes requires it)
+                    sep = '&' if '?' in burl else '?'
+                    burl_token = f"{burl}{sep}access_token={credentials.token}"
+                    resp = requests.get(burl_token, timeout=15, allow_redirects=True)
+                    logger.warning(f"Fetch attempt 2 (token param) -> HTTP {resp.status_code} for {photo.get('id','')}")
+                if resp.status_code != 200:
+                    logger.error(f"Image fetch failed after 2 attempts; status {resp.status_code}; body: {resp.text[:120]}")
                     photo['baseUrl'] = burl
                     continue
 
