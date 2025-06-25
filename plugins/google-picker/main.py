@@ -548,7 +548,7 @@ def init(config):
             logger.info(f"Found {len(selected_photos)} selected photos in cache")
         
         logger.info("Google Picker plugin initialized successfully")
-        logger.propagate = False
+        logger.propagate = True
         return {'data': {}}
     except Exception as e:
         logger.error(f"Error initializing plugin: {e}")
