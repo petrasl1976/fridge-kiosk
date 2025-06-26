@@ -496,7 +496,24 @@ def api_data():
                     resp = requests.get(burl_token, timeout=15, allow_redirects=True)
                     logger.warning(f"Fetch attempt 2 (token param) -> HTTP {resp.status_code} for {photo.get('id','')}")
                 if resp.status_code != 200:
-                    logger.error(f"Image fetch failed after 2 attempts; status {resp.status_code}; body: {resp.text[:120]}")
+                    logger.error(f"Image fetch failed after 2 attempts; status {resp.status_code}. Trying Library API fallback")
+
+                    # Fallback: use Photos Library API to get mediaItem and baseUrl (publicly accessible)
+                    try:
+                        photos_service = get_photos_service()
+                        if photos_service:
+                            media_item = photos_service.mediaItems().get(mediaItemId=photo['id']).execute()
+                            new_burl = media_item.get('baseUrl', '')
+                            if new_burl:
+                                if '=' not in new_burl:
+                                    new_burl = f"{new_burl}=w1920-h1080"
+                                photo['baseUrl'] = new_burl
+                                logger.info(f"Library API fallback succeeded for {photo['id']}")
+                                continue  # Done with this photo
+                    except Exception as le:
+                        logger.error(f"Library API fallback failed: {le}")
+
+                    # Ultimate fallback: keep original URL (may fail in browser)
                     photo['baseUrl'] = burl
                     continue
 
