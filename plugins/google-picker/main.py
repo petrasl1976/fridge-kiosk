@@ -496,24 +496,26 @@ def api_data():
                     resp = requests.get(burl_token, timeout=15, allow_redirects=True)
                     logger.warning(f"Fetch attempt 2 (token param) -> HTTP {resp.status_code} for {photo.get('id','')}")
                 if resp.status_code != 200:
-                    logger.error(f"Image fetch failed after 2 attempts; status {resp.status_code}. Trying Library API fallback")
+                    logger.error(f"Image fetch failed after 2 attempts; status {resp.status_code}. Trying Picker getMedia fallback")
 
-                    # Fallback: use Photos Library API to get mediaItem and baseUrl (publicly accessible)
+                    # Fallback: use Picker API mediaItems.getMedia with BASE64 filter
                     try:
-                        photos_service = get_photos_service()
-                        if photos_service:
-                            media_item = photos_service.mediaItems().get(mediaItemId=photo['id']).execute()
-                            new_burl = media_item.get('baseUrl', '')
-                            if new_burl:
-                                if '=' not in new_burl:
-                                    new_burl = f"{new_burl}=w1920-h1080"
-                                photo['baseUrl'] = new_burl
-                                logger.info(f"Library API fallback succeeded for {photo['id']}")
-                                continue  # Done with this photo
-                    except Exception as le:
-                        logger.error(f"Library API fallback failed: {le}")
+                        picker_service = get_picker_service()
+                        if picker_service:
+                            media_resp = picker_service.mediaItems().getMedia(
+                                name=f"mediaItems/{photo['id']}",
+                                filter='BASE64'
+                            ).execute()
+                            b64_data = media_resp.get('data')
+                            mime = media_resp.get('mimeType', 'image/jpeg')
+                            if b64_data:
+                                photo['baseUrl'] = f"data:{mime};base64,{b64_data}"
+                                logger.info(f"Picker getMedia fallback succeeded for {photo['id']}")
+                                continue
+                    except Exception as ple:
+                        logger.error(f"Picker getMedia fallback failed: {ple}")
 
-                    # Ultimate fallback: keep original URL (may fail in browser)
+                    # Ultimate fallback: keep original URL (may still 403 in browser)
                     photo['baseUrl'] = burl
                     continue
 
