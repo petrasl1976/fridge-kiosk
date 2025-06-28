@@ -16,7 +16,8 @@
     }
   },
   "enabledPlugins": [
-    "google-picker",
+    "calendar",
+    "random-nature-photos",
     "weather-forecast",
     "sensors",
     "date-time",

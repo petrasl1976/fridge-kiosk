@@ -1,0 +1,43 @@
+body{
+	margin: 0%;
+}
+p1 {
+	font-family: Arial, sans-serif;
+	font-size : 15px;
+	color: white;
+}
+statusbar {
+	position: relative;
+	display: flex;
+	padding: 0px 5px;
+	box-sizing: border-box;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	height: 35px;
+	background-image: linear-gradient(to bottom, #555555, black);
+}
+div.stat {
+	position: relative;
+	background: #707070;
+	height: 25px;
+	padding: 0px 5px;
+	border-radius: 2.5px;
+	display: flex;
+  flex-direction: row;
+  gap: 5px;
+	align-items: center;
+}
+div.hgroup {
+	display: flex;
+	flex-direction: row;
+	gap: 5px;
+}
+p1.time {
+	position: absolute;
+	left: 0;
+	right: 0;
+	margin-inline: auto; 
+	width : fit-content;
+}

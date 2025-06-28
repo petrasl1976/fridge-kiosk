@@ -1,0 +1,59 @@
+/* Calendar Statusbar Plugin styles */
+
+#calendar {
+  position: relative;
+  width: 100%;
+  height: 35px;
+  font-family: Arial, sans-serif;
+  color: #fff;
+}
+
+#calendar .calendar-statusbar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 35px;
+  padding: 0 5px;
+  background-image: linear-gradient(to bottom, #555555, black);
+  box-sizing: border-box;
+}
+
+#calendar .stat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  background: #707070;
+  height: 25px;
+  padding: 0 5px;
+  border-radius: 2.5px;
+  font-size: 15px;
+}
+
+#calendar .stat img {
+  width: 18px;
+  height: 18px;
+}
+
+#calendar .stat-group {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+}
+
+#calendar .time {
+  font-size: 15px;
+}
+
+/* CPU temp severity colors */
+#calendar #cpu_text.normal {
+  color: #ffffff;
+}
+#calendar #cpu_text.warning {
+  color: #ffcc00;
+}
+#calendar #cpu_text.critical {
+  color: #ff3300;
+} 
